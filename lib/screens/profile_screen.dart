@@ -5,6 +5,8 @@ import '../services/user_service.dart';
 import '../models/user_model.dart';
 import '../theme/app_theme.dart';
 import 'settings_screen.dart';
+import 'notifications_screen.dart';
+import '../services/hangout_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -170,6 +172,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
 
 
+                    // Notifications
+                    _buildMenuCard(
+                      Icons.notifications_outlined,
+                      'Notifications',
+                      'View your notifications',
+                      () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+                        );
+                      },
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Test Notification
+                    _buildMenuCard(
+                      Icons.bug_report,
+                      'Test Notification',
+                      'Create a test notification',
+                      () async {
+                        await HangoutService.createTestNotification();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Test notification created')),
+                        );
+                      },
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
                     // Subscription
                     _buildMenuCard(
                       Icons.star_outline,

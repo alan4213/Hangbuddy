@@ -41,6 +41,40 @@ class MatchService {
     };
 
     await _firestore.collection('matches').doc(matchId).set(matchData);
+    
+    // Create match notification
+    try {
+      await _firestore.collection('notifications').add({
+        'userId': user2Id,
+        'type': 'match',
+        'message': 'It\'s a Match! You matched for "$hangoutTitle"',
+        'hangoutTitle': hangoutTitle,
+        'createdAt': FieldValue.serverTimestamp(),
+        'read': false,
+      });
+    } catch (e) {
+      print('Match notification error: $e');
+    }
+    
+    // Send match notification to the interested user
+    await _sendMatchNotification(user2Id, user1Id, hangoutTitle);
+  }
+  
+  static Future<void> _sendMatchNotification(String userId, String matchedUserId, String hangoutTitle) async {
+    try {
+      await _firestore.collection('notifications').add({
+        'userId': userId,
+        'type': 'match_created',
+        'title': 'It\'s a Match!',
+        'message': 'You matched for "$hangoutTitle"! Start chatting now.',
+        'matchedUserId': matchedUserId,
+        'hangoutTitle': hangoutTitle,
+        'createdAt': FieldValue.serverTimestamp(),
+        'read': false,
+      });
+    } catch (e) {
+      print('Error sending match notification: $e');
+    }
   }
 
   static Future<void> deleteMatch(String matchId) async {

@@ -47,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
     User? user = FirebaseAuth.instance.currentUser;
     
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Colors.white,
       body: Column(
         children: [
           const SizedBox(height: 50),
@@ -129,7 +129,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: const Color(0xFF667EEA), size: 16),
+            Icon(icon, color: AppTheme.primaryColor, size: 16),
             const SizedBox(width: 6),
             Text(
               label,
@@ -174,7 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: AppTheme.primaryColor.withOpacity(0.2),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
@@ -193,23 +193,15 @@ class _HomeScreenState extends State<HomeScreen> {
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) {
                             return Container(
-                              decoration: const BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-                                ),
+                              decoration: BoxDecoration(
+                                gradient: AppTheme.primaryGradient,
                               ),
                             );
                           },
                         )
                       : Container(
-                          decoration: const BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
-                            ),
+                          decoration: BoxDecoration(
+                            gradient: AppTheme.primaryGradient,
                           ),
                         ),
                 ),

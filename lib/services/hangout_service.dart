@@ -96,6 +96,34 @@ class HangoutService {
     await _firestore.collection('hangout_requests').doc(hangoutId).update({
       'interestedUsers': FieldValue.arrayUnion([user.uid])
     });
+    
+    // Create notification
+    try {
+      print('Creating notification for hangout: $hangoutId');
+      final hangoutDoc = await _firestore.collection('hangout_requests').doc(hangoutId).get();
+      if (hangoutDoc.exists) {
+        final hangout = HangoutRequest.fromMap(hangoutDoc.data()!, hangoutId);
+        print('Hangout creator: ${hangout.creatorId}');
+        print('Current user: ${user.uid}');
+        
+        final notificationData = {
+          'userId': hangout.creatorId,
+          'type': 'interest',
+          'message': 'Someone is interested in your hangout!',
+          'hangoutTitle': hangout.title,
+          'createdAt': FieldValue.serverTimestamp(),
+          'read': false,
+        };
+        
+        print('Creating notification: $notificationData');
+        await _firestore.collection('notifications').add(notificationData);
+        print('Notification created successfully');
+      } else {
+        print('Hangout document does not exist');
+      }
+    } catch (e) {
+      print('Notification error: $e');
+    }
   }
 
   static Future<void> removeInterest(String hangoutId) async {
@@ -146,5 +174,25 @@ class HangoutService {
     await _firestore.collection('hangout_requests').doc(hangoutId).update({
       'viewedByUsers': FieldValue.arrayUnion([user.uid])
     });
+  }
+  
+  // Test notification creation
+  static Future<void> createTestNotification() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+    
+    try {
+      await _firestore.collection('notifications').add({
+        'userId': user.uid,
+        'type': 'test',
+        'message': 'Test notification',
+        'hangoutTitle': 'Test Hangout',
+        'createdAt': FieldValue.serverTimestamp(),
+        'read': false,
+      });
+      print('Test notification created');
+    } catch (e) {
+      print('Test notification error: $e');
+    }
   }
 }

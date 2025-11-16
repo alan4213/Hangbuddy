@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'services/notification_service.dart';
 import 'screens/home_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/profile_details_screen.dart';
@@ -22,10 +23,15 @@ import 'screens/photos_screen.dart';
 import 'services/chat_service.dart';
 import 'services/match_service.dart';
 import 'theme/app_theme.dart';
+import 'widgets/notification_badge.dart';
+import 'widgets/notification_overlay.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  await NotificationService.initialize();
   runApp(const MyApp());
 }
 
@@ -66,6 +72,34 @@ class _MainNavigationState extends State<MainNavigation> {
     ChatScreen(),
     const ProfileScreen(),
   ];
+  
+  @override
+  void initState() {
+    super.initState();
+    _listenForNotifications();
+  }
+  
+  void _listenForNotifications() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    
+    FirebaseFirestore.instance
+        .collection('notifications')
+        .where('userId', isEqualTo: user.uid)
+        .where('read', isEqualTo: false)
+        .snapshots()
+        .listen((snapshot) {
+      for (final change in snapshot.docChanges) {
+        if (change.type == DocumentChangeType.added) {
+          final data = change.doc.data() as Map<String, dynamic>;
+          NotificationOverlay.show(context, data['message'] ?? 'New notification');
+          
+          // Mark as read
+          change.doc.reference.update({'read': true});
+        }
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -131,7 +165,12 @@ class _MainNavigationState extends State<MainNavigation> {
                 ),
                 label: '',
               ),
-              const BottomNavigationBarItem(icon: Icon(Icons.person), label: ''),
+              BottomNavigationBarItem(
+                icon: NotificationBadge(
+                  child: const Icon(Icons.person),
+                ),
+                label: '',
+              ),
             ],
           );
         },

@@ -5,6 +5,8 @@ import '../models/user_model.dart';
 import '../services/match_service.dart';
 import '../services/hangout_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../theme/app_theme.dart';
+import 'profile_detail_screen.dart';
 
 class HangoutInterestedUsersScreen extends StatefulWidget {
   final HangoutRequest hangout;
@@ -21,15 +23,11 @@ class _HangoutInterestedUsersScreenState extends State<HangoutInterestedUsersScr
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFEFF2F7),
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text(
-          'Interested Users',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: const Color(0xFF343B5B),
+        backgroundColor: Colors.white,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
+        iconTheme: IconThemeData(color: AppTheme.primaryColor),
       ),
       body: StreamBuilder<DocumentSnapshot>(
         stream: FirebaseFirestore.instance
@@ -55,15 +53,15 @@ class _HangoutInterestedUsersScreenState extends State<HangoutInterestedUsersScr
               // Hangout info card
               Container(
                 margin: const EdgeInsets.all(16),
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
+                  gradient: AppTheme.primaryGradient,
+                  borderRadius: BorderRadius.circular(24),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.withOpacity(0.1),
-                      spreadRadius: 1,
-                      blurRadius: 5,
+                      color: AppTheme.primaryColor.withOpacity(0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
                     ),
                   ],
                 ),
@@ -75,24 +73,25 @@ class _HangoutInterestedUsersScreenState extends State<HangoutInterestedUsersScr
                       style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       currentHangout.category,
-                      style: TextStyle(
-                        color: Colors.grey[600],
+                      style: const TextStyle(
+                        color: Colors.white70,
                         fontSize: 14,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        Icon(Icons.location_on, size: 16, color: Colors.grey[600]),
+                        const Icon(Icons.location_on, size: 16, color: Colors.white70),
                         const SizedBox(width: 4),
                         Text(
                           currentHangout.location,
-                          style: TextStyle(color: Colors.grey[600]),
+                          style: const TextStyle(color: Colors.white70),
                         ),
                       ],
                     ),
@@ -131,14 +130,34 @@ class _HangoutInterestedUsersScreenState extends State<HangoutInterestedUsersScr
                                 return const SizedBox();
                               }
                               
-                              return Card(
-                                margin: const EdgeInsets.only(bottom: 8),
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.05),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
                                 child: ListTile(
+                                  contentPadding: const EdgeInsets.all(16),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => ProfileDetailScreen(user: user.toMap()),
+                                      ),
+                                    );
+                                  },
                                   leading: CircleAvatar(
                                     backgroundImage: user.profileImageUrl != null
                                         ? NetworkImage(user.profileImageUrl!)
                                         : null,
-                                    backgroundColor: const Color(0xFF5E3D9B),
+                                    backgroundColor: AppTheme.primaryColor,
                                     child: user.profileImageUrl == null
                                         ? Text(
                                             user.firstName[0],
@@ -157,14 +176,18 @@ class _HangoutInterestedUsersScreenState extends State<HangoutInterestedUsersScr
                                   trailing: ElevatedButton(
                                     onPressed: () => _acceptUser(user, currentHangout),
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFFEF4C5E),
+                                      backgroundColor: AppTheme.primaryColor,
                                       shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
+                                        borderRadius: BorderRadius.circular(25),
                                       ),
+                                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                                     ),
                                     child: const Text(
                                       'Accept',
-                                      style: TextStyle(color: Colors.white),
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                     ),
                                   ),
                                 ),
