@@ -25,7 +25,7 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
   bool _isLoading = false;
   final ImagePicker _picker = ImagePicker();
   
-  final List<String> _genderOptions = ['Woman', 'Man', 'Choose another'];
+  final List<String> _genderOptions = ['Male', 'Female', 'Other'];
   final List<String> _interestOptions = [
     'Coffee & Chat',
     'Fitness & Sports',
@@ -68,8 +68,10 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Column(
           children: [
             Padding(
               padding: const EdgeInsets.all(20),
@@ -401,47 +403,39 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
               ),
             ),
 
-            const SizedBox(height: 40),
-
-            // Continue Button
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _saveProfile,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
-                  ),
-                ),
-                child: _isLoading
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : const Text(
-                        'Continue',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-              ),
-            ),
-
-            const SizedBox(height: 40),
+            const SizedBox(height: 100),
                   ],
                 ),
               ),
             ),
           ],
-        ),
+            ),
+          ),
+          // Floating arrow button
+          Positioned(
+            bottom: MediaQuery.of(context).viewInsets.bottom > 0 
+              ? MediaQuery.of(context).viewInsets.bottom + 20
+              : 30,
+            right: 30,
+            child: FloatingActionButton(
+              onPressed: _isLoading ? null : _saveProfile,
+              backgroundColor: AppTheme.primaryColor,
+              child: _isLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : const Icon(
+                    Icons.arrow_forward,
+                    color: Colors.white,
+                  ),
+            ),
+          ),
+        ],
       ),
     );
   }

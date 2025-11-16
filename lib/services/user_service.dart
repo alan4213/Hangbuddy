@@ -23,28 +23,38 @@ class UserService {
     String? gender,
     List<String>? interests,
     String? profileImageUrl,
+    String? occupation,
+    String? education,
+    String? height,
+    String? race,
+    String? religion,
   }) async {
     final user = _auth.currentUser;
     if (user == null) throw Exception('No authenticated user');
 
-    final userModel = UserModel(
-      uid: user.uid,
-      phoneNumber: user.phoneNumber ?? '',
-      firstName: firstName,
-      lastName: lastName,
-      birthday: birthday,
-      age: _calculateAge(birthday),
-      gender: gender,
-      interests: interests,
-      profileImageUrl: profileImageUrl,
-      createdAt: DateTime.now(),
-      updatedAt: DateTime.now(),
-    );
+    final userData = {
+      'uid': user.uid,
+      'phoneNumber': user.phoneNumber ?? '',
+      'firstName': firstName,
+      'lastName': lastName,
+      'birthday': birthday?.millisecondsSinceEpoch,
+      'age': _calculateAge(birthday),
+      'gender': gender,
+      'interests': interests ?? [],
+      'profileImageUrl': profileImageUrl,
+      'occupation': occupation,
+      'education': education,
+      'height': height,
+      'race': race,
+      'religion': religion,
+      'createdAt': DateTime.now().millisecondsSinceEpoch,
+      'updatedAt': DateTime.now().millisecondsSinceEpoch,
+    };
 
     await _firestore
         .collection('users')
         .doc(user.uid)
-        .set(userModel.toMap());
+        .set(userData);
   }
 
   static Future<UserModel?> getUserProfile() async {

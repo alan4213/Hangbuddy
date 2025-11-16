@@ -1,0 +1,120 @@
+import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
+import '../widgets/loading_widget.dart';
+import '../models/signup_data.dart';
+import 'religion_screen.dart';
+
+class OccupationScreen extends StatefulWidget {
+  final SignupData signupData;
+  const OccupationScreen({super.key, required this.signupData});
+
+  @override
+  State<OccupationScreen> createState() => _OccupationScreenState();
+}
+
+class _OccupationScreenState extends State<OccupationScreen> {
+  String? _selectedOccupation;
+  bool _isLoading = false;
+  final List<String> _occupations = [
+    'Software Engineer', 'Product Manager', 'Designer', 'Data Scientist', 'Marketing Manager',
+    'Sales Representative', 'Consultant', 'Teacher', 'Doctor', 'Nurse', 'Lawyer', 'Accountant',
+    'Financial Analyst', 'Project Manager', 'Business Analyst', 'Engineer', 'Architect',
+    'Chef', 'Artist', 'Writer', 'Photographer', 'Real Estate Agent', 'Entrepreneur',
+    'Student', 'Researcher', 'Therapist', 'Social Worker', 'HR Manager', 'Operations Manager',
+    'Customer Success', 'UX/UI Designer', 'Content Creator', 'Freelancer', 'Other'
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedOccupation = widget.signupData.occupation;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: AppTheme.textPrimary),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'What\'s your occupation?',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              
+              const SizedBox(height: 48),
+              
+              // Occupation dropdown
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _selectedOccupation,
+                    hint: Text('Select your occupation'),
+                    isExpanded: true,
+                    items: _occupations.map((occupation) => DropdownMenuItem(
+                      value: occupation,
+                      child: Text(occupation),
+                    )).toList(),
+                    onChanged: (value) => setState(() => _selectedOccupation = value),
+                  ),
+                ),
+              ),
+              
+              SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 3),
+              
+              LoadingButton(
+                isLoading: _isLoading,
+                text: 'Continue',
+                onPressed: () async {
+                  if (_selectedOccupation == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Please select your occupation')),
+                    );
+                    return;
+                  }
+                  
+                  setState(() => _isLoading = true);
+                  
+                  widget.signupData.occupation = _selectedOccupation;
+                  
+                  await Future.delayed(const Duration(milliseconds: 300));
+                  if (mounted) {
+                    setState(() => _isLoading = false);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ReligionScreen(signupData: widget.signupData),
+                      ),
+                    );
+                  }
+                },
+              ),
+              const SizedBox(height: 32),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

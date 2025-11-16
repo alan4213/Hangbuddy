@@ -180,7 +180,7 @@ class SignUpScreen extends StatelessWidget {
                         height: 50,
                         child: ElevatedButton(
                           onPressed: () {
-                            Navigator.pushNamed(context, '/phone');
+                            Navigator.pushNamed(context, '/email');
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppTheme.primaryColor,

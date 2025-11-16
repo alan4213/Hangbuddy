@@ -14,6 +14,11 @@ import 'screens/matches_screen.dart';
 import 'screens/chat_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/get_started_screen.dart';
+import 'screens/email_screen.dart';
+import 'screens/name_dob_screen.dart';
+import 'screens/personal_info_screen.dart';
+import 'screens/interests_screen.dart';
+import 'screens/photos_screen.dart';
 import 'services/chat_service.dart';
 import 'services/match_service.dart';
 import 'theme/app_theme.dart';
@@ -38,6 +43,7 @@ class MyApp extends StatelessWidget {
         '/create': (context) => const CreateHangoutScreen(),
         '/phone': (context) => const PhoneNumberScreen(),
         '/otp': (context) => const OTPScreen(),
+        '/email': (context) => const EmailScreen(),
         '/profile-details': (context) => const ProfileDetailsScreen(),
       },
     );

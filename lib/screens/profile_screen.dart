@@ -27,11 +27,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _loadUserProfile() async {
     try {
       final profile = await UserService.getUserProfile();
+      print('Profile loaded: ${profile?.firstName} ${profile?.lastName}');
+      print('Profile image URL: ${profile?.profileImageUrl}');
       setState(() {
         _userProfile = profile;
         _isLoading = false;
       });
     } catch (e) {
+      print('Error loading profile: $e');
       setState(() => _isLoading = false);
     }
   }
@@ -86,7 +89,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: CircleAvatar(
                     radius: 58,
                     backgroundColor: Colors.grey[300],
-                    backgroundImage: _userProfile?.profileImageUrl != null
+                    backgroundImage: _userProfile?.profileImageUrl != null && _userProfile!.profileImageUrl!.isNotEmpty
                         ? NetworkImage(_userProfile!.profileImageUrl!)
                         : null,
                     child: _userProfile?.profileImageUrl == null
@@ -137,7 +140,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 Text(
                   _isLoading 
                       ? 'Loading...' 
-                      : '${_userProfile?.firstName ?? 'Alan'}',
+                      : '${_userProfile?.firstName ?? 'User'} ${_userProfile?.lastName ?? ''}',
                   style: const TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.w600,

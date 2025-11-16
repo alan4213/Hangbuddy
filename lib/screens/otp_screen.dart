@@ -49,11 +49,11 @@ class _OTPScreenState extends State<OTPScreen> {
         // Check if user profile exists
         final userProfile = await UserService.getUserProfile();
         if (userProfile == null) {
-          // New user - go to profile setup
-          Navigator.pushReplacementNamed(context, '/profile-details');
+          // New user - go to signup flow
+          Navigator.pushNamed(context, '/email');
         } else {
           // Existing user - go to home
-          Navigator.pushReplacementNamed(context, '/home');
+          Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
         }
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
