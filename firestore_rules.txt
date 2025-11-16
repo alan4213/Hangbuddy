@@ -1,0 +1,9 @@
+// Firestore Security Rules for HangBuddy App
+// Copy these rules to your Firebase Console -> Firestore Database -> Rules
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    allow read, write: if true;
+  }
+}

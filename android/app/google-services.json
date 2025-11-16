@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "940032181149",
+    "project_id": "hangbuddy-4a1e9",
+    "storage_bucket": "hangbuddy-4a1e9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:940032181149:android:562c0ef2d0caec89576574",
+        "android_client_info": {
+          "package_name": "com.example.hangbuddy_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDDRCYLxH74-xybwudKOTLLkygTYvOHFSc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

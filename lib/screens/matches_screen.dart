@@ -1,0 +1,71 @@
+import 'package:flutter/material.dart';
+import '../widgets/my_hangouts_tab.dart';
+import '../widgets/upcoming_hangouts_tab.dart';
+import '../theme/app_theme.dart';
+
+class MatchesScreen extends StatefulWidget {
+  const MatchesScreen({super.key});
+
+  @override
+  State<MatchesScreen> createState() => _MatchesScreenState();
+}
+
+class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: Column(
+        children: [
+          SizedBox(height: 60),
+          Container(
+            color: Colors.white,
+            child: TabBar(
+              controller: _tabController,
+              labelColor: AppTheme.primaryColor,
+              unselectedLabelColor: Colors.grey,
+              indicatorColor: AppTheme.primaryColor,
+              indicatorWeight: 3,
+              labelStyle: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
+              ),
+              unselectedLabelStyle: const TextStyle(
+                fontWeight: FontWeight.w400,
+                fontSize: 16,
+              ),
+              tabs: const [
+                Tab(text: 'My Hangouts'),
+                Tab(text: 'Upcoming Hangouts'),
+              ],
+            ),
+          ),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: const [
+                MyHangoutsTab(),
+                UpcomingHangoutsTab(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+}
