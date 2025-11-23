@@ -26,6 +26,8 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
   double? _latitude;
   double? _longitude;
   bool _isGettingLocation = false;
+  List<String> _locationSuggestions = [];
+  bool _showSuggestions = false;
 
 
   final List<String> _categories = [
@@ -345,37 +347,64 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
         Row(
           children: [
             Expanded(
-              child: TextField(
-                controller: _locationController,
-                decoration: InputDecoration(
-                  hintText: 'Enter location or use GPS',
-                  prefixIcon: const Icon(Icons.location_on, color: Colors.grey),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
+              child: Column(
+                children: [
+                  TextField(
+                    controller: _locationController,
+                    decoration: InputDecoration(
+                      hintText: 'Enter location or use GPS',
+                      prefixIcon: const Icon(Icons.location_on, color: Colors.grey),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: AppTheme.primaryColor),
+                      ),
+                      filled: true,
+                      fillColor: Colors.white,
+                    ),
+                    onChanged: (value) {
+                      _updateLocationSuggestions(value);
+                    },
                   ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(color: AppTheme.primaryColor),
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
-                ),
-                onChanged: (value) async {
-                  if (value.isNotEmpty) {
-                    final coords = await LocationService.getCoordinatesFromAddress(value);
-                    if (coords != null) {
-                      setState(() {
-                        _latitude = coords['latitude'];
-                        _longitude = coords['longitude'];
-                      });
-                    }
-                  }
-                },
+                  if (_showSuggestions && _locationSuggestions.isNotEmpty)
+                    Container(
+                      margin: const EdgeInsets.only(top: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      constraints: const BoxConstraints(maxHeight: 150),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: _locationSuggestions.length,
+                        itemBuilder: (context, index) {
+                          return ListTile(
+                            dense: true,
+                            leading: const Icon(Icons.location_on, size: 16),
+                            title: Text(
+                              _locationSuggestions[index],
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                            onTap: () => _selectLocation(_locationSuggestions[index]),
+                          );
+                        },
+                      ),
+                    ),
+                ],
               ),
             ),
             const SizedBox(width: 8),
@@ -484,7 +513,7 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
           _latitude = position.latitude;
           _longitude = position.longitude;
           if (address != null) {
-            _locationController.text = address;
+            _locationController.text = _cleanAddress(address);
           }
         });
         
@@ -511,6 +540,96 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
       );
     } finally {
       setState(() => _isGettingLocation = false);
+    }
+  }
+
+  void _updateLocationSuggestions(String query) {
+    if (query.length < 2) {
+      setState(() {
+        _showSuggestions = false;
+        _locationSuggestions = [];
+      });
+      return;
+    }
+    
+    // Popular locations in Kerala/India - you can expand this list
+    final allSuggestions = [
+      'MG Road, Ernakulam',
+      'Marine Drive, Kochi',
+      'Lulu Mall, Kochi',
+      'Forum Mall, Kochi',
+      'Kakkanad, Kochi',
+      'Edappally, Kochi',
+      'Kaloor, Kochi',
+      'Palarivattom, Kochi',
+      'Vytilla, Kochi',
+      'Fort Kochi',
+      'Mattancherry, Kochi',
+      'Aluva, Ernakulam',
+      'Perumbavoor, Ernakulam',
+      'Angamaly, Ernakulam',
+      'Muvattupuzha, Ernakulam',
+      'Kothamangalam, Ernakulam',
+      'Thrissur',
+      'Kozhikode',
+      'Thiruvananthapuram',
+      'Kollam',
+    ];
+    
+    final filteredSuggestions = allSuggestions
+        .where((location) => location.toLowerCase().contains(query.toLowerCase()))
+        .take(5)
+        .toList();
+    
+    setState(() {
+      _locationSuggestions = filteredSuggestions;
+      _showSuggestions = filteredSuggestions.isNotEmpty;
+    });
+  }
+  
+  void _selectLocation(String location) async {
+    _locationController.text = location;
+    setState(() {
+      _showSuggestions = false;
+    });
+    
+    // Get coordinates for the selected location
+    final coords = await LocationService.getCoordinatesFromAddress(location);
+    if (coords != null) {
+      setState(() {
+        _latitude = coords['latitude'];
+        _longitude = coords['longitude'];
+      });
+    }
+  }
+
+  String _cleanAddress(String address) {
+    final parts = address.split(', ');
+    List<String> cleanParts = [];
+    
+    for (String part in parts) {
+      String cleanPart = part.trim();
+      // Skip Plus Codes
+      bool isPlusCode = cleanPart.contains('+') && 
+          RegExp(r'^[A-Z0-9+]+$').hasMatch(cleanPart.toUpperCase());
+      
+      if (!isPlusCode && cleanPart.isNotEmpty) {
+        cleanParts.add(cleanPart);
+      }
+    }
+    
+    if (cleanParts.isEmpty) {
+      return address; // Fallback to original if nothing clean found
+    }
+    
+    // For hangout creation, show specific location (first 2-3 parts)
+    // This gives street/landmark + area + city
+    if (cleanParts.length >= 3) {
+      return '${cleanParts[0]}, ${cleanParts[1]}, ${cleanParts[2]}';
+    } else if (cleanParts.length >= 2) {
+      return '${cleanParts[0]}, ${cleanParts[1]}';
+    } else {
+      return cleanParts[0];
     }
   }
 

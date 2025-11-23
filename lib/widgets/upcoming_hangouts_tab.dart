@@ -97,13 +97,22 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
         
         final hangoutDateTime = (match['hangoutDateTime'] as Timestamp).toDate();
         final matchData = {
-          'name': '${user.firstName} ${user.lastName}',
+          'firstName': user.firstName,
+          'lastName': user.lastName,
           'age': user.age ?? 25,
+          'gender': user.gender,
+          'education': user.education,
+          'occupation': user.occupation,
+          'height': user.height,
+          'ethnicity': user.ethnicity ?? user.race,
+          'religion': user.religion,
+          'interests': user.interests,
           'hangout': match['hangoutTitle'],
           'venue': match['hangoutLocation'],
           'dateTime': hangoutDateTime,
           'image': user.profileImageUrl,
           'userId': otherUserId,
+          'distance': '0 km away',
         };
         
         return GestureDetector(
@@ -186,7 +195,12 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
                           context,
                           MaterialPageRoute(
                             builder: (context) => ChatWindowScreen(
-                              match: matchData,
+                              match: {
+                                'name': '${matchData['firstName']} ${matchData['lastName']}',
+                                'firstName': matchData['firstName'],
+                                'lastName': matchData['lastName'],
+                                ...matchData,
+                              },
                               otherUserId: matchData['userId'],
                             ),
                           ),
@@ -212,7 +226,7 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          '${matchData['name']}, ${matchData['age']}',
+                          '${matchData['firstName']} ${matchData['lastName']}, ${matchData['age']}',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,

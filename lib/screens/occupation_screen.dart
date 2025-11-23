@@ -62,26 +62,60 @@ class _OccupationScreenState extends State<OccupationScreen> {
               // Occupation dropdown
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300),
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: _selectedOccupation != null ? AppTheme.primaryColor : Colors.grey.shade300,
+                    width: _selectedOccupation != null ? 2 : 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
                     value: _selectedOccupation,
-                    hint: Text('Select your occupation'),
+                    hint: Text(
+                      'Select your occupation',
+                      style: TextStyle(
+                        color: AppTheme.textSecondary,
+                        fontSize: 16,
+                      ),
+                    ),
                     isExpanded: true,
+                    icon: Icon(
+                      Icons.keyboard_arrow_down,
+                      color: AppTheme.primaryColor,
+                    ),
+                    style: TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    dropdownColor: Colors.white,
                     items: _occupations.map((occupation) => DropdownMenuItem(
                       value: occupation,
-                      child: Text(occupation),
+                      child: Text(
+                        occupation,
+                        style: TextStyle(
+                          color: AppTheme.textPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     )).toList(),
                     onChanged: (value) => setState(() => _selectedOccupation = value),
                   ),
                 ),
               ),
               
-              SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 3),
+              SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 48),
               
               LoadingButton(
                 isLoading: _isLoading,

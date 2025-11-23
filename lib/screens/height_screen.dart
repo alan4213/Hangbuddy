@@ -59,26 +59,60 @@ class _HeightScreenState extends State<HeightScreen> {
               // Height dropdown
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300),
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: _selectedHeight != null ? AppTheme.primaryColor : Colors.grey.shade300,
+                    width: _selectedHeight != null ? 2 : 1,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
                     value: _selectedHeight,
-                    hint: Text('Select your height'),
+                    hint: Text(
+                      'Select your height',
+                      style: TextStyle(
+                        color: AppTheme.textSecondary,
+                        fontSize: 16,
+                      ),
+                    ),
                     isExpanded: true,
+                    icon: Icon(
+                      Icons.keyboard_arrow_down,
+                      color: AppTheme.primaryColor,
+                    ),
+                    style: TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    dropdownColor: Colors.white,
                     items: _heights.map((height) => DropdownMenuItem(
                       value: height,
-                      child: Text(height),
+                      child: Text(
+                        height,
+                        style: TextStyle(
+                          color: AppTheme.textPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     )).toList(),
                     onChanged: (value) => setState(() => _selectedHeight = value),
                   ),
                 ),
               ),
               
-              SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 3),
+              SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 32),
               
               LoadingButton(
                 isLoading: _isLoading,

@@ -91,23 +91,77 @@ class _DobScreenState extends State<DobScreen> {
               ),
               
               if (_selectedDate != null) ...[
-                const SizedBox(height: 16),
-                Text(
-                  'Age: ${DateTime.now().difference(_selectedDate!).inDays ~/ 365}',
-                  style: TextStyle(
-                    fontSize: 14,
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
                     color: DateTime.now().difference(_selectedDate!).inDays < 6570 
-                      ? Colors.red : AppTheme.textSecondary,
-                  ),
-                ),
-                if (DateTime.now().difference(_selectedDate!).inDays < 6570)
-                  Text(
-                    'You must be at least 18 years old',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.red,
+                      ? Colors.red.withOpacity(0.1)
+                      : AppTheme.primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: DateTime.now().difference(_selectedDate!).inDays < 6570 
+                        ? Colors.red.withOpacity(0.3)
+                        : AppTheme.primaryColor.withOpacity(0.3),
                     ),
                   ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: DateTime.now().difference(_selectedDate!).inDays < 6570 
+                            ? Colors.red
+                            : AppTheme.primaryColor,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          DateTime.now().difference(_selectedDate!).inDays < 6570 
+                            ? Icons.warning
+                            : Icons.check,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Age: ${DateTime.now().difference(_selectedDate!).inDays ~/ 365} years old',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: DateTime.now().difference(_selectedDate!).inDays < 6570 
+                                  ? Colors.red
+                                  : AppTheme.primaryColor,
+                              ),
+                            ),
+                            if (DateTime.now().difference(_selectedDate!).inDays < 6570)
+                              Text(
+                                'You must be at least 18 years old to use Gather',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.red.shade700,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              )
+                            else
+                              Text(
+                                'Perfect! You meet the age requirement',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: AppTheme.primaryColor.withOpacity(0.8),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
               
                 const SizedBox(height: 100),

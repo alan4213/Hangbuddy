@@ -32,9 +32,13 @@ class NotificationService {
   static Future<void> _saveTokenToDatabase(String token) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
-        'fcmToken': token,
-      });
+      try {
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          'fcmToken': token,
+        }, SetOptions(merge: true));
+      } catch (e) {
+        print('Error saving FCM token: $e');
+      }
     }
   }
 

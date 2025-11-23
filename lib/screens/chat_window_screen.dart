@@ -137,7 +137,7 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.match['name'],
+                  widget.match['name'] ?? widget.match['firstName'] ?? 'User',
                   style: TextStyle(color: Colors.white, fontSize: 18),
                 ),
                 StreamBuilder<bool>(
@@ -248,7 +248,7 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
                         padding: EdgeInsets.symmetric(horizontal: 16),
                         child: Row(
                           children: [
-                            Text('${widget.match['name']} is typing'),
+                            Text('${widget.match['name'] ?? widget.match['firstName'] ?? 'User'} is typing'),
                             SizedBox(width: 8),
                             SizedBox(
                               width: 20,
@@ -680,7 +680,7 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
           ),
           SizedBox(height: 8),
           Text(
-            'Start the conversation with ${widget.match['name']}!',
+            'Start the conversation with ${widget.match['name'] ?? widget.match['firstName'] ?? 'User'}!',
             style: TextStyle(
               fontSize: 14,
               color: Colors.grey[500],

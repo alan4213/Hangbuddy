@@ -69,6 +69,18 @@ class _HomeScreenState extends State<HomeScreen> {
           Expanded(child: _buildDiscoverTab()),
         ],
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => Navigator.pushNamed(context, '/create'),
+        backgroundColor: AppTheme.primaryColor,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.add),
+        label: const Text(
+          'Create Hangout',
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
     );
   }
 
@@ -152,9 +164,9 @@ class _HomeScreenState extends State<HomeScreen> {
         final user = userSnapshot.data;
         if (user == null) {
           return Container(
-            height: 280,
+            margin: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(20),
               color: Colors.grey[100],
             ),
             child: const LoadingWidget(message: 'Loading user...'),
@@ -166,222 +178,211 @@ class _HomeScreenState extends State<HomeScreen> {
         
         return GestureDetector(
           onTap: () {
-            // Navigate to hangout details
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ProfileDetailScreen(
+                  user: {
+                    'firstName': user.firstName,
+                    'lastName': user.lastName,
+                    'age': userAge,
+                    'gender': user.gender,
+                    'education': user.education,
+                    'occupation': user.occupation,
+                    'height': user.height,
+                    'ethnicity': user.ethnicity ?? user.race,
+                    'religion': user.religion,
+                    'interests': user.interests,
+                    'image': user.profileImageUrl,
+                    'hangout': hangout.title,
+                    'venue': hangout.location,
+                    'dateTime': hangout.dateTime,
+                    'userId': hangout.creatorId,
+                    'distance': '${_calculateDistance(hangout.latitude, hangout.longitude)} km away',
+                  },
+                  onMatch: () {},
+                ),
+              ),
+            );
           },
           child: Container(
-            height: 280,
+            margin: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.primaryColor.withOpacity(0.2),
+                  color: Colors.black.withOpacity(0.15),
                   blurRadius: 20,
-                  offset: const Offset(0, 8),
+                  offset: const Offset(0, 10),
                 ),
               ],
             ),
-            child: Stack(
-              children: [
-                // Background image
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(24),
-                  child: user?.profileImageUrl != null
-                      ? Image.network(
-                          user!.profileImageUrl!,
-                          width: double.infinity,
-                          height: double.infinity,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              decoration: BoxDecoration(
-                                gradient: AppTheme.primaryGradient,
-                              ),
-                            );
-                          },
-                        )
-                      : Container(
-                          decoration: BoxDecoration(
-                            gradient: AppTheme.primaryGradient,
-                          ),
-                        ),
-                ),
-                // Gradient overlay
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(24),
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Colors.black.withOpacity(0.8),
-                      ],
-                    ),
-                  ),
-                ),
-                // Online status
-                Positioned(
-                  top: 16,
-                  right: 16,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Stack(
+                children: [
+                  // Background Image
+                  Container(
+                    width: double.infinity,
+                    height: double.infinity,
                     decoration: BoxDecoration(
-                      color: Colors.green,
-                      borderRadius: BorderRadius.circular(12),
+                      image: const DecorationImage(
+                        image: NetworkImage('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop&crop=face'),
+                        fit: BoxFit.cover,
+                      ),
+                      gradient: user?.profileImageUrl == null
+                          ? const LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                            )
+                          : null,
                     ),
-                    child: const Text(
-                      'Online',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
+                  ),
+                  // Gradient overlay
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.transparent,
+                          Colors.black.withOpacity(0.8),
+                        ],
                       ),
                     ),
                   ),
-                ),
-                // User info
-                Positioned(
-                  bottom: 16,
-                  left: 16,
-                  right: 16,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "$userName${userAge > 0 ? ', $userAge' : ''}",
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        hangout.category,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 14,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
+
+                  // User info at bottom
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Expanded(
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(20),
-                              child: BackdropFilter(
-                                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                                child: Container(
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.95),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    hangout.title,
-                                    style: const TextStyle(
-                                      color: Color(0xFF1E293B),
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Row(
-                                    children: [
-                                      Icon(Icons.location_on, size: 12, color: Colors.grey[600]),
-                                      const SizedBox(width: 4),
-                                      Expanded(
-                                        child: Text(
-                                          hangout.location,
-                                          style: TextStyle(
-                                            color: Colors.grey[600],
-                                            fontSize: 11,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Row(
-                                    children: [
-                                      Icon(Icons.access_time, size: 12, color: Colors.grey[600]),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        "${_formatDate(hangout.dateTime)} • ${_formatTime(hangout.dateTime)}",
-                                        style: TextStyle(
-                                          color: Colors.grey[600],
-                                          fontSize: 10,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                                ),
-                              ),
+                          Text(
+                            "$userName${userAge > 0 ? ', $userAge' : ''}",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Column(
-                            children: [
-                              GestureDetector(
-                                onTap: () => _handleAccept(hangout),
-                                child: Container(
-                                  width: 44,
-                                  height: 44,
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [Color(0xFF10B981), Color(0xFF059669)],
+                          const SizedBox(height: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  _getHangoutIcon(hangout.category),
+                                  size: 16,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    hangout.title,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
                                     ),
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(0xFF10B981).withOpacity(0.3),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  child: const Icon(Icons.favorite, color: Colors.white, size: 20),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          FutureBuilder<String>(
+                            future: _getFormattedLocation(hangout),
+                            builder: (context, locationSnapshot) {
+                              final locationText = locationSnapshot.data ?? _cleanLocation(hangout.location);
+                              return Row(
+                                children: [
+                                  const Icon(Icons.location_on, size: 14, color: Colors.white70),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      locationText,
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 12,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Icon(Icons.access_time, size: 14, color: Colors.white70),
+                              const SizedBox(width: 4),
+                              Text(
+                                "${_formatDate(hangout.dateTime)} ${_formatTime(hangout.dateTime)}",
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 12,
                                 ),
                               ),
-                              const SizedBox(height: 12),
-                              GestureDetector(
-                                onTap: () => _handleReject(hangout),
-                                child: Container(
-                                  width: 44,
-                                  height: 44,
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [Color(0xFFEF4444), Color(0xFFDC2626)],
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () => _handleReject(hangout),
+                                  child: Container(
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.2),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(color: Colors.white.withOpacity(0.3)),
                                     ),
-                                    shape: BoxShape.circle,
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: const Color(0xFFEF4444).withOpacity(0.3),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
+                                    child: const Icon(Icons.close, color: Colors.white, size: 20),
                                   ),
-                                  child: const Icon(Icons.close, color: Colors.white, size: 20),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () => _handleAccept(hangout),
+                                  child: Container(
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: [AppTheme.primaryColor, AppTheme.primaryColor.withOpacity(0.8)],
+                                      ),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: const Icon(Icons.favorite, color: Colors.white, size: 20),
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );
@@ -571,14 +572,17 @@ class _HomeScreenState extends State<HomeScreen> {
             );
           }
           
-          return ListView.builder(
+          return GridView.builder(
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 0.45,
+            ),
             itemCount: hangouts.length,
             itemBuilder: (context, index) {
               final hangout = hangouts[index];
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 15),
-                child: _buildHangoutCard(context, hangout),
-              );
+              return _buildHangoutCard(context, hangout);
             },
           );
             },
@@ -846,6 +850,124 @@ class _HomeScreenState extends State<HomeScreen> {
   String _formatHour(double hour) {
     final h = hour.toInt();
     return h == 24 ? '12:00 AM' : h == 0 ? '12:00 AM' : h > 12 ? '${h - 12}:00 PM' : '$h:00 AM';
+  }
+
+  double _calculateDistance(double? lat, double? lng) {
+    if (_userLatitude == null || _userLongitude == null || lat == null || lng == null) {
+      return 0.0;
+    }
+    return Geolocator.distanceBetween(_userLatitude!, _userLongitude!, lat, lng) / 1000;
+  }
+
+  Future<String> _getFormattedLocation(HangoutRequest hangout) async {
+    // First check if original location is already user-friendly
+    final cleanedOriginal = _cleanLocation(hangout.location);
+    
+    // If original location is user-friendly (contains common place names), use it
+    if (_isUserFriendlyLocation(cleanedOriginal)) {
+      return cleanedOriginal;
+    }
+    
+    // Otherwise, try reverse geocoding if coordinates are available
+    if (hangout.latitude != null && hangout.longitude != null) {
+      try {
+        final address = await LocationService.getAddressFromCoordinates(
+          hangout.latitude!,
+          hangout.longitude!,
+        );
+        if (address != null && address.isNotEmpty) {
+          return address;
+        }
+      } catch (e) {
+        print('Error formatting location: $e');
+      }
+    }
+    
+    // Fallback to cleaned location text
+    return cleanedOriginal;
+  }
+  
+  bool _isUserFriendlyLocation(String location) {
+    final lowerLocation = location.toLowerCase();
+    
+    // Check if location contains common place indicators
+    final friendlyKeywords = [
+      'mall', 'market', 'center', 'centre', 'plaza', 'complex',
+      'road', 'street', 'avenue', 'lane', 'drive',
+      'hotel', 'restaurant', 'cafe', 'hospital', 'school',
+      'park', 'beach', 'station', 'airport', 'temple',
+      'church', 'mosque', 'stadium', 'theatre', 'cinema'
+    ];
+    
+    // If location contains friendly keywords and doesn't look like coordinates/codes
+    return friendlyKeywords.any((keyword) => lowerLocation.contains(keyword)) &&
+           !RegExp(r'^[A-Z0-9-]+$').hasMatch(location.toUpperCase()) &&
+           !location.contains('+');
+  }
+
+  String _cleanLocation(String location) {
+    final parts = location.split(',');
+    List<String> cleanParts = [];
+    
+    for (String part in parts) {
+      String cleanPart = part.trim();
+      // Skip Plus Codes
+      bool isPlusCode = cleanPart.contains('+') && 
+          RegExp(r'^[A-Z0-9+]+$').hasMatch(cleanPart.toUpperCase());
+      
+      if (!isPlusCode && cleanPart.isNotEmpty) {
+        cleanParts.add(cleanPart);
+      }
+    }
+    
+    if (cleanParts.isEmpty) {
+      return 'Location';
+    }
+    
+    String result = cleanParts.join(', ');
+    
+    // If too long, use just the last part (usually city)
+    if (result.length > 25 && cleanParts.length > 1) {
+      result = cleanParts.last;
+    }
+    
+    return result;
+  }
+
+  IconData _getHangoutIcon(String category) {
+    switch (category.toLowerCase()) {
+      case 'coffee':
+        return Icons.local_cafe;
+      case 'food':
+      case 'dinner':
+      case 'lunch':
+        return Icons.restaurant;
+      case 'movie':
+      case 'cinema':
+        return Icons.movie;
+      case 'sports':
+      case 'gym':
+        return Icons.sports;
+      case 'music':
+      case 'concert':
+        return Icons.music_note;
+      case 'shopping':
+        return Icons.shopping_bag;
+      case 'travel':
+      case 'adventure':
+        return Icons.explore;
+      case 'party':
+      case 'nightlife':
+        return Icons.celebration;
+      case 'study':
+      case 'work':
+        return Icons.school;
+      case 'outdoor':
+      case 'nature':
+        return Icons.nature;
+      default:
+        return Icons.group;
+    }
   }
 }
 

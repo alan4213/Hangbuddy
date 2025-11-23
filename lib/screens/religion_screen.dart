@@ -55,27 +55,33 @@ class _ReligionScreenState extends State<ReligionScreen> {
               
               const SizedBox(height: 48),
               
-              // Religion dropdown
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _selectedReligion,
-                    hint: Text('Select your religion'),
-                    isExpanded: true,
-                    items: _religions.map((religion) => DropdownMenuItem(
-                      value: religion,
-                      child: Text(religion),
-                    )).toList(),
-                    onChanged: (value) => setState(() => _selectedReligion = value),
+              // Religion options
+              ..._religions.map((religion) => Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: GestureDetector(
+                  onTap: () => setState(() => _selectedReligion = religion),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    decoration: BoxDecoration(
+                      color: _selectedReligion == religion ? AppTheme.primaryColor : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: _selectedReligion == religion ? AppTheme.primaryColor : Colors.grey.shade300,
+                      ),
+                    ),
+                    child: Text(
+                      religion,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: _selectedReligion == religion ? Colors.white : AppTheme.textPrimary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ),
                 ),
-              ),
+              )).toList(),
               
               SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 32),
               

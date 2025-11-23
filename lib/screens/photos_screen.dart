@@ -84,7 +84,17 @@ class _PhotosScreenState extends State<PhotosScreen> {
                         decoration: BoxDecoration(
                           color: Colors.grey.shade100,
                           borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: Colors.grey.shade300),
+                          border: Border.all(
+                            color: photo != null ? AppTheme.primaryColor : Colors.grey.shade300,
+                            width: photo != null ? 2 : 1,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
                         child: photo != null
                           ? Stack(
@@ -146,17 +156,25 @@ class _PhotosScreenState extends State<PhotosScreen> {
                           : Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(
-                                  Icons.add_photo_alternate,
-                                  size: 40,
-                                  color: Colors.grey.shade400,
+                                Container(
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.primaryColor.withOpacity(0.1),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.add_photo_alternate,
+                                    size: 32,
+                                    color: AppTheme.primaryColor,
+                                  ),
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 12),
                                 Text(
                                   index == 0 ? 'Main Photo' : 'Add Photo',
                                   style: TextStyle(
-                                    color: Colors.grey.shade600,
-                                    fontSize: 12,
+                                    color: AppTheme.textPrimary,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
                               ],
@@ -180,7 +198,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
               
               LoadingButton(
                 isLoading: _isLoading,
-                text: 'Complete Profile',
+                text: _isLoading ? 'Uploading Photos...' : 'Complete Profile',
                 onPressed: () async {
                   if (_photoCount < 2) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -192,6 +210,9 @@ class _PhotosScreenState extends State<PhotosScreen> {
                   setState(() => _isLoading = true);
                   
                   try {
+                    // Filter out null photos
+                    final validPhotos = _photos.where((photo) => photo != null).cast<File>().toList();
+                    
                     // Create user profile with all collected data
                     await UserService.createUserProfile(
                       firstName: widget.signupData.firstName ?? 'User',
@@ -199,7 +220,7 @@ class _PhotosScreenState extends State<PhotosScreen> {
                       birthday: widget.signupData.birthday,
                       gender: widget.signupData.gender,
                       interests: widget.signupData.interests,
-                      profileImageUrl: _photos.isNotEmpty && _photos[0] != null ? 'local_photo' : null,
+                      photos: validPhotos,
                       occupation: widget.signupData.occupation,
                       education: widget.signupData.education,
                       height: widget.signupData.height,

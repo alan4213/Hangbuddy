@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../services/user_service.dart';
 import '../models/user_model.dart';
 import '../theme/app_theme.dart';
+import '../widgets/profile_image_widget.dart';
 import 'settings_screen.dart';
 import 'notifications_screen.dart';
 import '../services/hangout_service.dart';
@@ -78,30 +79,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             // Profile Image
             Stack(
               children: [
-                Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppTheme.primaryColor,
-                      width: 3,
-                    ),
-                  ),
-                  child: CircleAvatar(
-                    radius: 58,
-                    backgroundColor: Colors.grey[300],
-                    backgroundImage: _userProfile?.profileImageUrl != null && _userProfile!.profileImageUrl!.isNotEmpty
-                        ? NetworkImage(_userProfile!.profileImageUrl!)
-                        : null,
-                    child: _userProfile?.profileImageUrl == null
-                        ? const Icon(
-                            Icons.person,
-                            size: 60,
-                            color: Colors.white,
-                          )
-                        : null,
-                  ),
+                ProfileImageWidget(
+                  imageUrl: _userProfile?.profileImageUrl,
+                  size: 120,
                 ),
                 Positioned(
                   bottom: 0,
@@ -239,8 +219,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       'Sign out of your account',
                       () async {
                         await FirebaseAuth.instance.signOut();
-                        Navigator.pushNamedAndRemoveUntil(context, '/phone', (route) => false);
+                        Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
                       },
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Delete Account
+                    _buildMenuCard(
+                      Icons.delete_forever,
+                      'Delete Account',
+                      'Permanently delete your account',
+                      () => _showDeleteAccountDialog(),
                     ),
                     ],
                   ),
@@ -253,7 +243,48 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  void _showDeleteAccountDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Account'),
+        content: const Text('Are you sure you want to permanently delete your account? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _deleteAccount();
+            },
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
 
+  Future<void> _deleteAccount() async {
+    try {
+      await UserService.deleteUserAccount();
+      Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Account deleted successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error deleting account: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   Widget _buildMenuCard(IconData icon, String title, String subtitle, VoidCallback onTap) {
     return GestureDetector(

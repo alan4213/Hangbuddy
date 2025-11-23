@@ -30,20 +30,22 @@ class _EthnicityScreenState extends State<EthnicityScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppTheme.textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(32),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Custom back button
+              Align(
+                alignment: Alignment.centerLeft,
+                child: IconButton(
+                  icon: Icon(Icons.arrow_back, color: AppTheme.textPrimary),
+                  onPressed: () => Navigator.pop(context),
+                  padding: EdgeInsets.zero,
+                ),
+              ),
+              SizedBox(height: 16),
               Text(
                 'What\'s your ethnicity?',
                 style: TextStyle(
@@ -55,29 +57,35 @@ class _EthnicityScreenState extends State<EthnicityScreen> {
               
               const SizedBox(height: 48),
               
-              // Ethnicity dropdown
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _selectedEthnicity,
-                    hint: Text('Select your ethnicity'),
-                    isExpanded: true,
-                    items: _ethnicities.map((ethnicity) => DropdownMenuItem(
-                      value: ethnicity,
-                      child: Text(ethnicity),
-                    )).toList(),
-                    onChanged: (value) => setState(() => _selectedEthnicity = value),
+              // Ethnicity options
+              ..._ethnicities.map((ethnicity) => Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: GestureDetector(
+                  onTap: () => setState(() => _selectedEthnicity = ethnicity),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    decoration: BoxDecoration(
+                      color: _selectedEthnicity == ethnicity ? AppTheme.primaryColor : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: _selectedEthnicity == ethnicity ? AppTheme.primaryColor : Colors.grey.shade300,
+                      ),
+                    ),
+                    child: Text(
+                      ethnicity,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: _selectedEthnicity == ethnicity ? Colors.white : AppTheme.textPrimary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ),
                 ),
-              ),
+              )).toList(),
               
-              SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 3),
+              SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 32),
               
               LoadingButton(
                 isLoading: _isLoading,

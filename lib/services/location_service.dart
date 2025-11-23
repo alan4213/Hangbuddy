@@ -62,12 +62,102 @@ class LocationService {
   static Future<String?> getAddressFromCoordinates(double latitude, double longitude) async {
     try {
       List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
+      
+      // Debug: Print all available placemark data
+      for (int i = 0; i < placemarks.length && i < 3; i++) {
+        final place = placemarks[i];
+        print('Placemark $i:');
+        print('  name: ${place.name}');
+        print('  street: ${place.street}');
+        print('  thoroughfare: ${place.thoroughfare}');
+        print('  subThoroughfare: ${place.subThoroughfare}');
+        print('  locality: ${place.locality}');
+        print('  subLocality: ${place.subLocality}');
+        print('  administrativeArea: ${place.administrativeArea}');
+        print('  subAdministrativeArea: ${place.subAdministrativeArea}');
+        print('  postalCode: ${place.postalCode}');
+        print('  country: ${place.country}');
+      }
+      
       if (placemarks.isNotEmpty) {
-        final place = placemarks.first;
-        return '${place.street}, ${place.locality}, ${place.country}';
+        // Try to find the most detailed placemark
+        Placemark? bestPlace;
+        for (final place in placemarks) {
+          if (place.thoroughfare != null && place.thoroughfare!.isNotEmpty) {
+            bestPlace = place;
+            break;
+          }
+          if (place.name != null && place.name!.isNotEmpty && 
+              !(place.name!.contains('+') && RegExp(r'^[A-Z0-9+]+$').hasMatch(place.name!.toUpperCase()))) {
+            bestPlace = place;
+          }
+        }
+        
+        final place = bestPlace ?? placemarks.first;
+        List<String> addressParts = [];
+        
+        // Add street number
+        if (place.subThoroughfare != null && place.subThoroughfare!.isNotEmpty) {
+          addressParts.add(place.subThoroughfare!);
+        }
+        
+        // Get location name (prioritize name over thoroughfare)
+        String? locationName;
+        if (place.name != null && place.name!.isNotEmpty) {
+          bool isNamePlusCode = place.name!.contains('+') && 
+              RegExp(r'^[A-Z0-9+]+$').hasMatch(place.name!.toUpperCase());
+          if (!isNamePlusCode) {
+            locationName = place.name;
+          }
+        }
+        if (locationName == null && place.thoroughfare != null && place.thoroughfare!.isNotEmpty) {
+          locationName = place.thoroughfare;
+        }
+        
+        // Get area (subLocality or locality)
+        String? area;
+        if (place.subLocality != null && place.subLocality!.isNotEmpty) {
+          area = place.subLocality;
+        } else if (place.locality != null && place.locality!.isNotEmpty) {
+          area = place.locality;
+        }
+        
+        // Format as "locationName, area"
+        if (locationName != null && area != null) {
+          addressParts = [locationName, area];
+        } else if (locationName != null) {
+          addressParts = [locationName];
+        } else if (area != null) {
+          addressParts = [area];
+        }
+        
+        String result = addressParts.isNotEmpty ? addressParts.join(', ') : 'Unknown Location';
+        print('Final address: $result');
+        return result;
       }
     } catch (e) {
       print('Error getting address: $e');
+    }
+    return null;
+  }
+  
+  static Future<String?> getShortAddressFromCoordinates(double latitude, double longitude) async {
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
+      if (placemarks.isNotEmpty) {
+        final place = placemarks.first;
+        
+        // Return just locality for short display
+        if (place.locality != null && place.locality!.isNotEmpty) {
+          return place.locality!;
+        } else if (place.subAdministrativeArea != null && place.subAdministrativeArea!.isNotEmpty) {
+          return place.subAdministrativeArea!;
+        } else if (place.administrativeArea != null && place.administrativeArea!.isNotEmpty) {
+          return place.administrativeArea!;
+        }
+      }
+    } catch (e) {
+      print('Error getting short address: $e');
     }
     return null;
   }

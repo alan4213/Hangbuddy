@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../widgets/loading_widget.dart';
 import '../models/signup_data.dart';
+import '../services/auth_service.dart';
+import '../services/user_service.dart';
 import 'name_screen.dart';
 
 class EmailScreen extends StatefulWidget {
@@ -62,13 +64,58 @@ class _EmailScreenState extends State<EmailScreen> {
                   height: 50,
                   margin: const EdgeInsets.only(bottom: 16),
                   child: OutlinedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => NameScreen(signupData: SignupData()),
-                        ),
-                      );
+                    onPressed: () async {
+                      print('=== GOOGLE BUTTON CLICKED ON EMAIL SCREEN ===');
+                      setState(() => _isLoading = true);
+                      try {
+                        print('Calling AuthService.signInWithGoogle()...');
+                        final result = await AuthService.signInWithGoogle();
+                        print('Google sign-in result: $result');
+                        
+                        if (result != null && mounted) {
+                          print('Google sign-in successful!');
+                          final userProfile = await UserService.getUserProfile();
+                          if (userProfile == null) {
+                            // New user - extract name from Google account
+                            final signupData = SignupData();
+                            if (result.user?.displayName != null) {
+                              final nameParts = result.user!.displayName!.split(' ');
+                              signupData.firstName = nameParts.first;
+                              if (nameParts.length > 1) {
+                                signupData.lastName = nameParts.skip(1).join(' ');
+                              }
+                            }
+                            signupData.email = result.user?.email;
+                            
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => NameScreen(signupData: signupData),
+                              ),
+                            );
+                          } else {
+                            // Existing user - go to home
+                            Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+                          }
+                        } else {
+                          print('Google sign-in cancelled or failed');
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Google sign-in was cancelled'),
+                              backgroundColor: Colors.orange,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        print('Google sign-in error: $e');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Sign-in failed: $e'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                      if (mounted) setState(() => _isLoading = false);
                     },
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(color: Colors.grey.shade300),

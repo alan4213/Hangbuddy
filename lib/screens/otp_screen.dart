@@ -44,30 +44,145 @@ class _OTPScreenState extends State<OTPScreen> {
 
   void _verifyOTP() async {
     try {
+      print('Starting OTP verification...');
       bool success = await AuthService.verifyOTP(_otp);
+      print('OTP verification result: $success');
+      
       if (success && mounted) {
-        // Check if user profile exists
-        final userProfile = await UserService.getUserProfile();
-        if (userProfile == null) {
-          // New user - go to signup flow
-          Navigator.pushNamed(context, '/email');
-        } else {
-          // Existing user - go to home
-          Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
-        }
+        print('Phone verification successful');
+        // Ensure phone number is stored in user profile
+        await UserService.updatePhoneNumberFromAuth();
+        print('Phone number stored in profile');
+        
+        // Now prompt for Google sign-in to link accounts
+        _showGoogleLinkDialog();
       } else if (mounted) {
+        print('OTP verification failed');
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Invalid OTP')),
+          const SnackBar(
+            content: Text('Invalid OTP. Please check and try again.'),
+            backgroundColor: Colors.red,
+          ),
         );
         setState(() => _otp = '');
       }
     } catch (e) {
+      print('Exception during OTP verification: $e');
       if (mounted) {
+        String errorMessage = 'Verification failed. Please try again.';
+        if (e.toString().contains('invalid-verification-code')) {
+          errorMessage = 'Invalid verification code. Please try again.';
+        } else if (e.toString().contains('session-expired')) {
+          errorMessage = 'Verification session expired. Please request a new code.';
+        }
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Verification failed. Please try again.')),
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+          ),
         );
         setState(() => _otp = '');
       }
+    }
+  }
+
+  void _showGoogleLinkDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Link Google Account'),
+        content: const Text('Please sign in with Google to complete your account setup and access all features.'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/email');
+            },
+            child: const Text('Skip'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _linkGoogleAccount();
+            },
+            child: const Text('Sign in with Google'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _linkGoogleAccount() async {
+    try {
+      print('Linking Google account to phone-verified user...');
+      final googleCredential = await AuthService.getGoogleCredential();
+      if (googleCredential != null) {
+        final currentUser = FirebaseAuth.instance.currentUser;
+        if (currentUser != null) {
+          // Get phone number before linking
+          final phoneNumber = currentUser.phoneNumber;
+          print('Phone number before linking: $phoneNumber');
+          
+          await currentUser.linkWithCredential(googleCredential);
+          print('Google account linked successfully');
+          
+          // Force update phone number after linking
+          if (phoneNumber != null && phoneNumber.isNotEmpty) {
+            await UserService.forceUpdatePhoneNumber(phoneNumber);
+            print('Phone number preserved after linking: $phoneNumber');
+          }
+          
+          // Check if user profile exists
+          final userProfile = await UserService.getUserProfile();
+          if (userProfile == null) {
+            // New user - go to signup flow
+            Navigator.pushNamed(context, '/email');
+          } else {
+            // Existing user - go to home
+            Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+          }
+        }
+      }
+    } catch (e) {
+      print('Error linking Google account: $e');
+      
+      if (e.toString().contains('credential-already-in-use')) {
+        // Google account already exists - sign in with it instead
+        try {
+          print('Google account already exists, signing in with Google...');
+          final result = await AuthService.signInWithGoogle();
+          if (result != null) {
+            // Successfully signed in with existing Google account
+            final userProfile = await UserService.getUserProfile();
+            if (userProfile == null) {
+              Navigator.pushNamed(context, '/email');
+            } else {
+              Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+            }
+            return;
+          }
+        } catch (googleError) {
+          print('Error signing in with Google: $googleError');
+        }
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('This Google account is already registered. Please use a different Google account or continue without linking.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to link Google account: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      
+      // Continue to signup even if Google linking fails
+      Navigator.pushNamed(context, '/email');
     }
   }
 

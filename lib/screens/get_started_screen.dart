@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
-import 'sign_up_screen.dart';
 import '../widgets/loading_widget.dart';
+import '../services/auth_service.dart';
+import '../services/user_service.dart';
+import 'phone_number_screen.dart';
 
 class GetStartedScreen extends StatefulWidget {
   const GetStartedScreen({super.key});
@@ -60,20 +62,7 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                         color: AppTheme.primaryColor,
                       ),
                     ),
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primaryColor.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        'Skip',
-                        style: TextStyle(
-                          color: AppTheme.primaryColor,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
+                    SizedBox(),
                   ],
                 ),
               ),
@@ -139,7 +128,12 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                         setState(() => _isLoading = true);
                         await Future.delayed(const Duration(milliseconds: 500));
                         if (mounted) {
-                          Navigator.pushNamed(context, '/phone').then((_) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PhoneNumberScreen(showGoogleSignIn: false),
+                            ),
+                          ).then((_) {
                             if (mounted) setState(() => _isLoading = false);
                           });
                         }
@@ -153,8 +147,21 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                       width: double.infinity,
                       height: 50,
                       child: OutlinedButton(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/phone');
+                        onPressed: () async {
+                          setState(() => _isLoading = true);
+                          try {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PhoneNumberScreen(showGoogleSignIn: true),
+                              ),
+                            );
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Sign in failed: $e')),
+                            );
+                          }
+                          if (mounted) setState(() => _isLoading = false);
                         },
                         style: OutlinedButton.styleFrom(
                           side: BorderSide(color: AppTheme.primaryColor),

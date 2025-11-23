@@ -12,7 +12,28 @@
           "package_name": "com.example.hangbuddy_app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "940032181149-nu1733hciijhba86tfos4jhok99es97i.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.hangbuddy_app",
+            "certificate_hash": "6f4cec55b0cdeaf2f6bd65663da638ba295f8ffd"
+          }
+        },
+        {
+          "client_id": "940032181149-qj5nb62eab9311m3r14kt0bq7jdi2e75.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.hangbuddy_app",
+            "certificate_hash": "589dc7bcea8f16559253877c391b787023f5b182"
+          }
+        },
+        {
+          "client_id": "940032181149-hj20v568vkvkt1k5ji0s58ivk3vl8lrd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDDRCYLxH74-xybwudKOTLLkygTYvOHFSc"
@@ -20,7 +41,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "940032181149-hj20v568vkvkt1k5ji0s58ivk3vl8lrd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

@@ -74,7 +74,7 @@ class _InterestsScreenState extends State<InterestsScreen> {
               const SizedBox(height: 32),
               
               SizedBox(
-                height: 400,
+                height: 600,
                 child: GridView.builder(
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,

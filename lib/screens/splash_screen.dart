@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 import 'get_started_screen.dart';
 
@@ -39,18 +40,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
+      backgroundColor: Colors.white,
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppTheme.primaryColor.withOpacity(0.1),
-              AppTheme.backgroundColor,
-            ],
-          ),
-        ),
         child: Center(
           child: FadeTransition(
             opacity: _fadeAnimation,
@@ -58,21 +49,12 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Gather',
+                  "Gather",
+                  textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 48,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.bold,
                     color: AppTheme.primaryColor,
-                    letterSpacing: -1,
-                  ),
-                ),
-                SizedBox(height: 12),
-                Text(
-                  'Connect. Meet. Explore.',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
-                    color: AppTheme.textSecondary,
                   ),
                 ),
               ],

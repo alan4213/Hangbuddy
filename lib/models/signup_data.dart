@@ -1,6 +1,7 @@
 class SignupData {
   String? firstName;
   String? lastName;
+  String? email;
   DateTime? birthday;
   String? gender;
   String? occupation;
@@ -17,6 +18,7 @@ class SignupData {
     return {
       'firstName': firstName,
       'lastName': lastName,
+      'email': email,
       'birthday': birthday?.millisecondsSinceEpoch,
       'gender': gender,
       'occupation': occupation,

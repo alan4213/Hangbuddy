@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'match_notification_screen.dart';
+import '../theme/app_theme.dart';
 
 class ProfileDetailScreen extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -15,21 +16,26 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
   PageController _pageController = PageController();
   int _currentIndex = 0;
   
-  List<String> get images => [
-    widget.user['image'] ?? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
-    widget.user['image'] ?? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
-    widget.user['image'] ?? 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
-  ];
+  List<String> get images {
+    final imageUrl = widget.user['image'];
+    final validUrl = (imageUrl != null && imageUrl != 'local_photo' && imageUrl.toString().startsWith('http')) 
+        ? imageUrl 
+        : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400';
+    return [validUrl, validUrl, validUrl];
+  }
 
   @override
   Widget build(BuildContext context) {
+    // Debug prints
+   
+    
     return Scaffold(
       backgroundColor: Colors.white,
       body: Column(
         children: [
           // Image section with swipe
           Expanded(
-            flex: 3,
+            flex: 2,
             child: Stack(
               children: [
                 PageView.builder(
@@ -125,7 +131,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                       width: 60,
                       height: 60,
                       decoration: BoxDecoration(
-                        color: Color(0xFF4A90E2),
+                        color: AppTheme.primaryColor,
                         shape: BoxShape.circle,
                       ),
                       child: Icon(Icons.favorite, color: Colors.white, size: 30),
@@ -138,7 +144,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
           // Profile info section
           Expanded(
             flex: 2,
-            child: Padding(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -147,14 +153,14 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                   Row(
                     children: [
                       Text(
-                        widget.user['name'] ?? 'Unknown',
+                        '${widget.user['firstName'] ?? ''} ${widget.user['lastName'] ?? ''}',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       SizedBox(width: 8),
-                      Icon(Icons.verified, color: Color(0xFF4A90E2), size: 20),
+                      Icon(Icons.verified, color: AppTheme.primaryColor, size: 20),
                       SizedBox(width: 8),
                       Text(
                         '${widget.user['age'] ?? '0'}',
@@ -174,45 +180,85 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                     ),
                   ),
                   SizedBox(height: 16),
+                  
+                  // Gender
+                  if (widget.user['gender'] != null)
+                    _buildInfoRow(Icons.person, 'Gender', widget.user['gender']),
+                  if (widget.user['gender'] != null)
+                    SizedBox(height: 8),
+                  
+                  // Height
+                  if (widget.user['height'] != null)
+                    _buildInfoRow(Icons.height, 'Height', widget.user['height']),
+                  if (widget.user['height'] != null)
+                    SizedBox(height: 8),
+                  
+                  // Education
+                  if (widget.user['education'] != null)
+                    _buildInfoRow(Icons.school, 'Education', widget.user['education']),
+                  if (widget.user['education'] != null)
+                    SizedBox(height: 8),
+                  
+                  // Occupation
+                  if (widget.user['occupation'] != null)
+                    _buildInfoRow(Icons.work, 'Occupation', widget.user['occupation']),
+                  if (widget.user['occupation'] != null)
+                    SizedBox(height: 8),
+                  
+                  // Ethnicity
+                  if (widget.user['ethnicity'] != null)
+                    _buildInfoRow(Icons.public, 'Ethnicity', widget.user['ethnicity']),
+                  if (widget.user['ethnicity'] != null)
+                    SizedBox(height: 8),
+                  
+                  // Religion
+                  if (widget.user['religion'] != null)
+                    _buildInfoRow(Icons.church, 'Religion', widget.user['religion']),
+                  if (widget.user['religion'] != null)
+                    SizedBox(height: 8),
+                  
                   // Location
-                  Row(
-                    children: [
-                      Icon(Icons.home, size: 16, color: Colors.grey[600]),
-                      SizedBox(width: 8),
-                      Text(
-                        'Lagos state, Nigeria',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
+                  _buildInfoRow(Icons.location_on, 'Distance', widget.user['distance'] ?? '10 miles away'),
                   SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Icon(Icons.location_on, size: 16, color: Colors.grey[600]),
-                      SizedBox(width: 8),
-                      Text(
-                        widget.user['distance'] ?? '10 miles away',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 14,
-                        ),
+                  
+                  // Join Date
+                  _buildInfoRow(Icons.calendar_today, 'Member since', '2023'),
+                  
+                  // Interests
+                  if (widget.user['interests'] != null && (widget.user['interests'] as List).isNotEmpty) ...[
+                    SizedBox(height: 16),
+                    Text(
+                      'Interests',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
                       ),
-                    ],
-                  ),
-                  SizedBox(height: 20),
-                  // Action buttons
-                  Row(
-                    children: [
-                      _buildActionButton('Messaging', Icons.message),
-                      SizedBox(width: 12),
-                      _buildActionButton('Working out', Icons.fitness_center),
-                      SizedBox(width: 12),
-                      _buildActionButton('Travel', Icons.flight),
-                    ],
-                  ),
+                    ),
+                    SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: (widget.user['interests'] as List).map<Widget>((interest) {
+                        return Container(
+                          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: AppTheme.primaryColor.withOpacity(0.3)),
+                          ),
+                          child: Text(
+                            interest.toString(),
+                            style: TextStyle(
+                              color: AppTheme.primaryColor,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -222,27 +268,31 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
     );
   }
 
-  Widget _buildActionButton(String text, IconData icon) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[300]!),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 16, color: Colors.grey[600]),
-          SizedBox(width: 4),
-          Text(
-            text,
+  Widget _buildInfoRow(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: Colors.grey[600]),
+        SizedBox(width: 8),
+        Text(
+          '$label: ',
+          style: TextStyle(
+            color: Colors.grey[600],
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
             style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 12,
+              color: Colors.black87,
+              fontSize: 14,
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
+
+
 }

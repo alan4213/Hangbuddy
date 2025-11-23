@@ -54,29 +54,35 @@ class _EducationScreenState extends State<EducationScreen> {
               
               const SizedBox(height: 48),
               
-              // Education dropdown
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _selectedEducation,
-                    hint: Text('Select your education level'),
-                    isExpanded: true,
-                    items: _educations.map((education) => DropdownMenuItem(
-                      value: education,
-                      child: Text(education),
-                    )).toList(),
-                    onChanged: (value) => setState(() => _selectedEducation = value),
+              // Education options
+              ..._educations.map((education) => Padding(
+                padding: const EdgeInsets.only(bottom: 16),
+                child: GestureDetector(
+                  onTap: () => setState(() => _selectedEducation = education),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    decoration: BoxDecoration(
+                      color: _selectedEducation == education ? AppTheme.primaryColor : Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: _selectedEducation == education ? AppTheme.primaryColor : Colors.grey.shade300,
+                      ),
+                    ),
+                    child: Text(
+                      education,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: _selectedEducation == education ? Colors.white : AppTheme.textPrimary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                   ),
                 ),
-              ),
+              )).toList(),
               
-              SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 3),
+              SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 32),
               
               LoadingButton(
                 isLoading: _isLoading,
