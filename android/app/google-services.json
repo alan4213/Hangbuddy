@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "940032181149-i5v1hm5eqdm1bdsdvj5ouu6erg2mrm8d.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.hangbuddy_app",
+            "certificate_hash": "17a479332576ecf37f1310dff9e58dc4b61be41e"
+          }
+        },
+        {
           "client_id": "940032181149-nu1733hciijhba86tfos4jhok99es97i.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
