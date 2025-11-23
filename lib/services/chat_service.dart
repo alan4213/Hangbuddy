@@ -104,6 +104,7 @@ class ChatService {
     double? longitude,
     String? locationName,
     String? gifUrl,
+    String? photoUrl,
   }) async {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
@@ -130,6 +131,7 @@ class ChatService {
       'longitude': longitude,
       'locationName': locationName,
       'gifUrl': gifUrl,
+      'photoUrl': photoUrl,
     });
     
     // Update chat metadata

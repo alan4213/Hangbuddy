@@ -9,6 +9,9 @@ import '../models/user_model.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import '../services/photo_upload_service.dart';
 
 class ChatWindowScreen extends StatefulWidget {
   final Map<String, dynamic> match;
@@ -29,6 +32,8 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
   bool _isSearching = false;
   String _searchQuery = '';
   ChatMessage? _replyingTo;
+  File? _selectedPhoto;
+  String? _uploadedPhotoUrl;
   final List<Color> avatarColors = [
     Color(0xFF8B5CF6),
     Color(0xFF3B82F6),
@@ -390,6 +395,8 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
                         ? _buildLocationMessage(message, isMe)
                         : message.messageType == 'gif'
                         ? _buildGifMessage(message, isMe)
+                        : message.messageType == 'photo'
+                        ? _buildPhotoMessage(message, isMe)
                         : Text(
                             message.message,
                             style: TextStyle(
@@ -552,14 +559,49 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
             child: Icon(Icons.location_on, color: Colors.grey),
           ),
           SizedBox(width: 12),
+          PopupMenuButton(
+            icon: Icon(Icons.attach_file, color: Colors.grey),
+            onSelected: (value) {
+              if (value == 'camera') _pickPhoto(ImageSource.camera);
+              if (value == 'gallery') _pickPhoto(ImageSource.gallery);
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(value: 'camera', child: Row(children: [Icon(Icons.camera_alt), SizedBox(width: 8), Text('Camera')])),
+              PopupMenuItem(value: 'gallery', child: Row(children: [Icon(Icons.photo), SizedBox(width: 8), Text('Gallery')])),
+            ],
+          ),
+          SizedBox(width: 12),
           Expanded(
-            child: TextField(
-              controller: _messageController,
-              decoration: InputDecoration(
-                hintText: 'Type something to send...',
-                hintStyle: TextStyle(color: Colors.grey),
-                border: InputBorder.none,
-              ),
+            child: Column(
+              children: [
+                if (_selectedPhoto != null)
+                  Container(
+                    margin: EdgeInsets.only(bottom: 8),
+                    height: 60,
+                    child: Row(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.file(_selectedPhoto!, width: 60, height: 60, fit: BoxFit.cover),
+                        ),
+                        SizedBox(width: 8),
+                        Expanded(child: Text('Photo selected', style: TextStyle(color: Colors.grey))),
+                        IconButton(
+                          icon: Icon(Icons.close, size: 20),
+                          onPressed: () => setState(() { _selectedPhoto = null; _uploadedPhotoUrl = null; }),
+                        ),
+                      ],
+                    ),
+                  ),
+                TextField(
+                  controller: _messageController,
+                  decoration: InputDecoration(
+                    hintText: _selectedPhoto != null ? 'Add a caption...' : 'Type something to send...',
+                    hintStyle: TextStyle(color: Colors.grey),
+                    border: InputBorder.none,
+                  ),
+                ),
+              ],
             ),
           ),
           SizedBox(width: 12),
@@ -586,19 +628,44 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
   }
 
   void _sendMessage() async {
-    if (_messageController.text.trim().isEmpty || _otherUserId == null) return;
+    if ((_messageController.text.trim().isEmpty && _selectedPhoto == null) || _otherUserId == null) return;
 
     try {
-      await ChatService.sendMessage(
-        receiverId: _otherUserId!,
-        message: _messageController.text.trim(),
-        replyToId: _replyingTo?.id,
-        replyToMessage: _replyingTo?.message,
-      );
+      if (_selectedPhoto != null) {
+        // Upload photo first if not already uploaded
+        if (_uploadedPhotoUrl == null) {
+          _uploadedPhotoUrl = await PhotoUploadService.uploadChatPhoto(_selectedPhoto!);
+          if (_uploadedPhotoUrl == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Failed to upload photo'), backgroundColor: Colors.red),
+            );
+            return;
+          }
+        }
+        
+        await ChatService.sendMessage(
+          receiverId: _otherUserId!,
+          message: _messageController.text.trim().isEmpty ? 'Photo' : _messageController.text.trim(),
+          messageType: 'photo',
+          photoUrl: _uploadedPhotoUrl,
+          replyToId: _replyingTo?.id,
+          replyToMessage: _replyingTo?.message,
+        );
+      } else {
+        await ChatService.sendMessage(
+          receiverId: _otherUserId!,
+          message: _messageController.text.trim(),
+          replyToId: _replyingTo?.id,
+          replyToMessage: _replyingTo?.message,
+        );
+      }
+      
       _messageController.clear();
       _clearDraft();
       setState(() {
         _replyingTo = null;
+        _selectedPhoto = null;
+        _uploadedPhotoUrl = null;
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1203,6 +1270,58 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
                 ],
               ),
             ),
+        ),
+      ),
+    );
+  }
+
+  void _pickPhoto(ImageSource source) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: source);
+    
+    if (pickedFile != null) {
+      setState(() {
+        _selectedPhoto = File(pickedFile.path);
+        _uploadedPhotoUrl = null;
+      });
+    }
+  }
+
+  Widget _buildPhotoMessage(ChatMessage message, bool isMe) {
+    return Container(
+      constraints: BoxConstraints(maxWidth: 200, maxHeight: 200),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.network(
+          message.photoUrl!,
+          fit: BoxFit.cover,
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Container(
+              width: 200,
+              height: 200,
+              color: Colors.grey[200],
+              child: Center(
+                child: CircularProgressIndicator(
+                  value: loadingProgress.expectedTotalBytes != null
+                      ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                      : null,
+                ),
+              ),
+            );
+          },
+          errorBuilder: (context, error, stackTrace) => Container(
+            width: 200,
+            height: 100,
+            color: Colors.grey[200],
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error, color: Colors.grey),
+                Text('Photo not available', style: TextStyle(color: Colors.grey)),
+              ],
+            ),
+          ),
         ),
       ),
     );

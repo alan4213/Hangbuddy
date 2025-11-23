@@ -10,11 +10,12 @@ class ChatMessage {
   final Map<String, String> reactions; // userId: emoji
   final String? replyToId;
   final String? replyToMessage;
-  final String? messageType; // text, location, gif
+  final String? messageType; // text, location, gif, photo
   final double? latitude;
   final double? longitude;
   final String? locationName;
   final String? gifUrl;
+  final String? photoUrl;
 
   ChatMessage({
     required this.id,
@@ -31,6 +32,7 @@ class ChatMessage {
     this.longitude,
     this.locationName,
     this.gifUrl,
+    this.photoUrl,
   });
 
   Map<String, dynamic> toMap() {
@@ -48,6 +50,7 @@ class ChatMessage {
       'longitude': longitude,
       'locationName': locationName,
       'gifUrl': gifUrl,
+      'photoUrl': photoUrl,
     };
   }
 
@@ -67,6 +70,7 @@ class ChatMessage {
       longitude: map['longitude']?.toDouble(),
       locationName: map['locationName'],
       gifUrl: map['gifUrl'],
+      photoUrl: map['photoUrl'],
     );
   }
 }
