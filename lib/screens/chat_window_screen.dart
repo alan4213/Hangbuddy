@@ -132,7 +132,11 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
           children: [
             CircleAvatar(
               radius: 20,
-              backgroundImage: NetworkImage('https://picsum.photos/100/100?random=1'),
+              backgroundImage: _otherUser?.profileImageUrl != null || _otherUser?.photoUrls?.isNotEmpty == true
+                  ? NetworkImage(_otherUser!.profileImageUrl ?? _otherUser!.photoUrls!.first)
+                  : widget.match['image'] != null
+                  ? NetworkImage(widget.match['image'])
+                  : NetworkImage('https://picsum.photos/100/100?random=1'),
               backgroundColor: _otherUserId != null 
                   ? avatarColors[_otherUserId!.hashCode % avatarColors.length]
                   : Color(0xFF8B5CF6),

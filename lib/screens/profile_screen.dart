@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import '../widgets/profile_image_widget.dart';
 import 'settings_screen.dart';
 import 'notifications_screen.dart';
+import 'edit_photos_screen.dart';
 import '../services/hangout_service.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -51,14 +52,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             // Header
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.05),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Gather',
                     style: TextStyle(
-                      fontSize: 28,
+                      fontSize: MediaQuery.of(context).size.width * 0.07,
                       fontWeight: FontWeight.bold,
                       color: AppTheme.primaryColor,
                     ),
@@ -70,7 +71,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         MaterialPageRoute(builder: (context) => SettingsScreen()),
                       );
                     },
-                    child: Icon(Icons.settings, size: 24, color: AppTheme.primaryColor),
+                    child: Icon(Icons.settings, size: MediaQuery.of(context).size.width * 0.06, color: AppTheme.primaryColor),
                   ),
                 ],
               ),
@@ -81,7 +82,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 ProfileImageWidget(
                   imageUrl: _userProfile?.profileImageUrl,
-                  size: 120,
+                  size: MediaQuery.of(context).size.width * 0.3,
                 ),
                 Positioned(
                   bottom: 0,
@@ -92,8 +93,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _loadUserProfile();
                     },
                     child: Container(
-                      width: 36,
-                      height: 36,
+                      width: MediaQuery.of(context).size.width * 0.09,
+                      height: MediaQuery.of(context).size.width * 0.09,
                       decoration: BoxDecoration(
                         color: AppTheme.primaryColor,
                         shape: BoxShape.circle,
@@ -102,9 +103,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           width: 2,
                         ),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.edit,
-                        size: 18,
+                        size: MediaQuery.of(context).size.width * 0.045,
                         color: Colors.white,
                       ),
                     ),
@@ -113,7 +114,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
             
-            const SizedBox(height: 16),
+            SizedBox(height: MediaQuery.of(context).size.height * 0.02),
             
             // Name
             Row(
@@ -123,30 +124,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   _isLoading 
                       ? 'Loading...' 
                       : '${_userProfile?.firstName ?? 'User'} ${_userProfile?.lastName ?? ''}',
-                  style: const TextStyle(
-                    fontSize: 32,
+                  style: TextStyle(
+                    fontSize: MediaQuery.of(context).size.width * 0.08,
                     fontWeight: FontWeight.w600,
                     color: Colors.black,
                   ),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: MediaQuery.of(context).size.width * 0.02),
                 Icon(
                   Icons.verified,
                   color: Colors.grey[400],
-                  size: 24,
+                  size: MediaQuery.of(context).size.width * 0.06,
                 ),
               ],
             ),
             
-            const SizedBox(height: 32),
+            SizedBox(height: MediaQuery.of(context).size.height * 0.04),
             
-            const SizedBox(height: 24),
+            SizedBox(height: MediaQuery.of(context).size.height * 0.03),
             
             // Content
             Expanded(
               child: SingleChildScrollView(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.05),
                   child: Column(
                     children: [
 
@@ -291,44 +292,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.05),
         decoration: BoxDecoration(
           color: Colors.grey[100],
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(MediaQuery.of(context).size.width * 0.04),
         ),
         child: Row(
           children: [
             Container(
-              width: 40,
-              height: 40,
+              width: MediaQuery.of(context).size.width * 0.1,
+              height: MediaQuery.of(context).size.width * 0.1,
               decoration: BoxDecoration(
                 color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(MediaQuery.of(context).size.width * 0.02),
               ),
               child: Icon(
                 icon,
-                size: 20,
+                size: MediaQuery.of(context).size.width * 0.05,
                 color: Colors.grey[600],
               ),
             ),
-            const SizedBox(width: 16),
+            SizedBox(width: MediaQuery.of(context).size.width * 0.04),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
-                      fontSize: 16,
+                    style: TextStyle(
+                      fontSize: MediaQuery.of(context).size.width * 0.04,
                       fontWeight: FontWeight.w600,
                       color: Colors.black,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.005),
                   Text(
                     subtitle,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: MediaQuery.of(context).size.width * 0.035,
                       color: Colors.grey[600],
                     ),
                   ),

@@ -50,37 +50,36 @@ class _InterestsScreenState extends State<InterestsScreen> {
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(32),
+        child: Padding(
+          padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.08),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Your Interests',
                 style: TextStyle(
-                  fontSize: 28,
+                  fontSize: MediaQuery.of(context).size.width * 0.07,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.textPrimary,
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: MediaQuery.of(context).size.height * 0.015),
               Text(
                 'Select at least 3 interests to help us find your perfect hangout buddy',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: MediaQuery.of(context).size.width * 0.04,
                   color: AppTheme.textSecondary,
                 ),
               ),
-              const SizedBox(height: 32),
+              SizedBox(height: MediaQuery.of(context).size.height * 0.03),
               
-              SizedBox(
-                height: 600,
+              Expanded(
                 child: GridView.builder(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     childAspectRatio: 3,
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
+                    crossAxisSpacing: MediaQuery.of(context).size.width * 0.03,
+                    mainAxisSpacing: MediaQuery.of(context).size.height * 0.015,
                   ),
                   itemCount: _allInterests.length,
                   itemBuilder: (context, index) {
@@ -100,7 +99,7 @@ class _InterestsScreenState extends State<InterestsScreen> {
                       child: Container(
                         decoration: BoxDecoration(
                           color: isSelected ? AppTheme.primaryColor : Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(25),
+                          borderRadius: BorderRadius.circular(MediaQuery.of(context).size.width * 0.06),
                           border: Border.all(
                             color: isSelected ? AppTheme.primaryColor : Colors.grey.shade300,
                           ),
@@ -111,7 +110,7 @@ class _InterestsScreenState extends State<InterestsScreen> {
                             style: TextStyle(
                               color: isSelected ? Colors.white : AppTheme.textPrimary,
                               fontWeight: FontWeight.w500,
-                              fontSize: 14,
+                              fontSize: MediaQuery.of(context).size.width * 0.035,
                             ),
                           ),
                         ),
@@ -122,15 +121,17 @@ class _InterestsScreenState extends State<InterestsScreen> {
               ),
               
               if (_selectedInterests.isNotEmpty) ...[
+                SizedBox(height: MediaQuery.of(context).size.height * 0.01),
                 Text(
                   '${_selectedInterests.length} selected',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: MediaQuery.of(context).size.width * 0.035,
                     color: AppTheme.textSecondary,
                   ),
                 ),
-                const SizedBox(height: 16),
               ],
+              
+              SizedBox(height: MediaQuery.of(context).size.height * 0.02),
               
               LoadingButton(
                 isLoading: _isLoading,
@@ -159,7 +160,6 @@ class _InterestsScreenState extends State<InterestsScreen> {
                   }
                 },
               ),
-              SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 32),
             ],
           ),
         ),

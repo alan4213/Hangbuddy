@@ -162,10 +162,18 @@ class UserService {
     if (photoUrls != null) updates['photoUrls'] = photoUrls;
     if (phoneNumber != null) updates['phoneNumber'] = phoneNumber;
 
+    print('=== UPDATING USER PROFILE ===');
+    print('photoUrls: $photoUrls');
+    print('profileImageUrl: $profileImageUrl');
+    print('Updates: $updates');
+
     await _firestore
         .collection('users')
         .doc(user.uid)
         .update(updates);
+        
+    print('Profile updated successfully');
+    print('=== END UPDATE ===');
   }
 
   static Future<void> updatePhoneNumberFromAuth() async {

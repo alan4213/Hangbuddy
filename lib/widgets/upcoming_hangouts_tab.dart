@@ -110,7 +110,7 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
           'hangout': match['hangoutTitle'],
           'venue': match['hangoutLocation'],
           'dateTime': hangoutDateTime,
-          'image': user.profileImageUrl,
+          'image': user.profileImageUrl ?? (user.photoUrls?.isNotEmpty == true ? user.photoUrls!.first : null),
           'userId': otherUserId,
           'distance': '0 km away',
         };
@@ -150,10 +150,15 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
                     width: double.infinity,
                     height: double.infinity,
                     decoration: BoxDecoration(
-                      image: const DecorationImage(
-                        image: NetworkImage('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop&crop=face'),
-                        fit: BoxFit.cover,
-                      ),
+                      image: matchData['image'] != null
+                          ? DecorationImage(
+                              image: NetworkImage(matchData['image']),
+                              fit: BoxFit.cover,
+                            )
+                          : const DecorationImage(
+                              image: NetworkImage('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop&crop=face'),
+                              fit: BoxFit.cover,
+                            ),
                       gradient: matchData['image'] == null
                           ? const LinearGradient(
                               begin: Alignment.topLeft,

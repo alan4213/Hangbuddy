@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'notification_service.dart';
 
 class MatchService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -58,6 +59,11 @@ class MatchService {
     
     // Send match notification to the interested user
     await _sendMatchNotification(user2Id, user1Id, hangoutTitle);
+    
+    // Send push notification
+    final user1Doc = await _firestore.collection('users').doc(user1Id).get();
+    final user1Name = user1Doc.data()?['firstName'] ?? 'Someone';
+    await NotificationService.sendMatchNotification(user2Id, user1Name);
   }
   
   static Future<void> _sendMatchNotification(String userId, String matchedUserId, String hangoutTitle) async {
@@ -72,6 +78,15 @@ class MatchService {
         'createdAt': FieldValue.serverTimestamp(),
         'read': false,
       });
+      
+      // Get the matched user's name for notification
+      final matchedUserDoc = await _firestore.collection('users').doc(matchedUserId).get();
+      final matchedUserName = matchedUserDoc.exists 
+          ? '${matchedUserDoc.data()?['firstName'] ?? ''} ${matchedUserDoc.data()?['lastName'] ?? ''}'.trim()
+          : 'Someone';
+      
+      // Send push notification to the matched user
+      await NotificationService.sendMatchNotification(userId, matchedUserName.isEmpty ? 'Someone' : matchedUserName);
     } catch (e) {
       print('Error sending match notification: $e');
     }

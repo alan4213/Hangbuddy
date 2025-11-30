@@ -25,15 +25,15 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(32),
+          padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.08),
           child: Column(
             children: [
-              const SizedBox(height: 60),
+              SizedBox(height: MediaQuery.of(context).size.height * 0.075),
               // Gather Brand Name
               Text(
                 'Gather',
                 style: TextStyle(
-                  fontSize: 32,
+                  fontSize: MediaQuery.of(context).size.width * 0.08,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.primaryColor,
                 ),
@@ -47,7 +47,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                   color: Colors.black,
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: MediaQuery.of(context).size.height * 0.015),
               Text(
                 widget.showGoogleSignIn 
                     ? 'Sign in to your account'
@@ -58,7 +58,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                   color: Colors.grey,
                 ),
               ),
-              const SizedBox(height: 48),
+              SizedBox(height: MediaQuery.of(context).size.height * 0.06),
               // Phone input field - only for new users
               if (!widget.showGoogleSignIn) ...[
                 IntlPhoneField(
@@ -82,7 +82,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                   },
                 ),
               ],
-              const SizedBox(height: 24),
+              SizedBox(height: MediaQuery.of(context).size.height * 0.03),
               
               // Google sign-in button for existing users only
               if (widget.showGoogleSignIn) ...[

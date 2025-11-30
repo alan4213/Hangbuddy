@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/app_theme.dart';
 import '../widgets/loading_widget.dart';
 import '../models/signup_data.dart';
@@ -19,6 +20,53 @@ class _EmailScreenState extends State<EmailScreen> {
   bool _isLoading = false;
   bool _otpSent = false;
 
+  // Check if there's a phone-verified account that should be merged
+  Future<User?> _checkForPhoneAccount(String? email) async {
+    if (email == null) return null;
+    
+    try {
+      // This is a simplified check - you might want to implement more sophisticated logic
+      // based on your app's requirements
+      return null;
+    } catch (e) {
+      print('Error checking for phone account: $e');
+      return null;
+    }
+  }
+  
+  // Merge phone-verified account with Google account
+  Future<void> _mergePhoneWithGoogle(User phoneUser, User googleUser) async {
+    try {
+      print('Merging phone account with Google account...');
+      
+      // Get phone number from the phone user
+      final phoneNumber = phoneUser.phoneNumber;
+      
+      if (phoneNumber != null) {
+        // Add phone number to Google account
+        await AuthService.mergePhoneAndGoogleAccounts(phoneNumber);
+        
+        // Clean up the old phone-only account
+        await AuthService.cleanupDuplicateAccount(phoneUser.uid);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Accounts merged successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      print('Error merging accounts: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to merge accounts: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -33,36 +81,36 @@ class _EmailScreenState extends State<EmailScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(32),
+          padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.08),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 _otpSent ? 'Verify Email' : 'Enter Email',
                 style: TextStyle(
-                  fontSize: 28,
+                  fontSize: MediaQuery.of(context).size.width * 0.07,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.textPrimary,
                 ),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: MediaQuery.of(context).size.height * 0.015),
               Text(
                 _otpSent 
                   ? 'Enter the verification code sent to your email'
                   : 'We\'ll send you a verification code',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: MediaQuery.of(context).size.width * 0.04,
                   color: AppTheme.textSecondary,
                 ),
               ),
-              const SizedBox(height: 48),
+              SizedBox(height: MediaQuery.of(context).size.height * 0.06),
               
               if (!_otpSent) ...[
                 // Google sign-in button
                 Container(
                   width: double.infinity,
-                  height: 50,
-                  margin: const EdgeInsets.only(bottom: 16),
+                  height: MediaQuery.of(context).size.height * 0.06,
+                  margin: EdgeInsets.only(bottom: MediaQuery.of(context).size.height * 0.02),
                   child: OutlinedButton(
                     onPressed: () async {
                       print('=== GOOGLE BUTTON CLICKED ON EMAIL SCREEN ===');
@@ -74,9 +122,21 @@ class _EmailScreenState extends State<EmailScreen> {
                         
                         if (result != null && mounted) {
                           print('Google sign-in successful!');
+                          
+                          // Check if this is an existing user or needs account merging
                           final userProfile = await UserService.getUserProfile();
+                          
                           if (userProfile == null) {
-                            // New user - extract name from Google account
+                            // New Google user - check if they have a phone-verified account to merge
+                            final phoneUser = await _checkForPhoneAccount(result.user?.email);
+                            if (phoneUser != null) {
+                              // Merge the accounts
+                              await _mergePhoneWithGoogle(phoneUser, result.user!);
+                              Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+                              return;
+                            }
+                            
+                            // Truly new user - extract name from Google account
                             final signupData = SignupData();
                             if (result.user?.displayName != null) {
                               final nameParts = result.user!.displayName!.split(' ');

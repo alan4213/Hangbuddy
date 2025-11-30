@@ -50,10 +50,13 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          const SizedBox(height: 50),
+          SizedBox(height: MediaQuery.of(context).size.height * 0.06),
           // Filter bar
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+            padding: EdgeInsets.symmetric(
+              horizontal: MediaQuery.of(context).size.width * 0.04,
+              vertical: MediaQuery.of(context).size.height * 0.012
+            ),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
@@ -125,8 +128,11 @@ class _HomeScreenState extends State<HomeScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(right: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        margin: EdgeInsets.only(right: MediaQuery.of(context).size.width * 0.03),
+        padding: EdgeInsets.symmetric(
+          horizontal: MediaQuery.of(context).size.width * 0.04,
+          vertical: MediaQuery.of(context).size.height * 0.012
+        ),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -141,12 +147,12 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: AppTheme.primaryColor, size: 16),
-            const SizedBox(width: 6),
+            Icon(icon, color: AppTheme.primaryColor, size: MediaQuery.of(context).size.width * 0.04),
+            SizedBox(width: MediaQuery.of(context).size.width * 0.015),
             Text(
               label,
-              style: const TextStyle(
-                fontSize: 12,
+              style: TextStyle(
+                fontSize: MediaQuery.of(context).size.width * 0.03,
                 fontWeight: FontWeight.w500,
                 color: Color(0xFF334155),
               ),
@@ -164,9 +170,9 @@ class _HomeScreenState extends State<HomeScreen> {
         final user = userSnapshot.data;
         if (user == null) {
           return Container(
-            margin: const EdgeInsets.all(4),
+            margin: EdgeInsets.all(MediaQuery.of(context).size.width * 0.01),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(MediaQuery.of(context).size.width * 0.05),
               color: Colors.grey[100],
             ),
             child: const LoadingWidget(message: 'Loading user...'),
@@ -206,9 +212,9 @@ class _HomeScreenState extends State<HomeScreen> {
             );
           },
           child: Container(
-            margin: const EdgeInsets.all(4),
+            margin: EdgeInsets.all(MediaQuery.of(context).size.width * 0.01),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(MediaQuery.of(context).size.width * 0.05),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.15),
@@ -218,7 +224,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(MediaQuery.of(context).size.width * 0.05),
               child: Stack(
                 children: [
                   // Background Image
@@ -226,11 +232,16 @@ class _HomeScreenState extends State<HomeScreen> {
                     width: double.infinity,
                     height: double.infinity,
                     decoration: BoxDecoration(
-                      image: const DecorationImage(
-                        image: NetworkImage('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop&crop=face'),
-                        fit: BoxFit.cover,
-                      ),
-                      gradient: user?.profileImageUrl == null
+                      image: user.profileImageUrl != null || user.photoUrls?.isNotEmpty == true
+                          ? DecorationImage(
+                              image: NetworkImage(user.profileImageUrl ?? user.photoUrls!.first),
+                              fit: BoxFit.cover,
+                            )
+                          : const DecorationImage(
+                              image: NetworkImage('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop&crop=face'),
+                              fit: BoxFit.cover,
+                            ),
+                      gradient: user.profileImageUrl == null && user.photoUrls?.isEmpty != false
                           ? const LinearGradient(
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
@@ -260,22 +271,25 @@ class _HomeScreenState extends State<HomeScreen> {
                     left: 0,
                     right: 0,
                     child: Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.04),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
                             "$userName${userAge > 0 ? ', $userAge' : ''}",
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: Colors.white,
-                              fontSize: 18,
+                              fontSize: MediaQuery.of(context).size.width * 0.045,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(height: 6),
+                          SizedBox(height: MediaQuery.of(context).size.height * 0.007),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: MediaQuery.of(context).size.width * 0.025,
+                              vertical: MediaQuery.of(context).size.height * 0.005
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(8),

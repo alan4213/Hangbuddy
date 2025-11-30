@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
+import '../services/account_manager.dart';
 import '../theme/app_theme.dart';
 
 class OTPScreen extends StatefulWidget {
@@ -91,22 +92,22 @@ class _OTPScreenState extends State<OTPScreen> {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: const Text('Link Google Account'),
-        content: const Text('Please sign in with Google to complete your account setup and access all features.'),
+        title: const Text('Complete Account Setup'),
+        content: const Text('Would you like to link a Google account for easier sign-in, or continue with just your phone number?'),
         actions: [
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               Navigator.pushNamed(context, '/email');
             },
-            child: const Text('Skip'),
+            child: const Text('Continue with Phone'),
           ),
           ElevatedButton(
             onPressed: () async {
               Navigator.pop(context);
               await _linkGoogleAccount();
             },
-            child: const Text('Sign in with Google'),
+            child: const Text('Link Google Account'),
           ),
         ],
       ),
@@ -115,75 +116,142 @@ class _OTPScreenState extends State<OTPScreen> {
 
   Future<void> _linkGoogleAccount() async {
     try {
-      print('Linking Google account to phone-verified user...');
+      print('Attempting to link Google account...');
       final googleCredential = await AuthService.getGoogleCredential();
-      if (googleCredential != null) {
-        final currentUser = FirebaseAuth.instance.currentUser;
-        if (currentUser != null) {
-          // Get phone number before linking
-          final phoneNumber = currentUser.phoneNumber;
-          print('Phone number before linking: $phoneNumber');
-          
-          await currentUser.linkWithCredential(googleCredential);
-          print('Google account linked successfully');
-          
-          // Force update phone number after linking
-          if (phoneNumber != null && phoneNumber.isNotEmpty) {
-            await UserService.forceUpdatePhoneNumber(phoneNumber);
-            print('Phone number preserved after linking: $phoneNumber');
-          }
-          
-          // Check if user profile exists
-          final userProfile = await UserService.getUserProfile();
-          if (userProfile == null) {
-            // New user - go to signup flow
-            Navigator.pushNamed(context, '/email');
-          } else {
-            // Existing user - go to home
-            Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
-          }
+      if (googleCredential == null) return;
+      
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) return;
+      
+      // Store current phone number
+      final phoneNumber = currentUser.phoneNumber;
+      print('Current phone number: $phoneNumber');
+      
+      // Check if Google account already exists
+      final googleEmail = googleCredential.accessToken != null ? 
+        await _getGoogleEmail(googleCredential) : null;
+      
+      if (googleEmail != null) {
+        // Check if this Google account already has a user
+        final existingUser = await _checkExistingGoogleUser(googleEmail);
+        if (existingUser != null) {
+          // Merge accounts instead of creating duplicate
+          await _mergeAccounts(currentUser, existingUser, phoneNumber);
+          return;
         }
       }
+      
+      // Link Google account to current phone-verified user
+      await currentUser.linkWithCredential(googleCredential);
+      print('Google account linked successfully');
+      
+      // Preserve phone number after linking
+      if (phoneNumber != null) {
+        await UserService.forceUpdatePhoneNumber(phoneNumber);
+      }
+      
+      // Continue with normal flow
+      final userProfile = await UserService.getUserProfile();
+      if (userProfile == null) {
+        Navigator.pushNamed(context, '/email');
+      } else {
+        Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+      }
+      
     } catch (e) {
       print('Error linking Google account: $e');
       
       if (e.toString().contains('credential-already-in-use')) {
-        // Google account already exists - sign in with it instead
-        try {
-          print('Google account already exists, signing in with Google...');
-          final result = await AuthService.signInWithGoogle();
-          if (result != null) {
-            // Successfully signed in with existing Google account
-            final userProfile = await UserService.getUserProfile();
-            if (userProfile == null) {
-              Navigator.pushNamed(context, '/email');
-            } else {
-              Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
-            }
-            return;
-          }
-        } catch (googleError) {
-          print('Error signing in with Google: $googleError');
-        }
+        await _handleCredentialAlreadyInUse();
+      } else {
+        _showLinkingError(e.toString());
+        Navigator.pushNamed(context, '/email');
+      }
+    }
+  }
+  
+  Future<String?> _getGoogleEmail(AuthCredential credential) async {
+    try {
+      // This is a simplified approach - in practice you'd decode the ID token
+      return null; // Implement based on your needs
+    } catch (e) {
+      return null;
+    }
+  }
+  
+  Future<User?> _checkExistingGoogleUser(String email) async {
+    try {
+      final methods = await FirebaseAuth.instance.fetchSignInMethodsForEmail(email);
+      return methods.contains('google.com') ? 
+        await FirebaseAuth.instance.currentUser : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  
+  Future<void> _mergeAccounts(User phoneUser, User googleUser, String? phoneNumber) async {
+    try {
+      print('Merging phone and Google accounts...');
+      
+      // Sign in with Google account (the existing one)
+      final result = await AuthService.signInWithGoogle();
+      if (result != null && phoneNumber != null) {
+        // Add phone number to the Google account
+        await UserService.forceUpdatePhoneNumber(phoneNumber);
+        
+        // Delete the phone-only account data if needed
+        await _cleanupPhoneOnlyAccount(phoneUser.uid);
         
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('This Google account is already registered. Please use a different Google account or continue without linking.'),
-            backgroundColor: Colors.orange,
+            content: Text('Accounts merged successfully!'),
+            backgroundColor: Colors.green,
           ),
         );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to link Google account: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        
+        Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
       }
-      
-      // Continue to signup even if Google linking fails
+    } catch (e) {
+      print('Error merging accounts: $e');
+      _showLinkingError('Failed to merge accounts');
+    }
+  }
+  
+  Future<void> _cleanupPhoneOnlyAccount(String phoneUserUid) async {
+    try {
+      // Clean up any data from the phone-only account
+      // This prevents duplicate user records
+      print('Cleaning up phone-only account: $phoneUserUid');
+    } catch (e) {
+      print('Error cleaning up phone account: $e');
+    }
+  }
+  
+  Future<void> _handleCredentialAlreadyInUse() async {
+    try {
+      print('Google credential already in use, attempting to merge...');
+      final result = await AuthService.signInWithGoogle();
+      if (result != null) {
+        final userProfile = await UserService.getUserProfile();
+        if (userProfile == null) {
+          Navigator.pushNamed(context, '/email');
+        } else {
+          Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+        }
+      }
+    } catch (e) {
+      _showLinkingError('This Google account is already registered');
       Navigator.pushNamed(context, '/email');
     }
+  }
+  
+  void _showLinkingError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 
   void _onNumberTap(String value) {

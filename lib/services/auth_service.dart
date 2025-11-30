@@ -54,6 +54,17 @@ class AuthService {
         verificationId: _verificationId!,
         smsCode: otp,
       );
+      
+      // Check if phone number is already linked to another account
+      if (_phoneNumber != null) {
+        final existingUser = await _checkPhoneNumberExists(_phoneNumber!);
+        if (existingUser != null) {
+          print('Phone number already exists, signing in with existing account');
+          await FirebaseAuth.instance.signInWithCredential(credential);
+          return true;
+        }
+      }
+      
       await FirebaseAuth.instance.signInWithCredential(credential);
       
       // Store phone number in Firestore immediately
@@ -87,6 +98,22 @@ class AuthService {
         }
       }
       throw 'Verification failed. Please try again.';
+    }
+  }
+  
+  // Check if phone number already exists in database
+  static Future<DocumentSnapshot?> _checkPhoneNumberExists(String phoneNumber) async {
+    try {
+      final query = await FirebaseFirestore.instance
+          .collection('users')
+          .where('phoneNumber', isEqualTo: phoneNumber)
+          .limit(1)
+          .get();
+      
+      return query.docs.isNotEmpty ? query.docs.first : null;
+    } catch (e) {
+      print('Error checking phone number: $e');
+      return null;
     }
   }
   
@@ -146,6 +173,48 @@ class AuthService {
       print('Stack trace: $stackTrace');
       print('Error type: ${e.runtimeType}');
       rethrow;
+    }
+  }
+  
+  // Check if email already exists and return sign-in methods
+  static Future<List<String>> checkExistingEmail(String email) async {
+    try {
+      return await FirebaseAuth.instance.fetchSignInMethodsForEmail(email);
+    } catch (e) {
+      print('Error checking existing email: $e');
+      return [];
+    }
+  }
+  
+  // Merge phone and Google accounts
+  static Future<bool> mergePhoneAndGoogleAccounts(String phoneNumber) async {
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) return false;
+      
+      // Update user profile with phone number
+      await FirebaseFirestore.instance.collection('users').doc(currentUser.uid).set({
+        'phoneNumber': phoneNumber,
+        'uid': currentUser.uid,
+        'email': currentUser.email,
+        'updatedAt': DateTime.now().millisecondsSinceEpoch,
+      }, SetOptions(merge: true));
+      
+      print('Successfully merged phone number $phoneNumber with Google account');
+      return true;
+    } catch (e) {
+      print('Error merging accounts: $e');
+      return false;
+    }
+  }
+  
+  // Clean up duplicate accounts
+  static Future<void> cleanupDuplicateAccount(String uid) async {
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(uid).delete();
+      print('Cleaned up duplicate account: $uid');
+    } catch (e) {
+      print('Error cleaning up duplicate account: $e');
     }
   }
 }

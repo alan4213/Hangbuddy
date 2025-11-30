@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'match_notification_screen.dart';
 import '../theme/app_theme.dart';
+import '../services/notification_service.dart';
+import '../services/user_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ProfileDetailScreen extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -15,20 +19,111 @@ class ProfileDetailScreen extends StatefulWidget {
 class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
   PageController _pageController = PageController();
   int _currentIndex = 0;
+  Map<String, dynamic>? _freshUserData;
+  bool _isLoading = true;
+  
+  @override
+  void initState() {
+    super.initState();
+    print('ProfileDetailScreen initState called');
+    _loadFreshUserData();
+  }
+  
+  Future<void> _loadFreshUserData() async {
+    try {
+      print('Widget user data: ${widget.user}');
+      
+      // Try to find UID in widget.user or use phone number to find user
+      String? targetUid = widget.user['uid'] ?? widget.user['userId'];
+      
+      if (targetUid == null || targetUid.isEmpty) {
+        print('No UID found, searching by phone number: ${widget.user['phoneNumber']}');
+        if (widget.user['phoneNumber'] != null) {
+          final querySnapshot = await FirebaseFirestore.instance
+              .collection('users')
+              .where('phoneNumber', isEqualTo: widget.user['phoneNumber'])
+              .limit(1)
+              .get();
+          
+          if (querySnapshot.docs.isNotEmpty) {
+            targetUid = querySnapshot.docs.first.id;
+            print('Found user by phone: $targetUid');
+          }
+        }
+      }
+      
+      if (targetUid == null) {
+        print('Could not determine target user UID');
+        return;
+      }
+      
+      print('Loading fresh data for UID: $targetUid');
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(targetUid)
+          .get();
+      if (doc.exists && mounted) {
+        final data = doc.data()!;
+        print('=== FIRESTORE DATA ===');
+        print('photoUrls: ${data['photoUrls']}');
+        print('profileImageUrl: ${data['profileImageUrl']}');
+        print('image: ${data['image']}');
+        print('=== END FIRESTORE ===');
+        setState(() {
+          _freshUserData = data;
+        });
+      } else {
+        print('Document does not exist or widget unmounted');
+      }
+    } catch (e) {
+      print('Error loading fresh user data: $e');
+    }
+  }
+  
+  Map<String, dynamic> get currentUser => _freshUserData ?? widget.user;
   
   List<String> get images {
-    final imageUrl = widget.user['image'];
-    final validUrl = (imageUrl != null && imageUrl != 'local_photo' && imageUrl.toString().startsWith('http')) 
-        ? imageUrl 
-        : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400';
-    return [validUrl, validUrl, validUrl];
+    final List<String> userImages = [];
+    
+    print('=== PHOTO DEBUG ===');
+    print('photoUrls: ${currentUser['photoUrls']}');
+    print('profileImageUrl: ${currentUser['profileImageUrl']}');
+    print('image: ${currentUser['image']}');
+    
+    // Get photos from photoUrls array first
+    final photoUrls = currentUser['photoUrls'] as List?;
+    if (photoUrls != null && photoUrls.isNotEmpty) {
+      print('Found ${photoUrls.length} photos in photoUrls');
+      for (final photo in photoUrls) {
+        if (photo != null && photo.toString().startsWith('http')) {
+          userImages.add(photo);
+          print('Added photo: ${photo.toString().substring(0, 50)}...');
+        }
+      }
+    }
+    
+    // If no photoUrls, get from profileImageUrl or image field
+    if (userImages.isEmpty) {
+      final mainImage = currentUser['profileImageUrl'] ?? currentUser['image'];
+      if (mainImage != null && mainImage.toString().startsWith('http')) {
+        userImages.add(mainImage);
+        print('Added main image: ${mainImage.toString().substring(0, 50)}...');
+      }
+    }
+    
+    print('Total images: ${userImages.length}');
+    print('=== END DEBUG ===');
+    
+    // If still no valid images, use placeholder
+    if (userImages.isEmpty) {
+      userImages.add('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400');
+    }
+    
+    return userImages;
   }
 
   @override
   Widget build(BuildContext context) {
-    // Debug prints
-   
-    
     return Scaffold(
       backgroundColor: Colors.white,
       body: Column(
@@ -40,6 +135,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
               children: [
                 PageView.builder(
                   controller: _pageController,
+                  physics: images.length > 1 ? const PageScrollPhysics() : const NeverScrollableScrollPhysics(),
                   onPageChanged: (index) {
                     setState(() {
                       _currentIndex = index;
@@ -90,36 +186,63 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                     ),
                   ),
                 ),
-                // Page indicators
-                Positioned(
-                  top: 100,
-                  left: 0,
-                  right: 0,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(
-                      images.length,
-                      (index) => Container(
-                        margin: EdgeInsets.symmetric(horizontal: 2),
-                        width: 30,
-                        height: 3,
-                        decoration: BoxDecoration(
-                          color: _currentIndex == index ? Colors.white : Colors.white.withOpacity(0.3),
-                          borderRadius: BorderRadius.circular(2),
+                // Page indicators - only show if multiple images
+                if (images.length > 1)
+                  Positioned(
+                    top: 100,
+                    left: 0,
+                    right: 0,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        images.length,
+                        (index) => Container(
+                          margin: EdgeInsets.symmetric(horizontal: 2),
+                          width: MediaQuery.of(context).size.width * 0.08,
+                          height: 3,
+                          decoration: BoxDecoration(
+                            color: _currentIndex == index ? Colors.white : Colors.white.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(2),
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
                 // Match button
                 Positioned(
-                  bottom: 20,
-                  right: 20,
+                  bottom: MediaQuery.of(context).size.height * 0.025,
+                  right: MediaQuery.of(context).size.width * 0.05,
                   child: GestureDetector(
-                    onTap: () {
+                    onTap: () async {
                       if (widget.onMatch != null) {
                         widget.onMatch!();
                       }
+                      
+                      // Get current user's name to send in notification
+                      final currentUser = FirebaseAuth.instance.currentUser;
+                      String currentUserName = 'Someone';
+                      if (currentUser != null) {
+                        try {
+                          final userDoc = await FirebaseFirestore.instance
+                              .collection('users')
+                              .doc(currentUser.uid)
+                              .get();
+                          if (userDoc.exists) {
+                            final userData = userDoc.data()!;
+                            currentUserName = '${userData['firstName'] ?? ''} ${userData['lastName'] ?? ''}'.trim();
+                            if (currentUserName.isEmpty) currentUserName = 'Someone';
+                          }
+                        } catch (e) {
+                          print('Error getting current user name: $e');
+                        }
+                      }
+                      
+                      // Send match notification to the profile user (not current user)
+                      await NotificationService.sendMatchNotification(
+                        widget.user['userId'] ?? widget.user['uid'] ?? '',
+                        currentUserName
+                      );
+                      
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -128,13 +251,13 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                       );
                     },
                     child: Container(
-                      width: 60,
-                      height: 60,
+                      width: MediaQuery.of(context).size.width * 0.15,
+                      height: MediaQuery.of(context).size.width * 0.15,
                       decoration: BoxDecoration(
                         color: AppTheme.primaryColor,
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(Icons.favorite, color: Colors.white, size: 30),
+                      child: Icon(Icons.favorite, color: Colors.white, size: MediaQuery.of(context).size.width * 0.075),
                     ),
                   ),
                 ),
@@ -145,7 +268,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
           Expanded(
             flex: 2,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.05),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -155,7 +278,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                       Text(
                         '${widget.user['firstName'] ?? ''} ${widget.user['lastName'] ?? ''}',
                         style: TextStyle(
-                          fontSize: 24,
+                          fontSize: MediaQuery.of(context).size.width * 0.06,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -165,7 +288,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                       Text(
                         '${widget.user['age'] ?? '0'}',
                         style: TextStyle(
-                          fontSize: 24,
+                          fontSize: MediaQuery.of(context).size.width * 0.06,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -176,7 +299,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                     'Looking for new friends',
                     style: TextStyle(
                       color: Colors.grey[600],
-                      fontSize: 14,
+                      fontSize: MediaQuery.of(context).size.width * 0.035,
                     ),
                   ),
                   SizedBox(height: 16),
@@ -230,7 +353,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                     Text(
                       'Interests',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: MediaQuery.of(context).size.width * 0.04,
                         fontWeight: FontWeight.w600,
                         color: Colors.black87,
                       ),
@@ -271,13 +394,13 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
   Widget _buildInfoRow(IconData icon, String label, String value) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: Colors.grey[600]),
-        SizedBox(width: 8),
+        Icon(icon, size: MediaQuery.of(context).size.width * 0.04, color: Colors.grey[600]),
+        SizedBox(width: MediaQuery.of(context).size.width * 0.02),
         Text(
           '$label: ',
           style: TextStyle(
             color: Colors.grey[600],
-            fontSize: 14,
+            fontSize: MediaQuery.of(context).size.width * 0.035,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -286,7 +409,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
             value,
             style: TextStyle(
               color: Colors.black87,
-              fontSize: 14,
+              fontSize: MediaQuery.of(context).size.width * 0.035,
             ),
           ),
         ),

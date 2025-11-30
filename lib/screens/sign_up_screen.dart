@@ -123,14 +123,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
                 // Header
                 Padding(
-                  padding: EdgeInsets.all(24),
+                  padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.06),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         'Gather',
                         style: TextStyle(
-                          fontSize: 24,
+                          fontSize: MediaQuery.of(context).size.width * 0.06,
                           fontWeight: FontWeight.bold,
                           color: AppTheme.primaryColor,
                         ),
@@ -144,9 +144,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 Expanded(
                   child: Container(
                     width: double.infinity,
-                    margin: EdgeInsets.symmetric(horizontal: 24),
+                    margin: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.06),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(MediaQuery.of(context).size.width * 0.05),
                       gradient: AppTheme.primaryGradient.scale(0.3),
                     ),
                     child: Center(
@@ -154,11 +154,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Container(
-                            width: 100,
-                            height: 100,
+                            width: MediaQuery.of(context).size.width * 0.25,
+                            height: MediaQuery.of(context).size.width * 0.25,
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius: BorderRadius.circular(50),
+                              borderRadius: BorderRadius.circular(MediaQuery.of(context).size.width * 0.125),
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.black.withOpacity(0.1),
@@ -169,7 +169,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             ),
                             child: Icon(
                               Icons.favorite,
-                              size: 50,
+                              size: MediaQuery.of(context).size.width * 0.125,
                               color: AppTheme.primaryColor,
                             ),
                           ),
@@ -183,12 +183,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 Expanded(
                   child: Container(
                     width: double.infinity,
-                    padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(context).padding.bottom),
+                    padding: EdgeInsets.fromLTRB(
+                      MediaQuery.of(context).size.width * 0.06,
+                      MediaQuery.of(context).size.width * 0.06,
+                      MediaQuery.of(context).size.width * 0.06,
+                      MediaQuery.of(context).padding.bottom
+                    ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(32),
-                      topRight: Radius.circular(32),
+                      topLeft: Radius.circular(MediaQuery.of(context).size.width * 0.08),
+                      topRight: Radius.circular(MediaQuery.of(context).size.width * 0.08),
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -205,25 +210,25 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       Text(
                         'Start Your Hangout\nJourney',
                         style: TextStyle(
-                          fontSize: 24,
+                          fontSize: MediaQuery.of(context).size.width * 0.06,
                           fontWeight: FontWeight.bold,
                           color: AppTheme.textPrimary,
                           height: 1.2,
                         ),
                       ),
                       
-                      SizedBox(height: 12),
+                      SizedBox(height: MediaQuery.of(context).size.height * 0.015),
                       
                       Text(
                         'Connect with like-minded people and\nexplore amazing experiences together.',
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: MediaQuery.of(context).size.width * 0.035,
                           color: AppTheme.textSecondary,
                           height: 1.4,
                         ),
                       ),
                       
-                      SizedBox(height: 24),
+                      SizedBox(height: MediaQuery.of(context).size.height * 0.03),
                       
 
                       // Continue with Google

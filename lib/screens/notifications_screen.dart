@@ -41,7 +41,7 @@ class NotificationsScreen extends StatelessWidget {
               final isRead = notification['read'] ?? false;
 
               return Card(
-                margin: const EdgeInsets.all(8),
+                margin: EdgeInsets.all(MediaQuery.of(context).size.width * 0.02),
                 child: ListTile(
                   leading: Icon(
                     notification['type'] == 'interest' ? Icons.favorite : Icons.people,

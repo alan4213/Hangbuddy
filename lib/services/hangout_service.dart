@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/hangout_request_model.dart';
 import 'location_service.dart';
+import 'notification_service.dart';
 
 class HangoutService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -118,6 +119,12 @@ class HangoutService {
         print('Creating notification: $notificationData');
         await _firestore.collection('notifications').add(notificationData);
         print('Notification created successfully');
+        
+        // Send push notification
+        await NotificationService.sendHangoutInterestNotification(
+          hangout.creatorId,
+          hangout.title
+        );
       } else {
         print('Hangout document does not exist');
       }

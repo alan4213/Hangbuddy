@@ -29,14 +29,14 @@ class _ChatScreenState extends State<ChatScreen> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.05),
           child: Column(
             children: [
               // Search Bar
               Container(
                 decoration: BoxDecoration(
                   color: const Color(0xFFF8F9FA),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(MediaQuery.of(context).size.width * 0.05),
                 ),
                 child: TextField(
                   decoration: InputDecoration(
@@ -44,12 +44,12 @@ class _ChatScreenState extends State<ChatScreen> {
                     hintStyle: TextStyle(color: Colors.grey[500]),
                     prefixIcon: Icon(Icons.search, color: AppTheme.primaryColor),
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                    contentPadding: EdgeInsets.symmetric(vertical: MediaQuery.of(context).size.height * 0.02),
                   ),
                 ),
               ),
               
-              const SizedBox(height: 24),
+              SizedBox(height: MediaQuery.of(context).size.height * 0.03),
             
               // Chats and Matches List
               Expanded(
@@ -201,10 +201,15 @@ class _ChatScreenState extends State<ChatScreen> {
                       decoration: BoxDecoration(
                         color: avatarColors[otherUserId.hashCode % avatarColors.length],
                         shape: BoxShape.circle,
-                        image: DecorationImage(
-                          image: NetworkImage('https://picsum.photos/100/100?random=${otherUserId.hashCode % 100}'),
-                          fit: BoxFit.cover,
-                        ),
+                        image: user.profileImageUrl != null || user.photoUrls?.isNotEmpty == true
+                            ? DecorationImage(
+                                image: NetworkImage(user.profileImageUrl ?? user.photoUrls!.first),
+                                fit: BoxFit.cover,
+                              )
+                            : DecorationImage(
+                                image: NetworkImage('https://picsum.photos/100/100?random=${otherUserId.hashCode % 100}'),
+                                fit: BoxFit.cover,
+                              ),
                       ),
                       child: user.profileImageUrl == null 
                           ? Center(
@@ -347,10 +352,15 @@ class _ChatScreenState extends State<ChatScreen> {
                   decoration: BoxDecoration(
                     color: avatarColors[otherUserId.hashCode % avatarColors.length],
                     shape: BoxShape.circle,
-                    image: DecorationImage(
-                      image: NetworkImage('https://picsum.photos/100/100?random=${otherUserId.hashCode % 100}'),
-                      fit: BoxFit.cover,
-                    ),
+                    image: user.profileImageUrl != null || user.photoUrls?.isNotEmpty == true
+                        ? DecorationImage(
+                            image: NetworkImage(user.profileImageUrl ?? user.photoUrls!.first),
+                            fit: BoxFit.cover,
+                          )
+                        : DecorationImage(
+                            image: NetworkImage('https://picsum.photos/100/100?random=${otherUserId.hashCode % 100}'),
+                            fit: BoxFit.cover,
+                          ),
                   ),
                   child: user.profileImageUrl == null 
                       ? Center(

@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../services/user_service.dart';
 import '../models/user_model.dart';
 import '../theme/app_theme.dart';
+import 'edit_photos_screen.dart';
 
 class ProfileDetailsScreen extends StatefulWidget {
   const ProfileDetailsScreen({super.key});
@@ -402,6 +403,44 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                 ),
               ),
             ),
+            
+            const SizedBox(height: 24),
+            
+            // Edit Photos Button
+            Container(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () async {
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => EditPhotosScreen(
+                        currentPhotos: _userProfile?.photoUrls,
+                      ),
+                    ),
+                  );
+                  if (result == true) {
+                    _loadUserProfile(); // Refresh profile
+                  }
+                },
+                icon: Icon(Icons.photo_library, color: Colors.white),
+                label: Text(
+                  'Edit Photos',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
 
             const SizedBox(height: 100),
                   ],
@@ -497,14 +536,24 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
         );
       } else {
         // Update existing profile
-        await UserService.updateUserProfile(
-          firstName: _firstNameController.text.trim(),
-          lastName: _lastNameController.text.trim(),
-          birthday: _selectedDate,
-          gender: _selectedGender,
-          interests: _selectedInterests,
-          profileImageUrl: imageUrl,
-        );
+        if (_selectedImage != null && imageUrl != null) {
+          await UserService.updateUserProfile(
+            firstName: _firstNameController.text.trim(),
+            lastName: _lastNameController.text.trim(),
+            birthday: _selectedDate,
+            gender: _selectedGender,
+            interests: _selectedInterests,
+            profileImageUrl: imageUrl,
+          );
+        } else {
+          await UserService.updateUserProfile(
+            firstName: _firstNameController.text.trim(),
+            lastName: _lastNameController.text.trim(),
+            birthday: _selectedDate,
+            gender: _selectedGender,
+            interests: _selectedInterests,
+          );
+        }
       }
 
       ScaffoldMessenger.of(context).showSnackBar(

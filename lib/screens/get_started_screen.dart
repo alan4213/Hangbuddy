@@ -50,14 +50,14 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
               ),
               // Header
               Padding(
-                padding: EdgeInsets.all(24),
+                padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.06),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       'Gather',
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: MediaQuery.of(context).size.width * 0.06,
                         fontWeight: FontWeight.bold,
                         color: AppTheme.primaryColor,
                       ),
@@ -78,12 +78,17 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                 constraints: BoxConstraints(
                   maxHeight: MediaQuery.of(context).size.height * 0.45,
                 ),
-                padding: EdgeInsets.fromLTRB(24, 24, 24, MediaQuery.of(context).padding.bottom + 16),
+                padding: EdgeInsets.fromLTRB(
+                  MediaQuery.of(context).size.width * 0.06,
+                  MediaQuery.of(context).size.width * 0.06,
+                  MediaQuery.of(context).size.width * 0.06,
+                  MediaQuery.of(context).padding.bottom + MediaQuery.of(context).size.height * 0.02
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(32),
-                    topRight: Radius.circular(32),
+                    topLeft: Radius.circular(MediaQuery.of(context).size.width * 0.08),
+                    topRight: Radius.circular(MediaQuery.of(context).size.width * 0.08),
                   ),
                   boxShadow: [
                     BoxShadow(
@@ -107,18 +112,18 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                       ),
                     ),
                     
-                    SizedBox(height: 12),
+                    SizedBox(height: MediaQuery.of(context).size.height * 0.015),
                     
                     Text(
                       'Find amazing people to explore\nactivities and create memories together.',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: MediaQuery.of(context).size.width * 0.035,
                         color: AppTheme.textSecondary,
                         height: 1.4,
                       ),
                     ),
                     
-                    SizedBox(height: 32),
+                    SizedBox(height: MediaQuery.of(context).size.height * 0.04),
                     
                     // Create an account button
                     LoadingButton(
@@ -140,12 +145,12 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                       },
                     ),
                     
-                    SizedBox(height: 12),
+                    SizedBox(height: MediaQuery.of(context).size.height * 0.015),
                     
                     // I have an account button
                     Container(
                       width: double.infinity,
-                      height: 50,
+                      height: MediaQuery.of(context).size.height * 0.06,
                       child: OutlinedButton(
                         onPressed: () async {
                           setState(() => _isLoading = true);
@@ -166,13 +171,13 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                         style: OutlinedButton.styleFrom(
                           side: BorderSide(color: AppTheme.primaryColor),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(25),
+                            borderRadius: BorderRadius.circular(MediaQuery.of(context).size.width * 0.06),
                           ),
                         ),
                         child: Text(
                           'I have an account',
                           style: TextStyle(
-                            fontSize: 16,
+                            fontSize: MediaQuery.of(context).size.width * 0.04,
                             fontWeight: FontWeight.w600,
                             color: AppTheme.primaryColor,
                           ),
