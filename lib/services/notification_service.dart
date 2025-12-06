@@ -7,6 +7,8 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 class NotificationService {
   static final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   static final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+  static GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+  static Function(int)? onTabChange;
 
   static Future<void> initialize() async {
     // Initialize local notifications
@@ -33,10 +35,16 @@ class NotificationService {
     // Handle background messages
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
     
-    // Handle notification taps
+    // Handle notification taps when app is in background
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      print('Notification tapped: ${message.data}');
+      _handleNotificationTap(message.data);
     });
+    
+    // Handle notification tap when app is terminated
+    RemoteMessage? initialMessage = await _messaging.getInitialMessage();
+    if (initialMessage != null) {
+      _handleNotificationTap(initialMessage.data);
+    }
   }
   
   static Future<void> _initializeLocalNotifications() async {
@@ -46,7 +54,17 @@ class NotificationService {
     const InitializationSettings initializationSettings =
         InitializationSettings(android: initializationSettingsAndroid);
     
-    await _localNotifications.initialize(initializationSettings);
+    await _localNotifications.initialize(
+      initializationSettings,
+      onDidReceiveNotificationResponse: (NotificationResponse response) {
+        if (response.payload != null) {
+          final data = Map<String, dynamic>.from(
+            Uri.splitQueryString(response.payload!)
+          );
+          _handleNotificationTap(data);
+        }
+      },
+    );
     
     // Create notification channel
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
@@ -62,6 +80,8 @@ class NotificationService {
   }
   
   static Future<void> _showLocalNotification(RemoteMessage message) async {
+    final payload = Uri(queryParameters: message.data).query;
+    
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
       'hangbuddy_notifications',
@@ -80,6 +100,7 @@ class NotificationService {
       message.notification?.title ?? 'Hangbuddy',
       message.notification?.body ?? 'You have a new notification',
       platformChannelSpecifics,
+      payload: payload,
     );
   }
   
@@ -100,10 +121,26 @@ class NotificationService {
     return await _messaging.getToken();
   }
   
-  static Future<void> _sendDeviceNotification(String userId, String title, String body) async {
-    // Cloud Function will handle FCM push notifications automatically
-    // when notification document is created in Firestore
-    print('Notification document created - Cloud Function will send FCM: $title');
+  static Future<void> _sendDeviceNotification(String userId, String title, String body, [Map<String, dynamic>? data]) async {
+    try {
+      // Get user's FCM token
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
+      final fcmToken = userDoc.data()?['fcmToken'];
+      
+      if (fcmToken != null) {
+        // Send direct FCM notification
+        await FirebaseFirestore.instance.collection('fcm_messages').add({
+          'token': fcmToken,
+          'title': title,
+          'body': body,
+          'data': data ?? {},
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+        print('FCM message queued: $title');
+      }
+    } catch (e) {
+      print('Error sending FCM notification: $e');
+    }
   }
   
   static Future<void> sendMatchNotification(String userId, String matchName) async {
@@ -115,12 +152,17 @@ class NotificationService {
         'type': 'match',
         'read': false,
         'timestamp': FieldValue.serverTimestamp(),
+        'data': {
+          'type': 'match',
+          'screen': 'matches',
+        },
       });
       
       await _sendDeviceNotification(
         userId,
         'New Match! 🎉',
-        'You matched with $matchName! Start chatting now.'
+        'You matched with $matchName! Start chatting now.',
+        {'type': 'match', 'screen': 'matches'}
       );
     } catch (e) {
       print('Error sending match notification: $e');
@@ -136,16 +178,85 @@ class NotificationService {
         'type': 'hangout_interest',
         'read': false,
         'timestamp': FieldValue.serverTimestamp(),
+        'data': {
+          'type': 'hangout_interest',
+          'screen': 'notifications',
+        },
       });
       
       await _sendDeviceNotification(
         creatorId,
         'Someone is interested! 🙋♂️',
-        'Someone wants to join your "$hangoutTitle" hangout!'
+        'Someone wants to join your "$hangoutTitle" hangout!',
+        {'type': 'hangout_interest', 'screen': 'notifications'}
       );
     } catch (e) {
       print('Error sending hangout interest notification: $e');
     }
+  }
+  
+  static Future<void> sendMessageNotification(String userId, String senderName, String message) async {
+    try {
+      await FirebaseFirestore.instance.collection('notifications').add({
+        'userId': userId,
+        'title': 'New Message 💬',
+        'message': '$senderName: $message',
+        'type': 'message',
+        'read': false,
+        'timestamp': FieldValue.serverTimestamp(),
+        'data': {
+          'type': 'message',
+          'screen': 'chat',
+        },
+      });
+      
+      await _sendDeviceNotification(
+        userId,
+        'New Message 💬',
+        '$senderName: $message',
+        {'type': 'message', 'screen': 'chat'}
+      );
+    } catch (e) {
+      print('Error sending message notification: $e');
+    }
+  }
+  
+  static void _handleNotificationTap(Map<String, dynamic> data) {
+    final context = navigatorKey.currentContext;
+    if (context == null) return;
+    
+    final type = data['type'];
+    
+    // Navigate to home first
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/home',
+      (route) => false,
+    );
+    
+    // Then navigate to appropriate tab
+    Future.delayed(Duration(milliseconds: 200), () {
+      if (onTabChange != null) {
+        switch (type) {
+          case 'match':
+            onTabChange!(1); // Matches tab
+            break;
+          case 'hangout_interest':
+            onTabChange!(3); // Profile tab (notifications)
+            break;
+          case 'message':
+            onTabChange!(2); // Chat tab
+            break;
+          default:
+            onTabChange!(0); // Home tab
+            break;
+        }
+      }
+    });
+  }
+  
+  static void setTabChangeCallback(Function(int) callback) {
+    onTabChange = callback;
   }
 }
 

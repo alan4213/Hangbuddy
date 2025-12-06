@@ -15,7 +15,17 @@ class PhotoUploadService {
           .child(user.uid)
           .child(fileName);
 
-      await ref.putFile(imageFile);
+      // Upload with metadata for better performance
+      final metadata = SettableMetadata(
+        contentType: 'image/jpeg',
+        cacheControl: 'max-age=3600',
+      );
+
+      final uploadTask = ref.putFile(imageFile, metadata);
+      
+      // Wait for upload to complete
+      await uploadTask;
+      
       return await ref.getDownloadURL();
     } catch (e) {
       print('Error uploading photo: $e');

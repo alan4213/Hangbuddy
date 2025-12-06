@@ -42,6 +42,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      navigatorKey: NotificationService.navigatorKey,
       theme: AppTheme.theme,
       home: SplashScreen(),
       routes: {
@@ -66,18 +67,23 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
 
+  @override
+  void initState() {
+    super.initState();
+    NotificationService.setTabChangeCallback((index) {
+      setState(() {
+        _selectedIndex = index;
+      });
+    });
+    _listenForNotifications();
+  }
+
   final List<Widget> _screens = [
     const HomeScreen(),
     const MatchesScreen(),
     ChatScreen(),
     const ProfileScreen(),
   ];
-  
-  @override
-  void initState() {
-    super.initState();
-    _listenForNotifications();
-  }
   
   void _listenForNotifications() {
     final user = FirebaseAuth.instance.currentUser;

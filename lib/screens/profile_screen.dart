@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:io';
 import '../services/user_service.dart';
 import '../models/user_model.dart';
 import '../theme/app_theme.dart';
@@ -9,6 +13,7 @@ import 'settings_screen.dart';
 import 'notifications_screen.dart';
 import 'edit_photos_screen.dart';
 import '../services/hangout_service.dart';
+import '../services/verification_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -20,12 +25,22 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   UserModel? _userProfile;
   bool _isLoading = true;
-
+  String? _verificationStatus;
 
   @override
   void initState() {
     super.initState();
     _loadUserProfile();
+    _loadVerificationStatus();
+  }
+  
+  void _loadVerificationStatus() async {
+    final status = await VerificationService.getVerificationStatus();
+    if (mounted) {
+      setState(() {
+        _verificationStatus = status;
+      });
+    }
   }
 
   void _loadUserProfile() async {
@@ -133,7 +148,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 SizedBox(width: MediaQuery.of(context).size.width * 0.02),
                 Icon(
                   Icons.verified,
-                  color: Colors.grey[400],
+                  color: _verificationStatus == 'verified' ? AppTheme.primaryColor : Colors.grey[400],
                   size: MediaQuery.of(context).size.width * 0.06,
                 ),
               ],
@@ -179,6 +194,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           const SnackBar(content: Text('Test notification created')),
                         );
                       },
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Verify Profile
+                    _buildMenuCard(
+                      Icons.verified_user,
+                      'Verify Profile',
+                      'Verify your identity for trust',
+                      () => _showVerificationDialog(),
                     ),
                     
                     const SizedBox(height: 16),
@@ -242,6 +267,136 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
     );
+  }
+
+  void _showVerificationDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.verified_user, color: AppTheme.primaryColor),
+              SizedBox(width: 8),
+              Text('Profile Verification'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (_verificationStatus == 'verified') ...[
+                Icon(Icons.check_circle, size: 48, color: Colors.green),
+                SizedBox(height: 8),
+                Text('Your profile is verified!', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+                SizedBox(height: 8),
+                Text('(Testing: You can verify again)', style: TextStyle(color: Colors.grey, fontSize: 12)),
+              ] else ...[
+                Text('Take a selfie to verify your identity and build trust with other users.'),
+                SizedBox(height: 16),
+                Icon(Icons.photo_camera, size: 48, color: AppTheme.primaryColor),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Close'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _startPhotoVerification();
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
+              child: Text(_verificationStatus == 'verified' ? 'Verify Again' : 'Take Photo', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _startPhotoVerification() async {
+    final ImagePicker picker = ImagePicker();
+    try {
+      final XFile? photo = await picker.pickImage(
+        source: ImageSource.camera,
+        preferredCameraDevice: CameraDevice.front,
+        imageQuality: 80,
+      );
+      
+      if (photo != null) {
+        await _uploadVerificationPhoto(File(photo.path));
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error taking photo: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+  
+  Future<void> _uploadVerificationPhoto(File photo) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+      
+      // Show loading
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              CircularProgressIndicator(color: Colors.white),
+              SizedBox(width: 16),
+              Text('Uploading verification photo...'),
+            ],
+          ),
+          backgroundColor: AppTheme.primaryColor,
+          duration: Duration(seconds: 10),
+        ),
+      );
+      
+      // Upload to Firebase Storage
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child('verification_photos')
+          .child('${user.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg');
+      
+      await ref.putFile(photo);
+      final photoUrl = await ref.getDownloadURL();
+      
+      // Update user document with verification photo and auto-verify
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .update({
+        'verificationPhotoUrl': photoUrl,
+        'verificationStatus': 'verified',
+        'verificationSubmittedAt': FieldValue.serverTimestamp(),
+        'verifiedAt': FieldValue.serverTimestamp(),
+      });
+      
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Profile verified successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      
+      // Refresh verification status
+      _loadVerificationStatus();
+    } catch (e) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error uploading photo: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _showDeleteAccountDialog() {

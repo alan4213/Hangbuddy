@@ -52,6 +52,96 @@ class ChatService {
     await batch.commit();
   }
   
+  static Future<String> sendMessageWithId({
+    required String receiverId, 
+    required String message,
+    String? replyToId,
+    String? replyToMessage,
+    String messageType = 'text',
+    double? latitude,
+    double? longitude,
+    String? locationName,
+    String? gifUrl,
+    String? photoUrl,
+    String? localPhotoPath,
+  }) async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) throw Exception('No user logged in');
+    
+    final chatId = _getChatId(currentUser.uid, receiverId);
+    final timestamp = DateTime.now();
+    
+    final batch = FirebaseFirestore.instance.batch();
+    
+    // Add message
+    final messageRef = FirebaseFirestore.instance
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages')
+        .doc();
+    
+    batch.set(messageRef, {
+      'senderId': currentUser.uid,
+      'receiverId': receiverId,
+      'message': message,
+      'timestamp': Timestamp.fromDate(timestamp),
+      'status': 'sent',
+      'reactions': {},
+      'replyToId': replyToId,
+      'replyToMessage': replyToMessage,
+      'messageType': messageType,
+      'latitude': latitude,
+      'longitude': longitude,
+      'locationName': locationName,
+      'gifUrl': gifUrl,
+      'photoUrl': photoUrl,
+      'localPhotoPath': localPhotoPath,
+    });
+    
+    // Update chat metadata
+    final chatRef = FirebaseFirestore.instance.collection('chats').doc(chatId);
+    batch.set(chatRef, {
+      'participants': [currentUser.uid, receiverId],
+      'lastMessage': message,
+      'lastMessageTime': timestamp.millisecondsSinceEpoch,
+      'unreadCount_$receiverId': FieldValue.increment(1),
+    }, SetOptions(merge: true));
+    
+    await batch.commit();
+    return messageRef.id;
+  }
+  
+  static Future<void> updateMessagePhoto(String otherUserId, String messageId, String photoUrl) async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+    
+    final chatId = _getChatId(currentUser.uid, otherUserId);
+    
+    await FirebaseFirestore.instance
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages')
+        .doc(messageId)
+        .update({'photoUrl': photoUrl});
+  }
+  
+  static Future<void> updateMessagePhotoComplete(String otherUserId, String messageId, String photoUrl) async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+    
+    final chatId = _getChatId(currentUser.uid, otherUserId);
+    
+    await FirebaseFirestore.instance
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages')
+        .doc(messageId)
+        .update({
+      'photoUrl': photoUrl,
+      'localPhotoPath': FieldValue.delete(), // Clean up local path
+    });
+  }
+  
   static Stream<List<ChatMessage>> getMessages(String otherUserId) {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return Stream.value([]);

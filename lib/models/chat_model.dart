@@ -16,6 +16,7 @@ class ChatMessage {
   final String? locationName;
   final String? gifUrl;
   final String? photoUrl;
+  final String? localPhotoPath;
 
   ChatMessage({
     required this.id,
@@ -33,6 +34,7 @@ class ChatMessage {
     this.locationName,
     this.gifUrl,
     this.photoUrl,
+    this.localPhotoPath,
   });
 
   Map<String, dynamic> toMap() {
@@ -51,6 +53,7 @@ class ChatMessage {
       'locationName': locationName,
       'gifUrl': gifUrl,
       'photoUrl': photoUrl,
+      'localPhotoPath': localPhotoPath,
     };
   }
 
@@ -71,6 +74,7 @@ class ChatMessage {
       locationName: map['locationName'],
       gifUrl: map['gifUrl'],
       photoUrl: map['photoUrl'],
+      localPhotoPath: map['localPhotoPath'],
     );
   }
 }

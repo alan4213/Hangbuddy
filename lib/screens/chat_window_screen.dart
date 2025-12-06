@@ -34,6 +34,7 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
   ChatMessage? _replyingTo;
   File? _selectedPhoto;
   String? _uploadedPhotoUrl;
+  bool _isUploading = false;
   final List<Color> avatarColors = [
     Color(0xFF8B5CF6),
     Color(0xFF3B82F6),
@@ -424,10 +425,12 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
                         if (isMe) ...[
                           SizedBox(width: 4),
                           Icon(
+                            message.photoUrl == 'uploading' ? Icons.access_time :
                             message.status == 'read' ? Icons.done_all : 
                             message.status == 'delivered' ? Icons.done_all : Icons.done,
                             size: 16,
-                            color: message.status == 'read' ? Colors.blue : Colors.white70,
+                            color: message.photoUrl == 'uploading' ? Colors.white70 :
+                                   message.status == 'read' ? Colors.blue : Colors.white70,
                           ),
                         ],
                       ],
@@ -586,10 +589,19 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(8),
-                          child: Image.file(_selectedPhoto!, width: 60, height: 60, fit: BoxFit.cover),
+                          child: Stack(
+                            children: [
+                              Image.file(_selectedPhoto!, width: 60, height: 60, fit: BoxFit.cover),
+                            ],
+                          ),
                         ),
                         SizedBox(width: 8),
-                        Expanded(child: Text('Photo selected', style: TextStyle(color: Colors.grey))),
+                        Expanded(
+                          child: Text(
+                            'Photo selected',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ),
                         IconButton(
                           icon: Icon(Icons.close, size: 20),
                           onPressed: () => setState(() { _selectedPhoto = null; _uploadedPhotoUrl = null; }),
@@ -615,15 +627,24 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
           ),
           SizedBox(width: 12),
           GestureDetector(
-            onTap: _sendMessage,
+            onTap: _isUploading ? null : _sendMessage,
             child: Container(
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: AppTheme.primaryColor,
+                color: _isUploading ? Colors.grey : AppTheme.primaryColor,
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.send, color: Colors.white, size: 20),
+              child: _isUploading
+                  ? SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : Icon(Icons.send, color: Colors.white, size: 20),
             ),
           ),
         ],
@@ -634,43 +655,42 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
   void _sendMessage() async {
     if ((_messageController.text.trim().isEmpty && _selectedPhoto == null) || _otherUserId == null) return;
 
+    final messageText = _messageController.text.trim();
+    final photo = _selectedPhoto;
+    final replyTo = _replyingTo;
+    
+    // Clear UI immediately (WhatsApp style)
+    _messageController.clear();
+    _clearDraft();
+    setState(() {
+      _replyingTo = null;
+      _selectedPhoto = null;
+      _uploadedPhotoUrl = null;
+    });
+
     try {
-      if (_selectedPhoto != null) {
-        // Upload photo first if not already uploaded
-        if (_uploadedPhotoUrl == null) {
-          _uploadedPhotoUrl = await PhotoUploadService.uploadChatPhoto(_selectedPhoto!);
-          if (_uploadedPhotoUrl == null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Failed to upload photo'), backgroundColor: Colors.red),
-            );
-            return;
-          }
-        }
-        
-        await ChatService.sendMessage(
+      if (photo != null) {
+        // Send message immediately with local photo path
+        final messageId = await ChatService.sendMessageWithId(
           receiverId: _otherUserId!,
-          message: _messageController.text.trim().isEmpty ? 'Photo' : _messageController.text.trim(),
+          message: messageText.isEmpty ? 'Photo' : messageText,
           messageType: 'photo',
-          photoUrl: _uploadedPhotoUrl,
-          replyToId: _replyingTo?.id,
-          replyToMessage: _replyingTo?.message,
+          photoUrl: 'uploading',
+          localPhotoPath: photo.path, // Local file path
+          replyToId: replyTo?.id,
+          replyToMessage: replyTo?.message,
         );
+        
+        // Upload in background and update
+        _uploadPhotoInBackground(photo, messageId);
       } else {
         await ChatService.sendMessage(
           receiverId: _otherUserId!,
-          message: _messageController.text.trim(),
-          replyToId: _replyingTo?.id,
-          replyToMessage: _replyingTo?.message,
+          message: messageText,
+          replyToId: replyTo?.id,
+          replyToMessage: replyTo?.message,
         );
       }
-      
-      _messageController.clear();
-      _clearDraft();
-      setState(() {
-        _replyingTo = null;
-        _selectedPhoto = null;
-        _uploadedPhotoUrl = null;
-      });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -678,6 +698,18 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
           backgroundColor: Colors.red,
         ),
       );
+    }
+  }
+  
+  void _uploadPhotoInBackground(File photo, String messageId) async {
+    try {
+      final photoUrl = await PhotoUploadService.uploadChatPhoto(photo);
+      if (photoUrl != null) {
+        // Update the message with actual photo URL and clear local path
+        await ChatService.updateMessagePhotoComplete(_otherUserId!, messageId, photoUrl);
+      }
+    } catch (e) {
+      print('Background upload failed: $e');
     }
   }
 
@@ -1292,6 +1324,48 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
   }
 
   Widget _buildPhotoMessage(ChatMessage message, bool isMe) {
+    // Always show local photo if available
+    if (message.localPhotoPath != null) {
+      return Container(
+        constraints: BoxConstraints(maxWidth: 200, maxHeight: 200),
+        child: Stack(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.file(
+                File(message.localPhotoPath!),
+                width: 200,
+                height: 200,
+                fit: BoxFit.cover,
+              ),
+            ),
+            // Show spinner only during upload
+            if (message.photoUrl == 'uploading')
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  padding: EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.5),
+                    shape: BoxShape.circle,
+                  ),
+                  child: SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      );
+    }
+    
+    // Fallback to network image
     return Container(
       constraints: BoxConstraints(maxWidth: 200, maxHeight: 200),
       child: ClipRRect(
@@ -1299,21 +1373,6 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
         child: Image.network(
           message.photoUrl!,
           fit: BoxFit.cover,
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return Container(
-              width: 200,
-              height: 200,
-              color: Colors.grey[200],
-              child: Center(
-                child: CircularProgressIndicator(
-                  value: loadingProgress.expectedTotalBytes != null
-                      ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                      : null,
-                ),
-              ),
-            );
-          },
           errorBuilder: (context, error, stackTrace) => Container(
             width: 200,
             height: 100,

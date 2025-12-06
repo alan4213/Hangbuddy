@@ -4,7 +4,6 @@ import 'package:intl_phone_field/intl_phone_field.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import '../theme/app_theme.dart';
-import '../widgets/loading_widget.dart';
 
 class PhoneNumberScreen extends StatefulWidget {
   final bool showGoogleSignIn;
@@ -22,178 +21,199 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.primaryColor, // Gather primary color background
       body: SafeArea(
         child: Padding(
-          padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.08),
+          padding: EdgeInsets.all(24),
           child: Column(
             children: [
-              SizedBox(height: MediaQuery.of(context).size.height * 0.075),
-              // Gather Brand Name
-              Text(
-                'Gather',
-                style: TextStyle(
-                  fontSize: MediaQuery.of(context).size.width * 0.08,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.primaryColor,
-                ),
-              ),
-              const SizedBox(height: 32),
-              const Text(
-                'Welcome',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
-                ),
-              ),
-              SizedBox(height: MediaQuery.of(context).size.height * 0.015),
-              Text(
-                widget.showGoogleSignIn 
-                    ? 'Sign in to your account'
-                    : 'Enter your phone number to get started',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                ),
-              ),
-              SizedBox(height: MediaQuery.of(context).size.height * 0.06),
-              // Phone input field - only for new users
-              if (!widget.showGoogleSignIn) ...[
-                IntlPhoneField(
-                  controller: _controller,
-                  decoration: InputDecoration(
-                    labelText: 'Phone Number',
-                    labelStyle: TextStyle(color: AppTheme.primaryColor),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              // Back button
+              Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Icon(Icons.arrow_back, color: Colors.white, size: 24),
                   ),
-                  initialCountryCode: 'US',
-                  onChanged: (phone) {
-                    _fullPhoneNumber = phone.completeNumber;
-                  },
-                ),
-              ],
-              SizedBox(height: MediaQuery.of(context).size.height * 0.03),
+                ],
+              ),
               
-              // Google sign-in button for existing users only
-              if (widget.showGoogleSignIn) ...[
-                Container(
-                  width: double.infinity,
-                  height: 50,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      setState(() => _isLoading = true);
-                      try {
-                        final result = await AuthService.signInWithGoogle();
-                        if (result != null && mounted) {
-                          final userProfile = await UserService.getUserProfile();
-                          if (userProfile == null) {
-                            // New Google user - continue with signup
-                            Navigator.pushNamed(context, '/email');
-                          } else {
-                            // Existing user - go to home
-                            Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
-                          }
-                        }
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Google sign-in failed: $e'),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                      }
-                      if (mounted) setState(() => _isLoading = false);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryColor,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(25),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Gather logo
+                    Container(
+                      margin: EdgeInsets.only(bottom: 60),
+                      child: Text(
+                        'gather',
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
-                      elevation: 0,
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 20,
-                          height: 20,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
+                    
+                    // Terms text
+                    Container(
+                      margin: EdgeInsets.only(bottom: 40),
+                      child: Text(
+                        'By tapping Create Account or Sign In, you agree to our\nTerms. Learn how we process your data in our Privacy\nPolicy and Cookies Policy.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.white.withOpacity(0.9),
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                    
+                    // Sign in buttons
+                    if (widget.showGoogleSignIn) ...[
+                      // Google sign-in button
+                      Container(
+                        width: double.infinity,
+                        height: 50,
+                        margin: EdgeInsets.only(bottom: 16),
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : () async {
+                            setState(() => _isLoading = true);
+                            try {
+                              final result = await AuthService.signInWithGoogle();
+                              if (result != null && mounted) {
+                                final userProfile = await UserService.getUserProfile();
+                                if (userProfile == null) {
+                                  Navigator.pushNamed(context, '/email');
+                                } else {
+                                  Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+                                }
+                              }
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Google sign-in failed: $e'), backgroundColor: Colors.red),
+                              );
+                            }
+                            if (mounted) setState(() => _isLoading = false);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: Colors.black87,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                            elevation: 0,
                           ),
-                          child: Center(
-                            child: Text(
-                              'G',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: AppTheme.primaryColor,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                width: 20,
+                                height: 20,
+                                margin: EdgeInsets.only(right: 12),
+                                decoration: BoxDecoration(
+                                  color: Color(0xFF4285F4),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Center(
+                                  child: Text('G', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
+                                ),
                               ),
+                              Text(
+                                _isLoading ? 'SIGNING IN...' : 'SIGN IN WITH GOOGLE',
+                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 0.5),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ] else ...[
+                      // Phone input for new users
+                      Container(
+                        margin: EdgeInsets.only(bottom: 20),
+                        child: IntlPhoneField(
+                          controller: _controller,
+                          style: TextStyle(color: Colors.white),
+                          dropdownTextStyle: TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            labelText: 'Phone Number',
+                            labelStyle: TextStyle(color: Colors.white.withOpacity(0.8)),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(25),
+                              borderSide: BorderSide(color: Colors.white.withOpacity(0.5)),
                             ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(25),
+                              borderSide: BorderSide(color: Colors.white.withOpacity(0.5)),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(25),
+                              borderSide: BorderSide(color: Colors.white, width: 2),
+                            ),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                          ),
+                          initialCountryCode: 'US',
+                          dropdownIcon: Icon(Icons.arrow_drop_down, color: Colors.white),
+                          onChanged: (phone) => _fullPhoneNumber = phone.completeNumber,
+                        ),
+                      ),
+                      
+                      // Continue button
+                      Container(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : () async {
+                            if (_fullPhoneNumber.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Please enter a valid phone number')),
+                              );
+                              return;
+                            }
+                            setState(() => _isLoading = true);
+                            try {
+                              await AuthService.sendOTP(_fullPhoneNumber);
+                              if (mounted) Navigator.pushNamed(context, '/otp');
+                            } catch (e) {
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                              }
+                            } finally {
+                              if (mounted) setState(() => _isLoading = false);
+                            }
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: AppTheme.primaryColor,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                            elevation: 0,
+                          ),
+                          child: Text(
+                            _isLoading ? 'SENDING...' : 'CONTINUE',
+                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 0.5),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Continue with Google',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              
+              // Trouble signing in
+              if (widget.showGoogleSignIn)
+                GestureDetector(
+                  onTap: () {
+                    // Handle trouble signing in
+                  },
+                  child: Padding(
+                    padding: EdgeInsets.only(bottom: 20),
+                    child: Text(
+                      'Trouble Signing In?',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        decoration: TextDecoration.underline,
+                      ),
                     ),
                   ),
                 ),
-
-              ],
-              
-              const Spacer(),
-              // Continue button - only for new users
-              if (!widget.showGoogleSignIn)
-                LoadingButton(
-                  isLoading: _isLoading,
-                  text: 'Continue',
-                  onPressed: () async {
-                    if (_fullPhoneNumber.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Please enter a valid phone number')),
-                      );
-                      return;
-                    }
-                    
-                    setState(() => _isLoading = true);
-                    try {
-                      await AuthService.sendOTP(_fullPhoneNumber);
-                      if (mounted) {
-                        Navigator.pushNamed(context, '/otp');
-                      }
-                    } catch (e) {
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Error: $e')),
-                        );
-                      }
-                    } finally {
-                      if (mounted) {
-                        setState(() => _isLoading = false);
-                      }
-                    }
-                  },
-                ),
-              const SizedBox(height: 32),
             ],
           ),
         ),

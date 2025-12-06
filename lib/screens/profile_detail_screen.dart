@@ -3,6 +3,7 @@ import 'match_notification_screen.dart';
 import '../theme/app_theme.dart';
 import '../services/notification_service.dart';
 import '../services/user_service.dart';
+import '../services/match_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -218,37 +219,34 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                         widget.onMatch!();
                       }
                       
-                      // Get current user's name to send in notification
                       final currentUser = FirebaseAuth.instance.currentUser;
-                      String currentUserName = 'Someone';
-                      if (currentUser != null) {
-                        try {
-                          final userDoc = await FirebaseFirestore.instance
-                              .collection('users')
-                              .doc(currentUser.uid)
-                              .get();
-                          if (userDoc.exists) {
-                            final userData = userDoc.data()!;
-                            currentUserName = '${userData['firstName'] ?? ''} ${userData['lastName'] ?? ''}'.trim();
-                            if (currentUserName.isEmpty) currentUserName = 'Someone';
-                          }
-                        } catch (e) {
-                          print('Error getting current user name: $e');
-                        }
+                      if (currentUser == null) return;
+                      
+                      try {
+                        // Create match in database
+                        await MatchService.createMatch(
+                          user1Id: currentUser.uid,
+                          user2Id: widget.user['userId'] ?? widget.user['uid'] ?? '',
+                          hangoutTitle: 'General Match',
+                          hangoutLocation: 'To be decided',
+                          hangoutDateTime: DateTime.now().add(Duration(days: 7)),
+                        );
+                        
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => MatchNotificationScreen(user: widget.user),
+                          ),
+                        );
+                      } catch (e) {
+                        print('Error creating match: $e');
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('Error creating match: $e'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
                       }
-                      
-                      // Send match notification to the profile user (not current user)
-                      await NotificationService.sendMatchNotification(
-                        widget.user['userId'] ?? widget.user['uid'] ?? '',
-                        currentUserName
-                      );
-                      
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => MatchNotificationScreen(user: widget.user),
-                        ),
-                      );
                     },
                     child: Container(
                       width: MediaQuery.of(context).size.width * 0.15,
