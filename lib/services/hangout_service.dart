@@ -98,35 +98,16 @@ class HangoutService {
       'interestedUsers': FieldValue.arrayUnion([user.uid])
     });
     
-    // Create notification
+    // Send notification
     try {
-      print('Creating notification for hangout: $hangoutId');
       final hangoutDoc = await _firestore.collection('hangout_requests').doc(hangoutId).get();
       if (hangoutDoc.exists) {
         final hangout = HangoutRequest.fromMap(hangoutDoc.data()!, hangoutId);
-        print('Hangout creator: ${hangout.creatorId}');
-        print('Current user: ${user.uid}');
-        
-        final notificationData = {
-          'userId': hangout.creatorId,
-          'type': 'interest',
-          'message': 'Someone is interested in your hangout!',
-          'hangoutTitle': hangout.title,
-          'createdAt': FieldValue.serverTimestamp(),
-          'read': false,
-        };
-        
-        print('Creating notification: $notificationData');
-        await _firestore.collection('notifications').add(notificationData);
-        print('Notification created successfully');
-        
-        // Send push notification
         await NotificationService.sendHangoutInterestNotification(
           hangout.creatorId,
-          hangout.title
+          hangout.title,
+          hangoutId
         );
-      } else {
-        print('Hangout document does not exist');
       }
     } catch (e) {
       print('Notification error: $e');

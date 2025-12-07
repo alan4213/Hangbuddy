@@ -25,6 +25,7 @@ exports.sendPushNotification = onDocumentCreated('notifications/{notificationId}
         title: notification.title,
         body: notification.message,
       },
+      data: notification.data || {},
       android: {
         notification: {
           channelId: 'hangbuddy_notifications',
@@ -33,6 +34,7 @@ exports.sendPushNotification = onDocumentCreated('notifications/{notificationId}
       },
     };
     
+    console.log('Sending notification with data:', notification.data);
     await getMessaging().send(message);
     console.log('Push notification sent');
     

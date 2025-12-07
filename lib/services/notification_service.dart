@@ -169,7 +169,7 @@ class NotificationService {
     }
   }
   
-  static Future<void> sendHangoutInterestNotification(String creatorId, String hangoutTitle) async {
+  static Future<void> sendHangoutInterestNotification(String creatorId, String hangoutTitle, String hangoutId) async {
     try {
       await FirebaseFirestore.instance.collection('notifications').add({
         'userId': creatorId,
@@ -180,7 +180,8 @@ class NotificationService {
         'timestamp': FieldValue.serverTimestamp(),
         'data': {
           'type': 'hangout_interest',
-          'screen': 'notifications',
+          'screen': 'my_hangouts',
+          'hangoutId': hangoutId,
         },
       });
       
@@ -188,7 +189,7 @@ class NotificationService {
         creatorId,
         'Someone is interested! 🙋♂️',
         'Someone wants to join your "$hangoutTitle" hangout!',
-        {'type': 'hangout_interest', 'screen': 'notifications'}
+        {'type': 'hangout_interest', 'screen': 'my_hangouts', 'hangoutId': hangoutId}
       );
     } catch (e) {
       print('Error sending hangout interest notification: $e');
@@ -221,36 +222,21 @@ class NotificationService {
     }
   }
   
-  static void _handleNotificationTap(Map<String, dynamic> data) {
+  static void _handleNotificationTap(Map<String, dynamic> data) async {
     final context = navigatorKey.currentContext;
     if (context == null) return;
     
-    final type = data['type'];
-    
-    // Navigate to home first
+    // Navigate to home
     Navigator.pushNamedAndRemoveUntil(
       context,
       '/home',
       (route) => false,
     );
     
-    // Then navigate to appropriate tab
+    // Go to Matches tab (heart icon - index 1)
     Future.delayed(Duration(milliseconds: 200), () {
       if (onTabChange != null) {
-        switch (type) {
-          case 'match':
-            onTabChange!(1); // Matches tab
-            break;
-          case 'hangout_interest':
-            onTabChange!(3); // Profile tab (notifications)
-            break;
-          case 'message':
-            onTabChange!(2); // Chat tab
-            break;
-          default:
-            onTabChange!(0); // Home tab
-            break;
-        }
+        onTabChange!(1);
       }
     });
   }
