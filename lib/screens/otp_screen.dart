@@ -55,8 +55,15 @@ class _OTPScreenState extends State<OTPScreen> {
         await UserService.updatePhoneNumberFromAuth();
         print('Phone number stored in profile');
         
-        // Now prompt for Google sign-in to link accounts
-        _showGoogleLinkDialog();
+        // Check if user already has a complete profile
+        final userProfile = await UserService.getUserProfile();
+        if (userProfile != null && userProfile.firstName.isNotEmpty) {
+          print('Existing user with complete profile - navigating to home');
+          Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+        } else {
+          print('New user or incomplete profile - proceeding to email screen');
+          Navigator.pushNamed(context, '/email');
+        }
       } else if (mounted) {
         print('OTP verification failed');
         ScaffoldMessenger.of(context).showSnackBar(

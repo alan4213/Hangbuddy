@@ -18,6 +18,68 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
   String _fullPhoneNumber = '';
   bool _isLoading = false;
 
+  void _showEmailSignInDialog() {
+    final emailController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Sign in with Email'),
+        content: TextField(
+          controller: emailController,
+          decoration: InputDecoration(
+            labelText: 'Email Address',
+            border: OutlineInputBorder(),
+          ),
+          keyboardType: TextInputType.emailAddress,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await _signInWithEmail(emailController.text);
+            },
+            child: Text('Send Link'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  Future<void> _signInWithEmail(String email) async {
+    if (email.isEmpty || !email.contains('@')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Please enter a valid email')),
+      );
+      return;
+    }
+    
+    setState(() => _isLoading = true);
+    
+    try {
+      await AuthService.sendEmailLink(email);
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Sign-in link sent to $email. Check your email and click the link to sign in.'),
+          duration: Duration(seconds: 5),
+          backgroundColor: Colors.green,
+        ),
+      );
+      
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to send sign-in link: $e')),
+      );
+    }
+    
+    if (mounted) setState(() => _isLoading = false);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -118,6 +180,68 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                               ),
                               Text(
                                 _isLoading ? 'SIGNING IN...' : 'SIGN IN WITH GOOGLE',
+                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 0.5),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      
+                      // Continue with phone number button
+                      Container(
+                        width: double.infinity,
+                        height: 50,
+                        margin: EdgeInsets.only(bottom: 16),
+                        child: OutlinedButton(
+                          onPressed: _isLoading ? null : () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PhoneNumberScreen(showGoogleSignIn: false),
+                              ),
+                            );
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            side: BorderSide(color: Colors.white, width: 2),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.phone, size: 18, color: Colors.white),
+                              SizedBox(width: 12),
+                              Text(
+                                'CONTINUE WITH PHONE NUMBER',
+                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 0.5),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      
+                      // Continue with email button
+                      Container(
+                        width: double.infinity,
+                        height: 50,
+                        margin: EdgeInsets.only(bottom: 16),
+                        child: OutlinedButton(
+                          onPressed: _isLoading ? null : () async {
+                            // Show email sign-in dialog
+                            _showEmailSignInDialog();
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            side: BorderSide(color: Colors.white, width: 2),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.email, size: 18, color: Colors.white),
+                              SizedBox(width: 12),
+                              Text(
+                                'CONTINUE WITH EMAIL',
                                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 0.5),
                               ),
                             ],

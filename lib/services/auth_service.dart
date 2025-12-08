@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 
 class AuthService {
   static String? _verificationId;
@@ -55,22 +56,23 @@ class AuthService {
         smsCode: otp,
       );
       
-      // Check if phone number is already linked to another account
-      if (_phoneNumber != null) {
-        final existingUser = await _checkPhoneNumberExists(_phoneNumber!);
-        if (existingUser != null) {
-          print('Phone number already exists, signing in with existing account');
-          await FirebaseAuth.instance.signInWithCredential(credential);
-          return true;
-        }
-      }
-      
       await FirebaseAuth.instance.signInWithCredential(credential);
       
       // Store phone number in Firestore immediately
       if (_phoneNumber != null) {
         final user = FirebaseAuth.instance.currentUser;
         if (user != null) {
+          // Check if there's already a Google account with same email in Firestore
+          final existingGoogleUser = await _checkExistingGoogleAccount(user.email);
+          if (existingGoogleUser != null) {
+            print('Found existing Google account, merging phone number');
+            // Delete current phone-only account and use existing Google account
+            await user.delete();
+            // Sign in with existing Google account and add phone number
+            await _mergeWithExistingGoogleAccount(existingGoogleUser, _phoneNumber!);
+            return true;
+          }
+          
           await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
             'phoneNumber': _phoneNumber,
             'uid': user.uid,
@@ -114,6 +116,42 @@ class AuthService {
     } catch (e) {
       print('Error checking phone number: $e');
       return null;
+    }
+  }
+  
+  // Check if Google account already exists in Firestore
+  static Future<DocumentSnapshot?> _checkExistingGoogleAccount(String? email) async {
+    if (email == null) return null;
+    
+    try {
+      final query = await FirebaseFirestore.instance
+          .collection('users')
+          .where('email', isEqualTo: email)
+          .limit(1)
+          .get();
+      
+      return query.docs.isNotEmpty ? query.docs.first : null;
+    } catch (e) {
+      print('Error checking existing Google account: $e');
+      return null;
+    }
+  }
+  
+  // Merge phone number with existing Google account
+  static Future<void> _mergeWithExistingGoogleAccount(DocumentSnapshot existingUser, String phoneNumber) async {
+    try {
+      final existingUid = existingUser.id;
+      
+      // Update existing Google account with phone number
+      await FirebaseFirestore.instance.collection('users').doc(existingUid).update({
+        'phoneNumber': phoneNumber,
+        'updatedAt': DateTime.now().millisecondsSinceEpoch,
+      });
+      
+      print('Successfully merged phone number $phoneNumber with existing Google account $existingUid');
+    } catch (e) {
+      print('Error merging with existing Google account: $e');
+      throw e;
     }
   }
   
@@ -215,6 +253,114 @@ class AuthService {
       print('Cleaned up duplicate account: $uid');
     } catch (e) {
       print('Error cleaning up duplicate account: $e');
+    }
+  }
+  
+  // Store email (no verification needed for phone users)
+  static Future<void> sendEmailLink(String email) async {
+    try {
+      // Just store the email in Firestore
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null) {
+        await FirebaseFirestore.instance.collection('users').doc(currentUser.uid).update({
+          'email': email,
+          'updatedAt': DateTime.now().millisecondsSinceEpoch,
+        });
+        print('Email stored: $email');
+      }
+    } catch (e) {
+      print('Error storing email: $e');
+      throw e;
+    }
+  }
+  
+  // Initialize dynamic links listener
+  static void initializeDynamicLinks() {
+    FirebaseDynamicLinks.instance.onLink.listen((dynamicLinkData) {
+      final Uri deepLink = dynamicLinkData.link;
+      handleDynamicLink(deepLink);
+    }).onError((error) {
+      print('Dynamic link error: $error');
+    });
+  }
+  
+  // Handle dynamic link
+  static Future<void> handleDynamicLink(Uri link) async {
+    try {
+      final email = link.queryParameters['email'];
+      if (email != null && FirebaseAuth.instance.isSignInWithEmailLink(link.toString())) {
+        await signInWithEmailLink(email, link.toString());
+      }
+    } catch (e) {
+      print('Error handling dynamic link: $e');
+    }
+  }
+  
+  // Verify email link and sign in
+  static Future<UserCredential?> signInWithEmailLink(String email, String emailLink) async {
+    try {
+      if (FirebaseAuth.instance.isSignInWithEmailLink(emailLink)) {
+        final result = await FirebaseAuth.instance.signInWithEmailLink(
+          email: email,
+          emailLink: emailLink,
+        );
+        
+        // Store in Firestore
+        if (result.user != null) {
+          await FirebaseFirestore.instance.collection('users').doc(result.user!.uid).set({
+            'email': email,
+            'uid': result.user!.uid,
+            'createdAt': DateTime.now().millisecondsSinceEpoch,
+            'updatedAt': DateTime.now().millisecondsSinceEpoch,
+          }, SetOptions(merge: true));
+        }
+        
+        return result;
+      }
+      return null;
+    } catch (e) {
+      print('Error signing in with email link: $e');
+      throw e;
+    }
+  }
+  
+  // Find user by email in Firestore
+  static Future<DocumentSnapshot?> findUserByEmail(String email) async {
+    try {
+      final query = await FirebaseFirestore.instance
+          .collection('users')
+          .where('email', isEqualTo: email)
+          .limit(1)
+          .get();
+      
+      return query.docs.isNotEmpty ? query.docs.first : null;
+    } catch (e) {
+      print('Error finding user by email: $e');
+      return null;
+    }
+  }
+  
+  // Temporary: Create account with email and simple password
+  static Future<UserCredential?> createEmailAccount(String email) async {
+    try {
+      final result = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: email,
+        password: 'hangbuddy123',
+      );
+      
+      if (result.user != null) {
+        await FirebaseFirestore.instance.collection('users').doc(result.user!.uid).set({
+          'email': email,
+          'uid': result.user!.uid,
+          'createdAt': DateTime.now().millisecondsSinceEpoch,
+          'updatedAt': DateTime.now().millisecondsSinceEpoch,
+        }, SetOptions(merge: true));
+      }
+      
+      return result;
+    } catch (e) {
+      print('Error creating email account: $e');
+      throw e;
     }
   }
 }

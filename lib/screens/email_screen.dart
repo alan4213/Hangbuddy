@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../theme/app_theme.dart';
 import '../widgets/loading_widget.dart';
 import '../models/signup_data.dart';
@@ -19,6 +20,53 @@ class _EmailScreenState extends State<EmailScreen> {
   final TextEditingController _otpController = TextEditingController();
   bool _isLoading = false;
   bool _otpSent = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkEmailVerification();
+  }
+
+  void _checkEmailVerification() async {
+    setState(() => _isLoading = true);
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await user.reload();
+        final updatedUser = FirebaseAuth.instance.currentUser;
+        
+        if (updatedUser != null && updatedUser.emailVerified) {
+          // Email is verified, store email and proceed
+          await UserService.updateUserProfile(email: _emailController.text);
+          
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => NameScreen(signupData: SignupData()),
+              ),
+            );
+          }
+        } else {
+          // Email not verified yet
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Email not verified yet. Please check your email and click the verification link.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error checking verification: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+    setState(() => _isLoading = false);
+  }
 
   // Check if there's a phone-verified account that should be merged
   Future<User?> _checkForPhoneAccount(String? email) async {
@@ -95,9 +143,7 @@ class _EmailScreenState extends State<EmailScreen> {
               ),
               SizedBox(height: MediaQuery.of(context).size.height * 0.015),
               Text(
-                _otpSent 
-                  ? 'Enter the verification code sent to your email'
-                  : 'We\'ll send you a verification code',
+                'Link your Google account or add an email for account recovery',
                 style: TextStyle(
                   fontSize: MediaQuery.of(context).size.width * 0.04,
                   color: AppTheme.textSecondary,
@@ -105,74 +151,61 @@ class _EmailScreenState extends State<EmailScreen> {
               ),
               SizedBox(height: MediaQuery.of(context).size.height * 0.06),
               
-              if (!_otpSent) ...[
-                // Google sign-in button
+              // Google sign-in button
                 Container(
                   width: double.infinity,
                   height: MediaQuery.of(context).size.height * 0.06,
                   margin: EdgeInsets.only(bottom: MediaQuery.of(context).size.height * 0.02),
                   child: OutlinedButton(
                     onPressed: () async {
-                      print('=== GOOGLE BUTTON CLICKED ON EMAIL SCREEN ===');
                       setState(() => _isLoading = true);
                       try {
-                        print('Calling AuthService.signInWithGoogle()...');
-                        final result = await AuthService.signInWithGoogle();
-                        print('Google sign-in result: $result');
+                        final currentUser = FirebaseAuth.instance.currentUser;
+                        final phoneNumber = currentUser?.phoneNumber;
                         
-                        if (result != null && mounted) {
-                          print('Google sign-in successful!');
-                          
-                          // Check if this is an existing user or needs account merging
-                          final userProfile = await UserService.getUserProfile();
-                          
-                          if (userProfile == null) {
-                            // New Google user - check if they have a phone-verified account to merge
-                            final phoneUser = await _checkForPhoneAccount(result.user?.email);
-                            if (phoneUser != null) {
-                              // Merge the accounts
-                              await _mergePhoneWithGoogle(phoneUser, result.user!);
-                              Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+                        if (currentUser != null && phoneNumber != null) {
+                          try {
+                            // Get Google credential directly without signing in
+                            final GoogleSignIn googleSignIn = GoogleSignIn();
+                            final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+                            
+                            if (googleUser != null) {
+                              final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+                              final AuthCredential credential = GoogleAuthProvider.credential(
+                                accessToken: googleAuth.accessToken,
+                                idToken: googleAuth.idToken,
+                              );
+                              
+                              // Link Google credential to current phone account
+                              await currentUser.linkWithCredential(credential);
+                              print('Google linked to phone account: ${currentUser.uid}');
+                              print('Email from Google: ${googleUser.email}');
+                              
+                              // Store email in Firestore
+                              if (googleUser.email != null) {
+                                await UserService.updateUserProfile(email: googleUser.email!);
+                              }
+                              
+                              // Continue to name screen
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => NameScreen(signupData: SignupData()),
+                                ),
+                              );
                               return;
                             }
-                            
-                            // Truly new user - extract name from Google account
-                            final signupData = SignupData();
-                            if (result.user?.displayName != null) {
-                              final nameParts = result.user!.displayName!.split(' ');
-                              signupData.firstName = nameParts.first;
-                              if (nameParts.length > 1) {
-                                signupData.lastName = nameParts.skip(1).join(' ');
-                              }
-                            }
-                            signupData.email = result.user?.email;
-                            
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => NameScreen(signupData: signupData),
-                              ),
+                          } catch (e) {
+                            print('Linking failed: $e');
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Failed to link Google account: $e')),
                             );
-                          } else {
-                            // Existing user - go to home
-                            Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
                           }
-                        } else {
-                          print('Google sign-in cancelled or failed');
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Google sign-in was cancelled'),
-                              backgroundColor: Colors.orange,
-                            ),
-                          );
                         }
                       } catch (e) {
                         print('Google sign-in error: $e');
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Sign-in failed: $e'),
-                            backgroundColor: Colors.red,
-                          ),
+                          SnackBar(content: Text('Google sign-in failed: $e')),
                         );
                       }
                       if (mounted) setState(() => _isLoading = false);
@@ -223,97 +256,48 @@ class _EmailScreenState extends State<EmailScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                // Email input
-                TextField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: 'Email Address',
-                    labelStyle: TextStyle(color: AppTheme.primaryColor),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              // Optional email input
+              TextField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  labelText: 'Email Address (Optional)',
+                  labelStyle: TextStyle(color: AppTheme.primaryColor),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
                   ),
-                ),
-              ] else ...[
-                // OTP input
-                TextField(
-                  controller: _otpController,
-                  keyboardType: TextInputType.number,
-                  maxLength: 6,
-                  decoration: InputDecoration(
-                    labelText: 'Verification Code',
-                    labelStyle: TextStyle(color: AppTheme.primaryColor),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                    counterText: '',
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
                   ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () {
-                    setState(() => _otpSent = false);
-                  },
-                  child: Text(
-                    'Resend Code',
-                    style: TextStyle(color: AppTheme.primaryColor),
-                  ),
-                ),
-              ],
+              ),
               
               SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 3),
               
               LoadingButton(
                 isLoading: _isLoading,
-                text: _otpSent ? 'Verify' : 'Send Code',
+                text: 'Continue to Profile Setup',
                 onPressed: () async {
-                  if (!_otpSent) {
-                    if (_emailController.text.isEmpty || !_emailController.text.contains('@')) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Please enter a valid email')),
-                      );
-                      return;
-                    }
-                    setState(() => _isLoading = true);
-                    await Future.delayed(const Duration(seconds: 1));
-                    if (mounted) {
-                      setState(() {
-                        _isLoading = false;
-                        _otpSent = true;
-                      });
-                    }
-                  } else {
-                    if (_otpController.text.length != 6) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Please enter 6-digit code')),
-                      );
-                      return;
-                    }
-                    setState(() => _isLoading = true);
-                    await Future.delayed(const Duration(seconds: 1));
-                    if (mounted) {
-                      setState(() => _isLoading = false);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => NameScreen(signupData: SignupData()),
-                        ),
-                      );
-                    }
+                  setState(() => _isLoading = true);
+                  
+                  // Store email if provided
+                  final currentUser = FirebaseAuth.instance.currentUser;
+                  if (currentUser != null && _emailController.text.isNotEmpty) {
+                    await UserService.updateUserProfile(email: _emailController.text);
                   }
+                  
+                  if (mounted) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => NameScreen(signupData: SignupData()),
+                      ),
+                    );
+                  }
+                  setState(() => _isLoading = false);
                 },
               ),
               const SizedBox(height: 32),

@@ -1,6 +1,7 @@
 class UserModel {
   final String uid;
   final String phoneNumber;
+  final String? email;
   final String firstName;
   final String lastName;
   final DateTime? birthday;
@@ -21,6 +22,7 @@ class UserModel {
   UserModel({
     required this.uid,
     required this.phoneNumber,
+    this.email,
     required this.firstName,
     required this.lastName,
     this.birthday,
@@ -43,6 +45,7 @@ class UserModel {
     return {
       'uid': uid,
       'phoneNumber': phoneNumber,
+      'email': email,
       'firstName': firstName,
       'lastName': lastName,
       'birthday': birthday?.millisecondsSinceEpoch,
@@ -66,6 +69,7 @@ class UserModel {
     return UserModel(
       uid: map['uid'] ?? '',
       phoneNumber: map['phoneNumber'] ?? '',
+      email: map['email'],
       firstName: map['firstName'] ?? '',
       lastName: map['lastName'] ?? '',
       birthday: map['birthday'] != null ? DateTime.fromMillisecondsSinceEpoch(map['birthday']) : null,

@@ -50,6 +50,7 @@ dependencies:
   geocoding: ^2.1.1
   url_launcher: ^6.2.4
   google_sign_in: ^6.1.5
+  firebase_dynamic_links: ^5.4.17
 
 dev_dependencies:
   flutter_test:
