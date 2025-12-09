@@ -184,16 +184,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   child: Container(
                     width: double.infinity,
                     padding: EdgeInsets.fromLTRB(
-                      MediaQuery.of(context).size.width * 0.06,
-                      MediaQuery.of(context).size.width * 0.06,
-                      MediaQuery.of(context).size.width * 0.06,
+                      (MediaQuery.of(context).size.width * 0.06).clamp(16.0, 24.0),
+                      (MediaQuery.of(context).size.width * 0.06).clamp(16.0, 24.0),
+                      (MediaQuery.of(context).size.width * 0.06).clamp(16.0, 24.0),
                       MediaQuery.of(context).padding.bottom
                     ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(MediaQuery.of(context).size.width * 0.08),
-                      topRight: Radius.circular(MediaQuery.of(context).size.width * 0.08),
+                      topLeft: Radius.circular((MediaQuery.of(context).size.width * 0.08).clamp(24.0, 32.0)),
+                      topRight: Radius.circular((MediaQuery.of(context).size.width * 0.08).clamp(24.0, 32.0)),
                     ),
                     boxShadow: [
                       BoxShadow(
@@ -210,25 +210,29 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       Text(
                         'Start Your Hangout\nJourney',
                         style: TextStyle(
-                          fontSize: MediaQuery.of(context).size.width * 0.06,
+                          fontSize: (MediaQuery.of(context).size.width * 0.06).clamp(18.0, 24.0),
                           fontWeight: FontWeight.bold,
                           color: AppTheme.textPrimary,
                           height: 1.2,
                         ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 2,
                       ),
                       
-                      SizedBox(height: MediaQuery.of(context).size.height * 0.015),
+                      SizedBox(height: (MediaQuery.of(context).size.height * 0.015).clamp(8.0, 12.0)),
                       
                       Text(
                         'Connect with like-minded people and\nexplore amazing experiences together.',
                         style: TextStyle(
-                          fontSize: MediaQuery.of(context).size.width * 0.035,
+                          fontSize: (MediaQuery.of(context).size.width * 0.035).clamp(12.0, 16.0),
                           color: AppTheme.textSecondary,
                           height: 1.4,
                         ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 3,
                       ),
                       
-                      SizedBox(height: MediaQuery.of(context).size.height * 0.03),
+                      SizedBox(height: (MediaQuery.of(context).size.height * 0.03).clamp(16.0, 24.0)),
                       
 
                       // Continue with Google

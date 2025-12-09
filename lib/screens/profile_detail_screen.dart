@@ -199,7 +199,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                         images.length,
                         (index) => Container(
                           margin: EdgeInsets.symmetric(horizontal: 2),
-                          width: MediaQuery.of(context).size.width * 0.08,
+                          width: (MediaQuery.of(context).size.width * 0.08).clamp(20.0, 40.0),
                           height: 3,
                           decoration: BoxDecoration(
                             color: _currentIndex == index ? Colors.white : Colors.white.withOpacity(0.3),
@@ -249,13 +249,13 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                       }
                     },
                     child: Container(
-                      width: MediaQuery.of(context).size.width * 0.15,
-                      height: MediaQuery.of(context).size.width * 0.15,
+                      width: (MediaQuery.of(context).size.width * 0.15).clamp(50.0, 70.0),
+                      height: (MediaQuery.of(context).size.width * 0.15).clamp(50.0, 70.0),
                       decoration: BoxDecoration(
                         color: AppTheme.primaryColor,
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(Icons.favorite, color: Colors.white, size: MediaQuery.of(context).size.width * 0.075),
+                      child: Icon(Icons.favorite, color: Colors.white, size: (MediaQuery.of(context).size.width * 0.075).clamp(20.0, 30.0)),
                     ),
                   ),
                 ),
@@ -266,18 +266,21 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
           Expanded(
             flex: 2,
             child: SingleChildScrollView(
-              padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.05),
+              padding: EdgeInsets.all((MediaQuery.of(context).size.width * 0.05).clamp(12.0, 20.0)),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Name and verification
                   Row(
                     children: [
-                      Text(
-                        '${widget.user['firstName'] ?? ''} ${widget.user['lastName'] ?? ''}',
-                        style: TextStyle(
-                          fontSize: MediaQuery.of(context).size.width * 0.06,
-                          fontWeight: FontWeight.bold,
+                      Flexible(
+                        child: Text(
+                          '${widget.user['firstName'] ?? ''} ${widget.user['lastName'] ?? ''}',
+                          style: TextStyle(
+                            fontSize: (MediaQuery.of(context).size.width * 0.06).clamp(16.0, 24.0),
+                            fontWeight: FontWeight.bold,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       SizedBox(width: 8),
@@ -286,7 +289,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                       Text(
                         '${widget.user['age'] ?? '0'}',
                         style: TextStyle(
-                          fontSize: MediaQuery.of(context).size.width * 0.06,
+                          fontSize: (MediaQuery.of(context).size.width * 0.06).clamp(16.0, 24.0),
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -297,8 +300,9 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                     'Looking for new friends',
                     style: TextStyle(
                       color: Colors.grey[600],
-                      fontSize: MediaQuery.of(context).size.width * 0.035,
+                      fontSize: (MediaQuery.of(context).size.width * 0.035).clamp(12.0, 16.0),
                     ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                   SizedBox(height: 16),
                   
@@ -351,7 +355,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                     Text(
                       'Interests',
                       style: TextStyle(
-                        fontSize: MediaQuery.of(context).size.width * 0.04,
+                        fontSize: (MediaQuery.of(context).size.width * 0.04).clamp(14.0, 18.0),
                         fontWeight: FontWeight.w600,
                         color: Colors.black87,
                       ),
@@ -372,9 +376,10 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                             interest.toString(),
                             style: TextStyle(
                               color: AppTheme.primaryColor,
-                              fontSize: 12,
+                              fontSize: (MediaQuery.of(context).size.width * 0.03).clamp(10.0, 14.0),
                               fontWeight: FontWeight.w500,
                             ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         );
                       }).toList(),
@@ -391,24 +396,32 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
 
   Widget _buildInfoRow(IconData icon, String label, String value) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: MediaQuery.of(context).size.width * 0.04, color: Colors.grey[600]),
-        SizedBox(width: MediaQuery.of(context).size.width * 0.02),
-        Text(
-          '$label: ',
-          style: TextStyle(
-            color: Colors.grey[600],
-            fontSize: MediaQuery.of(context).size.width * 0.035,
-            fontWeight: FontWeight.w500,
+        Icon(icon, size: (MediaQuery.of(context).size.width * 0.04).clamp(16.0, 20.0), color: Colors.grey[600]),
+        SizedBox(width: (MediaQuery.of(context).size.width * 0.02).clamp(4.0, 8.0)),
+        Flexible(
+          flex: 2,
+          child: Text(
+            '$label: ',
+            style: TextStyle(
+              color: Colors.grey[600],
+              fontSize: (MediaQuery.of(context).size.width * 0.035).clamp(12.0, 16.0),
+              fontWeight: FontWeight.w500,
+            ),
+            overflow: TextOverflow.ellipsis,
           ),
         ),
-        Expanded(
+        Flexible(
+          flex: 3,
           child: Text(
             value,
             style: TextStyle(
               color: Colors.black87,
-              fontSize: MediaQuery.of(context).size.width * 0.035,
+              fontSize: (MediaQuery.of(context).size.width * 0.035).clamp(12.0, 16.0),
             ),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 2,
           ),
         ),
       ],

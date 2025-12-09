@@ -67,17 +67,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             // Header
             Padding(
-              padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.05),
+              padding: EdgeInsets.all((MediaQuery.of(context).size.width * 0.05).clamp(12.0, 20.0)),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
                     'Gather',
                     style: TextStyle(
-                      fontSize: MediaQuery.of(context).size.width * 0.07,
+                      fontSize: (MediaQuery.of(context).size.width * 0.07).clamp(20.0, 28.0),
                       fontWeight: FontWeight.bold,
                       color: AppTheme.primaryColor,
                     ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                   GestureDetector(
                     onTap: () {
@@ -86,7 +87,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         MaterialPageRoute(builder: (context) => SettingsScreen()),
                       );
                     },
-                    child: Icon(Icons.settings, size: MediaQuery.of(context).size.width * 0.06, color: AppTheme.primaryColor),
+                    child: Icon(Icons.settings, size: (MediaQuery.of(context).size.width * 0.06).clamp(20.0, 28.0), color: AppTheme.primaryColor),
                   ),
                 ],
               ),
@@ -97,7 +98,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 ProfileImageWidget(
                   imageUrl: _userProfile?.profileImageUrl,
-                  size: MediaQuery.of(context).size.width * 0.3,
+                  size: (MediaQuery.of(context).size.width * 0.3).clamp(80.0, 120.0),
                 ),
                 Positioned(
                   bottom: 0,
@@ -108,8 +109,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       _loadUserProfile();
                     },
                     child: Container(
-                      width: MediaQuery.of(context).size.width * 0.09,
-                      height: MediaQuery.of(context).size.width * 0.09,
+                      width: (MediaQuery.of(context).size.width * 0.09).clamp(28.0, 36.0),
+                      height: (MediaQuery.of(context).size.width * 0.09).clamp(28.0, 36.0),
                       decoration: BoxDecoration(
                         color: AppTheme.primaryColor,
                         shape: BoxShape.circle,
@@ -120,7 +121,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       child: Icon(
                         Icons.edit,
-                        size: MediaQuery.of(context).size.width * 0.045,
+                        size: (MediaQuery.of(context).size.width * 0.045).clamp(16.0, 20.0),
                         color: Colors.white,
                       ),
                     ),
@@ -129,40 +130,44 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
             
-            SizedBox(height: MediaQuery.of(context).size.height * 0.02),
+            SizedBox(height: (MediaQuery.of(context).size.height * 0.02).clamp(12.0, 20.0)),
             
             // Name
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  _isLoading 
-                      ? 'Loading...' 
-                      : '${_userProfile?.firstName ?? 'User'} ${_userProfile?.lastName ?? ''}',
-                  style: TextStyle(
-                    fontSize: MediaQuery.of(context).size.width * 0.08,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
+                Flexible(
+                  child: Text(
+                    _isLoading 
+                        ? 'Loading...' 
+                        : '${_userProfile?.firstName ?? 'User'} ${_userProfile?.lastName ?? ''}',
+                    style: TextStyle(
+                      fontSize: (MediaQuery.of(context).size.width * 0.08).clamp(20.0, 32.0),
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
                 ),
-                SizedBox(width: MediaQuery.of(context).size.width * 0.02),
+                SizedBox(width: (MediaQuery.of(context).size.width * 0.02).clamp(4.0, 8.0)),
                 Icon(
                   Icons.verified,
                   color: _verificationStatus == 'verified' ? AppTheme.primaryColor : Colors.grey[400],
-                  size: MediaQuery.of(context).size.width * 0.06,
+                  size: (MediaQuery.of(context).size.width * 0.06).clamp(20.0, 24.0),
                 ),
               ],
             ),
             
-            SizedBox(height: MediaQuery.of(context).size.height * 0.04),
+            SizedBox(height: (MediaQuery.of(context).size.height * 0.04).clamp(20.0, 32.0)),
             
-            SizedBox(height: MediaQuery.of(context).size.height * 0.03),
+            SizedBox(height: (MediaQuery.of(context).size.height * 0.03).clamp(16.0, 24.0)),
             
             // Content
             Expanded(
               child: SingleChildScrollView(
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: MediaQuery.of(context).size.width * 0.05),
+                  padding: EdgeInsets.symmetric(horizontal: (MediaQuery.of(context).size.width * 0.05).clamp(12.0, 20.0)),
                   child: Column(
                     children: [
 
@@ -447,27 +452,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.05),
+        padding: EdgeInsets.all((MediaQuery.of(context).size.width * 0.05).clamp(12.0, 20.0)),
         decoration: BoxDecoration(
           color: Colors.grey[100],
-          borderRadius: BorderRadius.circular(MediaQuery.of(context).size.width * 0.04),
+          borderRadius: BorderRadius.circular((MediaQuery.of(context).size.width * 0.04).clamp(12.0, 16.0)),
         ),
         child: Row(
           children: [
             Container(
-              width: MediaQuery.of(context).size.width * 0.1,
-              height: MediaQuery.of(context).size.width * 0.1,
+              width: (MediaQuery.of(context).size.width * 0.1).clamp(32.0, 40.0),
+              height: (MediaQuery.of(context).size.width * 0.1).clamp(32.0, 40.0),
               decoration: BoxDecoration(
                 color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(MediaQuery.of(context).size.width * 0.02),
+                borderRadius: BorderRadius.circular((MediaQuery.of(context).size.width * 0.02).clamp(6.0, 8.0)),
               ),
               child: Icon(
                 icon,
-                size: MediaQuery.of(context).size.width * 0.05,
+                size: (MediaQuery.of(context).size.width * 0.05).clamp(18.0, 22.0),
                 color: Colors.grey[600],
               ),
             ),
-            SizedBox(width: MediaQuery.of(context).size.width * 0.04),
+            SizedBox(width: (MediaQuery.of(context).size.width * 0.04).clamp(12.0, 16.0)),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -475,18 +480,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Text(
                     title,
                     style: TextStyle(
-                      fontSize: MediaQuery.of(context).size.width * 0.04,
+                      fontSize: (MediaQuery.of(context).size.width * 0.04).clamp(14.0, 18.0),
                       fontWeight: FontWeight.w600,
                       color: Colors.black,
                     ),
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  SizedBox(height: MediaQuery.of(context).size.height * 0.005),
+                  SizedBox(height: (MediaQuery.of(context).size.height * 0.005).clamp(2.0, 4.0)),
                   Text(
                     subtitle,
                     style: TextStyle(
-                      fontSize: MediaQuery.of(context).size.width * 0.035,
+                      fontSize: (MediaQuery.of(context).size.width * 0.035).clamp(12.0, 16.0),
                       color: Colors.grey[600],
                     ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 2,
                   ),
                 ],
               ),

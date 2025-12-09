@@ -143,7 +143,8 @@ class _EmailScreenState extends State<EmailScreen> {
               ),
               SizedBox(height: MediaQuery.of(context).size.height * 0.015),
               Text(
-                'Link your Google account or add an email for account recovery',
+                'Google Sign-in is optional. If you don\'t have Gmail, you can skip this step.',
+                textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: MediaQuery.of(context).size.width * 0.04,
                   color: AppTheme.textSecondary,
@@ -160,55 +161,37 @@ class _EmailScreenState extends State<EmailScreen> {
                     onPressed: () async {
                       setState(() => _isLoading = true);
                       try {
-                        final currentUser = FirebaseAuth.instance.currentUser;
-                        final phoneNumber = currentUser?.phoneNumber;
+                        final GoogleSignIn googleSignIn = GoogleSignIn();
+                        await googleSignIn.signOut();
+                        final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
                         
-                        if (currentUser != null && phoneNumber != null) {
-                          try {
-                            // Get Google credential directly without signing in
-                            final GoogleSignIn googleSignIn = GoogleSignIn();
-                            final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-                            
-                            if (googleUser != null) {
-                              final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-                              final AuthCredential credential = GoogleAuthProvider.credential(
-                                accessToken: googleAuth.accessToken,
-                                idToken: googleAuth.idToken,
-                              );
-                              
-                              // Link Google credential to current phone account
-                              await currentUser.linkWithCredential(credential);
-                              print('Google linked to phone account: ${currentUser.uid}');
-                              print('Email from Google: ${googleUser.email}');
-                              
-                              // Store email in Firestore
-                              if (googleUser.email != null) {
-                                await UserService.updateUserProfile(email: googleUser.email!);
-                              }
-                              
-                              // Continue to name screen
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => NameScreen(signupData: SignupData()),
-                                ),
-                              );
-                              return;
-                            }
-                          } catch (e) {
-                            print('Linking failed: $e');
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Failed to link Google account: $e')),
-                            );
+                        if (googleUser != null) {
+                          final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+                          final AuthCredential credential = GoogleAuthProvider.credential(
+                            accessToken: googleAuth.accessToken,
+                            idToken: googleAuth.idToken,
+                          );
+                          
+                          final currentUser = FirebaseAuth.instance.currentUser;
+                          if (currentUser != null) {
+                            // Link Google to existing phone account
+                            await currentUser.linkWithCredential(credential);
+                            await UserService.updateUserProfile(email: googleUser.email!);
                           }
+                          
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => NameScreen(signupData: SignupData()),
+                            ),
+                          );
                         }
                       } catch (e) {
-                        print('Google sign-in error: $e');
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text('Google sign-in failed: $e')),
                         );
                       }
-                      if (mounted) setState(() => _isLoading = false);
+                      setState(() => _isLoading = false);
                     },
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(color: Colors.grey.shade300),
@@ -240,66 +223,28 @@ class _EmailScreenState extends State<EmailScreen> {
                     ),
                   ),
                 ),
-                
-                // Divider
-                Row(
-                  children: [
-                    Expanded(child: Divider()),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        'or',
-                        style: TextStyle(color: AppTheme.textSecondary),
-                      ),
+              
+              SizedBox(height: MediaQuery.of(context).size.height * 0.04),
+              
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => NameScreen(signupData: SignupData()),
                     ),
-                    Expanded(child: Divider()),
-                  ],
-                ),
-                const SizedBox(height: 16),
-              // Optional email input
-              TextField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
-                  labelText: 'Email Address (Optional)',
-                  labelStyle: TextStyle(color: AppTheme.primaryColor),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                ),
-              ),
-              
-              SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 3),
-              
-              LoadingButton(
-                isLoading: _isLoading,
-                text: 'Continue to Profile Setup',
-                onPressed: () async {
-                  setState(() => _isLoading = true);
-                  
-                  // Store email if provided
-                  final currentUser = FirebaseAuth.instance.currentUser;
-                  if (currentUser != null && _emailController.text.isNotEmpty) {
-                    await UserService.updateUserProfile(email: _emailController.text);
-                  }
-                  
-                  if (mounted) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => NameScreen(signupData: SignupData()),
-                      ),
-                    );
-                  }
-                  setState(() => _isLoading = false);
+                  );
                 },
+                child: Text(
+                  'Skip for now',
+                  style: TextStyle(
+                    color: AppTheme.primaryColor,
+                    fontSize: MediaQuery.of(context).size.width * 0.04,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
               ),
+
               const SizedBox(height: 32),
             ],
           ),

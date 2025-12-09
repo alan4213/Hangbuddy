@@ -84,9 +84,10 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.primaryColor, // Gather primary color background
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: Padding(
-          padding: EdgeInsets.all(24),
+          padding: EdgeInsets.all(20),
           child: Column(
             children: [
               // Back button
@@ -100,9 +101,11 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
               ),
               
               Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(height: MediaQuery.of(context).size.height * 0.1),
                     // Gather logo
                     Container(
                       margin: EdgeInsets.only(bottom: 60),
@@ -210,10 +213,13 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(Icons.phone, size: 18, color: Colors.white),
-                              SizedBox(width: 12),
-                              Text(
-                                'CONTINUE WITH PHONE NUMBER',
-                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 0.5),
+                              SizedBox(width: 8),
+                              Flexible(
+                                child: Text(
+                                  'CONTINUE WITH PHONE',
+                                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 0.5),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
                             ],
                           ),
@@ -316,28 +322,30 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                         ),
                       ),
                     ],
-                  ],
-                ),
-              ),
-              
-              // Trouble signing in
-              if (widget.showGoogleSignIn)
-                GestureDetector(
-                  onTap: () {
-                    // Handle trouble signing in
-                  },
-                  child: Padding(
-                    padding: EdgeInsets.only(bottom: 20),
-                    child: Text(
-                      'Trouble Signing In?',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
+                      SizedBox(height: MediaQuery.of(context).size.height * 0.1),
+                      
+                      // Trouble signing in
+                      if (widget.showGoogleSignIn)
+                        GestureDetector(
+                          onTap: () {
+                            // Handle trouble signing in
+                          },
+                          child: Padding(
+                            padding: EdgeInsets.only(bottom: 20),
+                            child: Text(
+                              'Trouble Signing In?',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
+              ),
             ],
           ),
         ),

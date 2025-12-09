@@ -50,12 +50,12 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          SizedBox(height: MediaQuery.of(context).size.height * 0.06),
+          SizedBox(height: (MediaQuery.of(context).size.height * 0.06).clamp(20.0, 50.0)),
           // Filter bar
           Container(
             padding: EdgeInsets.symmetric(
-              horizontal: MediaQuery.of(context).size.width * 0.04,
-              vertical: MediaQuery.of(context).size.height * 0.012
+              horizontal: (MediaQuery.of(context).size.width * 0.04).clamp(12.0, 20.0),
+              vertical: (MediaQuery.of(context).size.height * 0.012).clamp(8.0, 16.0)
             ),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -128,10 +128,10 @@ class _HomeScreenState extends State<HomeScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: EdgeInsets.only(right: MediaQuery.of(context).size.width * 0.03),
+        margin: EdgeInsets.only(right: (MediaQuery.of(context).size.width * 0.03).clamp(8.0, 12.0)),
         padding: EdgeInsets.symmetric(
-          horizontal: MediaQuery.of(context).size.width * 0.04,
-          vertical: MediaQuery.of(context).size.height * 0.012
+          horizontal: (MediaQuery.of(context).size.width * 0.04).clamp(12.0, 16.0),
+          vertical: (MediaQuery.of(context).size.height * 0.012).clamp(8.0, 12.0)
         ),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -147,14 +147,17 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: AppTheme.primaryColor, size: MediaQuery.of(context).size.width * 0.04),
-            SizedBox(width: MediaQuery.of(context).size.width * 0.015),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: MediaQuery.of(context).size.width * 0.03,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF334155),
+            Icon(icon, color: AppTheme.primaryColor, size: (MediaQuery.of(context).size.width * 0.04).clamp(16.0, 20.0)),
+            SizedBox(width: (MediaQuery.of(context).size.width * 0.015).clamp(4.0, 8.0)),
+            Flexible(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: (MediaQuery.of(context).size.width * 0.03).clamp(12.0, 16.0),
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF334155),
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -280,9 +283,11 @@ class _HomeScreenState extends State<HomeScreen> {
                             "$userName${userAge > 0 ? ', $userAge' : ''}",
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: MediaQuery.of(context).size.width * 0.045,
+                              fontSize: (MediaQuery.of(context).size.width * 0.045).clamp(16.0, 20.0),
                               fontWeight: FontWeight.bold,
                             ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
                           ),
                           SizedBox(height: MediaQuery.of(context).size.height * 0.007),
                           Container(

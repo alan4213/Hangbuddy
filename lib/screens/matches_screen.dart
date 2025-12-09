@@ -31,7 +31,7 @@ class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProvider
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          SizedBox(height: MediaQuery.of(context).size.height * 0.07),
+          SizedBox(height: (MediaQuery.of(context).size.height * 0.07).clamp(20.0, 50.0)),
           Container(
             color: Colors.white,
             child: TabBar(
@@ -42,11 +42,11 @@ class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProvider
               indicatorWeight: 3,
               labelStyle: TextStyle(
                 fontWeight: FontWeight.w600,
-                fontSize: MediaQuery.of(context).size.width * 0.04,
+                fontSize: (MediaQuery.of(context).size.width * 0.04).clamp(14.0, 18.0),
               ),
               unselectedLabelStyle: TextStyle(
                 fontWeight: FontWeight.w400,
-                fontSize: MediaQuery.of(context).size.width * 0.04,
+                fontSize: (MediaQuery.of(context).size.width * 0.04).clamp(14.0, 18.0),
               ),
               tabs: const [
                 Tab(text: 'My Hangouts'),

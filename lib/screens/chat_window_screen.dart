@@ -348,7 +348,7 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
             children: [
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.7),
+                constraints: BoxConstraints(maxWidth: (MediaQuery.of(context).size.width * 0.7).clamp(200.0, 280.0)),
                 decoration: BoxDecoration(
                   color: isMe ? AppTheme.primaryColor : Colors.white,
                   borderRadius: BorderRadius.only(
@@ -387,7 +387,7 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
                                 message.replyToMessage!,
                                 style: TextStyle(
                                   color: isMe ? Colors.white.withOpacity(0.6) : Colors.grey[600],
-                                  fontSize: 16,
+                                  fontSize: 14,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,

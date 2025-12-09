@@ -46,10 +46,11 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(20),
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.all(16),
               child: Row(
                 children: [
                   IconButton(
@@ -59,23 +60,23 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
                       Navigator.pop(context);
                     },
                   ),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Create Hangout',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: (MediaQuery.of(context).size.width * 0.05).clamp(18.0, 22.0),
                         fontWeight: FontWeight.bold,
                       ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   const SizedBox(width: 48),
                 ],
               ),
             ),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -203,9 +204,9 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
             ),
                   ],
                 ),
-              ),
             ),
           ],
+          ),
         ),
       ),
     );

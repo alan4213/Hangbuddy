@@ -288,10 +288,17 @@ class _OTPScreenState extends State<OTPScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            children: [
+        child: SingleChildScrollView(
+          padding: EdgeInsets.symmetric(
+            horizontal: 20,
+            vertical: 12,
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: MediaQuery.of(context).size.height - MediaQuery.of(context).padding.top - 24,
+            ),
+            child: Column(
+              children: [
               const SizedBox(height: 40),
               // Timer with circle
               Container(
@@ -405,6 +412,7 @@ class _OTPScreenState extends State<OTPScreen> {
               ),
               const SizedBox(height: 32),
             ],
+            ),
           ),
         ),
       ),
