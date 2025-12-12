@@ -16,6 +16,7 @@ import 'hangout_interested_users_screen.dart';
 import 'package:geolocator/geolocator.dart';
 import '../theme/app_theme.dart';
 import '../widgets/loading_widget.dart';
+import '../utils/responsive.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -48,14 +49,15 @@ class _HomeScreenState extends State<HomeScreen> {
     
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Column(
-        children: [
-          SizedBox(height: (MediaQuery.of(context).size.height * 0.06).clamp(20.0, 50.0)),
-          // Filter bar
-          Container(
+      body: SafeArea(
+        child: Column(
+          children: [
+            SizedBox(height: Responsive.padding(context, 0.02)),
+            // Filter bar
+            Container(
             padding: EdgeInsets.symmetric(
-              horizontal: (MediaQuery.of(context).size.width * 0.04).clamp(12.0, 20.0),
-              vertical: (MediaQuery.of(context).size.height * 0.012).clamp(8.0, 16.0)
+              horizontal: Responsive.padding(context, Responsive.mediumPadding),
+              vertical: Responsive.padding(context, 0.012)
             ),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -69,8 +71,9 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-          Expanded(child: _buildDiscoverTab()),
-        ],
+            Expanded(child: _buildDiscoverTab()),
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => Navigator.pushNamed(context, '/create'),
@@ -128,10 +131,10 @@ class _HomeScreenState extends State<HomeScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: EdgeInsets.only(right: (MediaQuery.of(context).size.width * 0.03).clamp(8.0, 12.0)),
+        margin: EdgeInsets.only(right: Responsive.padding(context, Responsive.smallPadding)),
         padding: EdgeInsets.symmetric(
-          horizontal: (MediaQuery.of(context).size.width * 0.04).clamp(12.0, 16.0),
-          vertical: (MediaQuery.of(context).size.height * 0.012).clamp(8.0, 12.0)
+          horizontal: Responsive.padding(context, Responsive.mediumPadding),
+          vertical: Responsive.padding(context, 0.012)
         ),
         decoration: BoxDecoration(
           color: Colors.white,
@@ -147,13 +150,13 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: AppTheme.primaryColor, size: (MediaQuery.of(context).size.width * 0.04).clamp(16.0, 20.0)),
-            SizedBox(width: (MediaQuery.of(context).size.width * 0.015).clamp(4.0, 8.0)),
+            Icon(icon, color: AppTheme.primaryColor, size: Responsive.fontSize(context, Responsive.bodyFontSize)),
+            SizedBox(width: Responsive.padding(context, 0.015)),
             Flexible(
               child: Text(
                 label,
                 style: TextStyle(
-                  fontSize: (MediaQuery.of(context).size.width * 0.03).clamp(12.0, 16.0),
+                  fontSize: Responsive.fontSize(context, Responsive.smallFontSize),
                   fontWeight: FontWeight.w500,
                   color: Color(0xFF334155),
                 ),
@@ -545,14 +548,10 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.search_off,
-                    size: 80,
-                    color: Colors.grey[400],
-                  ),
+                  _AnimatedMeetingScene(),
                   const SizedBox(height: 20),
                   const Text(
-                    'No hangouts nearby',
+                    'Looking for company?',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
@@ -561,30 +560,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Be the first to create one!',
+                    'Check back later or create your own hangout',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.grey,
                     ),
-                  ),
-                  const SizedBox(height: 30),
-                  ElevatedButton(
-                    onPressed: () => Navigator.pushNamed(context, '/create'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                    ),
-                    child: const Text(
-                      'Create Hangout',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    textAlign: TextAlign.center,
                   ),
                 ],
               ),
@@ -1146,4 +1127,178 @@ class HangoutIllustrationPainter extends CustomPainter {
   
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => false;
+}
+
+class _AnimatedMeetingScene extends StatefulWidget {
+  @override
+  _AnimatedMeetingSceneState createState() => _AnimatedMeetingSceneState();
+}
+
+class _AnimatedMeetingSceneState extends State<_AnimatedMeetingScene>
+    with TickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _person1Animation;
+  late Animation<double> _person2Animation;
+  late Animation<double> _heartAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 3),
+      vsync: this,
+    );
+
+    _person1Animation = Tween<double>(begin: -100, end: 0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.4, curve: Curves.easeOut),
+      ),
+    );
+
+    _person2Animation = Tween<double>(begin: 100, end: 0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.2, 0.6, curve: Curves.easeOut),
+      ),
+    );
+
+    _heartAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.7, 1.0, curve: Curves.elasticOut),
+      ),
+    );
+
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return SizedBox(
+          width: 200,
+          height: 120,
+          child: CustomPaint(
+            painter: _MeetingScenePainter(
+              person1Offset: _person1Animation.value,
+              person2Offset: _person2Animation.value,
+              heartScale: _heartAnimation.value,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _MeetingScenePainter extends CustomPainter {
+  final double person1Offset;
+  final double person2Offset;
+  final double heartScale;
+
+  _MeetingScenePainter({
+    required this.person1Offset,
+    required this.person2Offset,
+    required this.heartScale,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint();
+    final center = Offset(size.width / 2, size.height / 2);
+
+    // Draw bench
+    paint.color = const Color(0xFF8B4513);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(center: center + const Offset(0, 20), width: 80, height: 8),
+        const Radius.circular(4),
+      ),
+      paint,
+    );
+    
+    // Bench legs
+    canvas.drawRect(Rect.fromLTWH(center.dx - 35, center.dy + 24, 4, 15), paint);
+    canvas.drawRect(Rect.fromLTWH(center.dx + 31, center.dy + 24, 4, 15), paint);
+
+    // Person 1 (left)
+    final person1Center = center + Offset(-25 + person1Offset, 0);
+    _drawPerson(canvas, person1Center, AppTheme.primaryColor);
+
+    // Person 2 (right)
+    final person2Center = center + Offset(25 + person2Offset, 0);
+    _drawPerson(canvas, person2Center, const Color(0xFFE91E63));
+
+    // Heart between them
+    if (heartScale > 0) {
+      _drawHeart(canvas, center + const Offset(0, -10), heartScale);
+    }
+  }
+
+  void _drawPerson(Canvas canvas, Offset center, Color color) {
+    final paint = Paint();
+    
+    // Head
+    paint.color = const Color(0xFFFFDBB5);
+    canvas.drawCircle(center + const Offset(0, -15), 8, paint);
+    
+    // Body
+    paint.color = color;
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(center: center, width: 12, height: 20),
+        const Radius.circular(6),
+      ),
+      paint,
+    );
+    
+    // Legs
+    paint.color = const Color(0xFF1E40AF);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(center.dx - 4, center.dy + 10, 3, 12),
+        const Radius.circular(2),
+      ),
+      paint,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(center.dx + 1, center.dy + 10, 3, 12),
+        const Radius.circular(2),
+      ),
+      paint,
+    );
+  }
+
+  void _drawHeart(Canvas canvas, Offset center, double scale) {
+    final paint = Paint()..color = const Color(0xFFEF4444);
+    final path = Path();
+    final size = 6 * scale;
+    
+    path.moveTo(center.dx, center.dy + size * 0.3);
+    path.cubicTo(
+      center.dx - size * 0.6, center.dy - size * 0.3,
+      center.dx - size * 0.6, center.dy - size * 0.8,
+      center.dx, center.dy - size * 0.5,
+    );
+    path.cubicTo(
+      center.dx + size * 0.6, center.dy - size * 0.8,
+      center.dx + size * 0.6, center.dy - size * 0.3,
+      center.dx, center.dy + size * 0.3,
+    );
+    
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

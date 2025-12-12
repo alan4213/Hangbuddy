@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import '../widgets/loading_widget.dart';
 import '../models/signup_data.dart';
+import '../utils/responsive.dart';
 import 'height_screen.dart';
 
 class GenderScreen extends StatefulWidget {
@@ -37,14 +38,14 @@ class _GenderScreenState extends State<GenderScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(32),
+          padding: EdgeInsets.all(Responsive.padding(context, Responsive.largePadding)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'What\'s your gender?',
                 style: TextStyle(
-                  fontSize: 28,
+                  fontSize: Responsive.fontSize(context, Responsive.titleFontSize),
                   fontWeight: FontWeight.bold,
                   color: AppTheme.textPrimary,
                 ),
@@ -71,7 +72,7 @@ class _GenderScreenState extends State<GenderScreen> {
                       gender,
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: Responsive.fontSize(context, Responsive.bodyFontSize),
                         color: _selectedGender == gender ? Colors.white : AppTheme.textPrimary,
                         fontWeight: FontWeight.w500,
                       ),

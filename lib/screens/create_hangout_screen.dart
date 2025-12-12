@@ -7,6 +7,7 @@ import '../services/location_service.dart';
 import 'package:geolocator/geolocator.dart';
 import '../theme/app_theme.dart';
 import '../widgets/loading_widget.dart';
+import '../utils/responsive.dart';
 
 class CreateHangoutScreen extends StatefulWidget {
   const CreateHangoutScreen({super.key});
@@ -49,37 +50,39 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              Padding(
-                padding: EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: Icon(Icons.close, color: AppTheme.primaryColor),
-                    onPressed: () {
-                      HapticFeedback.lightImpact();
-                      Navigator.pop(context);
-                    },
-                  ),
-                  Expanded(
-                    child: Text(
-                      'Create Hangout',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: (MediaQuery.of(context).size.width * 0.05).clamp(18.0, 22.0),
-                        fontWeight: FontWeight.bold,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 48),
-                ],
-              ),
-            ),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                child: Stack(
                   children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: IconButton(
+                        icon: Icon(Icons.close, color: AppTheme.primaryColor),
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ),
+                    Center(
+                      child: Text(
+                        'Create Hangout',
+                        style: TextStyle(
+                          fontSize: Responsive.fontSize(context, Responsive.headingFontSize),
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: Responsive.padding(context, Responsive.mediumPadding),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                     // Title
             _buildTextField(
               controller: _titleController,
@@ -202,8 +205,8 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
               text: 'Create Hangout',
               onPressed: _createHangout,
             ),
-                  ],
-                ),
+                ],
+              ),
             ),
           ],
           ),
@@ -217,8 +220,8 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
       padding: const EdgeInsets.only(bottom: 12),
       child: Text(
         title,
-        style: const TextStyle(
-          fontSize: 18,
+        style: TextStyle(
+          fontSize: Responsive.fontSize(context, Responsive.bodyFontSize),
           fontWeight: FontWeight.w600,
           color: Colors.black87,
         ),
@@ -242,7 +245,10 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
           maxLines: maxLines,
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: Colors.grey, fontSize: 16),
+            hintStyle: TextStyle(
+              color: Colors.grey, 
+              fontSize: Responsive.fontSize(context, Responsive.smallFontSize),
+            ),
             prefixIcon: prefixIcon != null ? Icon(prefixIcon, color: Colors.grey) : null,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
@@ -455,19 +461,21 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
           child: Column(
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Who can see this hangout?',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black87,
+                  Expanded(
+                    child: Text(
+                      'Who can see this hangout?',
+                      style: TextStyle(
+                        fontSize: Responsive.fontSize(context, Responsive.smallFontSize),
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black87,
+                      ),
                     ),
                   ),
                   Text(
                     'Within ${_maxDistance.toInt()} km',
                     style: TextStyle(
+                      fontSize: Responsive.fontSize(context, Responsive.smallFontSize),
                       fontWeight: FontWeight.bold,
                       color: AppTheme.primaryColor,
                     ),
@@ -484,13 +492,14 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
                   setState(() => _maxDistance = value);
                 },
               ),
-              const Text(
+              Text(
                 'People within this range can see your hangout',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: Responsive.fontSize(context, Responsive.smallFontSize),
                   color: Colors.grey,
                   fontWeight: FontWeight.w400,
                 ),
+                textAlign: TextAlign.center,
               ),
             ],
           ),
