@@ -43,49 +43,30 @@ class MatchService {
 
     await _firestore.collection('matches').doc(matchId).set(matchData);
     
-    // Create match notification
-    try {
-      await _firestore.collection('notifications').add({
-        'userId': user2Id,
-        'type': 'match',
-        'message': 'It\'s a Match! You matched for "$hangoutTitle"',
-        'hangoutTitle': hangoutTitle,
-        'createdAt': FieldValue.serverTimestamp(),
-        'read': false,
-      });
-    } catch (e) {
-      print('Match notification error: $e');
-    }
-    
-    // Send match notification to the interested user
+    // Send match notifications to both users
     await _sendMatchNotification(user2Id, user1Id, hangoutTitle);
-    
-    // Send push notification
-    final user1Doc = await _firestore.collection('users').doc(user1Id).get();
-    final user1Name = user1Doc.data()?['firstName'] ?? 'Someone';
-    await NotificationService.sendMatchNotification(user2Id, user1Name);
+    await _sendMatchNotification(user1Id, user2Id, hangoutTitle);
   }
   
   static Future<void> _sendMatchNotification(String userId, String matchedUserId, String hangoutTitle) async {
     try {
+      // Create single notification in Firestore
       await _firestore.collection('notifications').add({
         'userId': userId,
-        'type': 'match_created',
-        'title': 'It\'s a Match!',
-        'message': 'You matched for "$hangoutTitle"! Start chatting now.',
+        'type': 'match',
+        'message': 'It\'s a Match! You matched for "$hangoutTitle"',
         'matchedUserId': matchedUserId,
         'hangoutTitle': hangoutTitle,
         'createdAt': FieldValue.serverTimestamp(),
         'read': false,
       });
       
-      // Get the matched user's name for notification
+      // Get matched user's name and send single push notification
       final matchedUserDoc = await _firestore.collection('users').doc(matchedUserId).get();
       final matchedUserName = matchedUserDoc.exists 
           ? '${matchedUserDoc.data()?['firstName'] ?? ''} ${matchedUserDoc.data()?['lastName'] ?? ''}'.trim()
           : 'Someone';
       
-      // Send push notification to the matched user
       await NotificationService.sendMatchNotification(userId, matchedUserName.isEmpty ? 'Someone' : matchedUserName);
     } catch (e) {
       print('Error sending match notification: $e');

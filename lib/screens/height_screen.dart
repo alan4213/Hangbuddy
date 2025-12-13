@@ -3,6 +3,7 @@ import '../theme/app_theme.dart';
 import '../widgets/loading_widget.dart';
 import '../models/signup_data.dart';
 import 'ethnicity_screen.dart';
+import '../widgets/progress_bar.dart';
 
 class HeightScreen extends StatefulWidget {
   final SignupData signupData;
@@ -40,10 +41,14 @@ class _HeightScreenState extends State<HeightScreen> {
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: Column(
+          children: [
+            const ProgressBar(currentStep: 4, totalSteps: 8),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'What\'s your height?',
@@ -51,6 +56,14 @@ class _HeightScreenState extends State<HeightScreen> {
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Optional information to help friends recognize you when meeting up.',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: AppTheme.textSecondary,
                 ),
               ),
               
@@ -142,8 +155,11 @@ class _HeightScreenState extends State<HeightScreen> {
                 },
               ),
               const SizedBox(height: 32),
-            ],
-          ),
+                ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

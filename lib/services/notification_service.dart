@@ -2,18 +2,15 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import '../screens/chat_window_screen.dart';
 
 class NotificationService {
   static final FirebaseMessaging _messaging = FirebaseMessaging.instance;
-  static final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
   static GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
   static Function(int)? onTabChange;
+  static Function(int)? onMatchesTabChange;
 
   static Future<void> initialize() async {
-    // Initialize local notifications
-    await _initializeLocalNotifications();
-    
     // Request permission
     await _messaging.requestPermission(
       alert: true,
@@ -27,9 +24,9 @@ class NotificationService {
       await _saveTokenToDatabase(token);
     }
 
-    // Handle foreground messages - show local notification
+    // Handle foreground messages
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      _showLocalNotification(message);
+      print('Foreground message received: ${message.notification?.title}');
     });
 
     // Handle background messages
@@ -47,63 +44,6 @@ class NotificationService {
     }
   }
   
-  static Future<void> _initializeLocalNotifications() async {
-    const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@drawable/ic_notification');
-    
-    const InitializationSettings initializationSettings =
-        InitializationSettings(android: initializationSettingsAndroid);
-    
-    await _localNotifications.initialize(
-      initializationSettings,
-      onDidReceiveNotificationResponse: (NotificationResponse response) {
-        if (response.payload != null) {
-          final data = Map<String, dynamic>.from(
-            Uri.splitQueryString(response.payload!)
-          );
-          _handleNotificationTap(data);
-        }
-      },
-    );
-    
-    // Create notification channel
-    const AndroidNotificationChannel channel = AndroidNotificationChannel(
-      'hangbuddy_notifications',
-      'Hangbuddy Notifications',
-      description: 'Notifications for matches, messages, and hangouts',
-      importance: Importance.high,
-    );
-    
-    await _localNotifications
-        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
-        ?.createNotificationChannel(channel);
-  }
-  
-  static Future<void> _showLocalNotification(RemoteMessage message) async {
-    final payload = Uri(queryParameters: message.data).query;
-    
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
-        AndroidNotificationDetails(
-      'hangbuddy_notifications',
-      'Hangbuddy Notifications',
-      channelDescription: 'Notifications for matches, messages, and hangouts',
-      importance: Importance.high,
-      priority: Priority.high,
-      showWhen: true,
-    );
-    
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
-    
-    await _localNotifications.show(
-      message.hashCode,
-      message.notification?.title ?? 'Hangbuddy',
-      message.notification?.body ?? 'You have a new notification',
-      platformChannelSpecifics,
-      payload: payload,
-    );
-  }
-  
   static Future<void> _saveTokenToDatabase(String token) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
@@ -111,6 +51,7 @@ class NotificationService {
         await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
           'fcmToken': token,
         }, SetOptions(merge: true));
+        print('FCM token saved for user: ${user.uid}');
       } catch (e) {
         print('Error saving FCM token: $e');
       }
@@ -127,6 +68,9 @@ class NotificationService {
       final userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
       final fcmToken = userDoc.data()?['fcmToken'];
       
+      print('Sending notification to user: $userId');
+      print('FCM Token found: ${fcmToken != null}');
+      
       if (fcmToken != null) {
         // Send direct FCM notification
         await FirebaseFirestore.instance.collection('fcm_messages').add({
@@ -136,7 +80,9 @@ class NotificationService {
           'data': data ?? {},
           'timestamp': FieldValue.serverTimestamp(),
         });
-        print('FCM message queued: $title');
+        print('FCM message queued: $title for user: $userId');
+      } else {
+        print('No FCM token found for user: $userId');
       }
     } catch (e) {
       print('Error sending FCM notification: $e');
@@ -169,12 +115,12 @@ class NotificationService {
     }
   }
   
-  static Future<void> sendHangoutInterestNotification(String creatorId, String hangoutTitle, String hangoutId) async {
+  static Future<void> sendHangoutInterestNotification(String creatorId, String hangoutTitle, String hangoutId, [String interestedUserName = 'Someone']) async {
     try {
       await FirebaseFirestore.instance.collection('notifications').add({
         'userId': creatorId,
         'title': 'Someone is interested! 🙋♂️',
-        'message': 'Someone wants to join your "$hangoutTitle" hangout!',
+        'message': '$interestedUserName wants to join your "$hangoutTitle" hangout!',
         'type': 'hangout_interest',
         'read': false,
         'timestamp': FieldValue.serverTimestamp(),
@@ -188,7 +134,7 @@ class NotificationService {
       await _sendDeviceNotification(
         creatorId,
         'Someone is interested! 🙋♂️',
-        'Someone wants to join your "$hangoutTitle" hangout!',
+        '$interestedUserName wants to join your "$hangoutTitle" hangout!',
         {'type': 'hangout_interest', 'screen': 'my_hangouts', 'hangoutId': hangoutId}
       );
     } catch (e) {
@@ -196,7 +142,7 @@ class NotificationService {
     }
   }
   
-  static Future<void> sendMessageNotification(String userId, String senderName, String message) async {
+  static Future<void> sendMessageNotification(String userId, String senderName, String message, [String? senderId]) async {
     try {
       await FirebaseFirestore.instance.collection('notifications').add({
         'userId': userId,
@@ -208,6 +154,7 @@ class NotificationService {
         'data': {
           'type': 'message',
           'screen': 'chat',
+          'senderId': senderId,
         },
       });
       
@@ -215,7 +162,7 @@ class NotificationService {
         userId,
         'New Message 💬',
         '$senderName: $message',
-        {'type': 'message', 'screen': 'chat'}
+        {'type': 'message', 'screen': 'chat', 'senderId': senderId}
       );
     } catch (e) {
       print('Error sending message notification: $e');
@@ -226,24 +173,129 @@ class NotificationService {
     final context = navigatorKey.currentContext;
     if (context == null) return;
     
-    // Navigate to home
+    print('Handling notification tap: $data');
+    final notificationType = data['type'];
+    final senderId = data['senderId'];
+    print('Notification type: $notificationType');
+    print('Sender ID: $senderId');
+    
+    // Navigate to home first
     Navigator.pushNamedAndRemoveUntil(
       context,
       '/home',
       (route) => false,
     );
     
-    // Go to Matches tab (heart icon - index 1)
-    Future.delayed(Duration(milliseconds: 200), () {
-      if (onTabChange != null) {
-        onTabChange!(1);
+    // For message notifications, open specific chat if senderId available
+    if (notificationType == 'message' && senderId != null) {
+      print('Opening chat with sender: $senderId');
+      
+      Future.delayed(Duration(milliseconds: 200), () {
+        if (onTabChange != null) {
+          onTabChange!(2); // Go to chat tab first
+        }
+      });
+      
+      // Open specific chat window
+      Future.delayed(Duration(milliseconds: 500), () async {
+        try {
+          final chatDetailScreen = await _getChatDetailScreen(senderId);
+          if (chatDetailScreen != null && navigatorKey.currentContext != null) {
+            Navigator.push(
+              navigatorKey.currentContext!,
+              MaterialPageRoute(builder: (context) => chatDetailScreen),
+            );
+          }
+        } catch (e) {
+          print('Error opening specific chat: $e');
+        }
+      });
+    } else if (data.isEmpty || notificationType == 'message') {
+      print('Going to chat tab (no senderId in notification)');
+      
+      Future.delayed(Duration(milliseconds: 200), () {
+        if (onTabChange != null) {
+          onTabChange!(2); // Just go to chat tab
+        }
+      });
+    } else if (notificationType == 'hangout_interest') {
+      print('Going to My Hangouts tab for hangout interest notification');
+      
+      Future.delayed(Duration(milliseconds: 200), () {
+        if (onMatchesTabChange != null) {
+          onMatchesTabChange!(0); // Go to "My Hangouts" tab (index 0)
+        }
+      });
+    } else if (notificationType == 'match') {
+      print('Going to Upcoming Hangouts tab for match notification');
+      
+      Future.delayed(Duration(milliseconds: 200), () {
+        if (onMatchesTabChange != null) {
+          onMatchesTabChange!(1); // Go to "Upcoming Hangouts" tab (index 1)
+        }
+      });
+    } else {
+      // Go to home tab for other notifications
+      Future.delayed(Duration(milliseconds: 200), () {
+        if (onTabChange != null) {
+          onTabChange!(0);
+        }
+      });
+    }
+  }
+  
+  static Future<Widget?> _getChatDetailScreen(String senderId) async {
+    try {
+      print('Getting chat detail screen for sender: $senderId');
+      
+      // Get sender's user data
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(senderId).get();
+      print('User doc exists: ${userDoc.exists}');
+      
+      if (!userDoc.exists) {
+        print('User document not found for: $senderId');
+        return null;
       }
-    });
+      
+      final userData = userDoc.data()!;
+      final firstName = userData['firstName'] ?? '';
+      final lastName = userData['lastName'] ?? '';
+      print('Creating chat screen for: $firstName $lastName');
+      
+      // Create ChatWindowScreen with sender's data
+      return ChatWindowScreen(
+        match: {'name': '$firstName $lastName'},
+        otherUserId: senderId,
+      );
+    } catch (e) {
+      print('Error getting chat detail screen: $e');
+      return null;
+    }
   }
   
   static void setTabChangeCallback(Function(int) callback) {
     onTabChange = callback;
   }
+  
+  static void setMatchesTabCallback(Function(int) callback) {
+    onMatchesTabChange = callback;
+  }
+  
+  static Future<void> refreshFCMToken() async {
+    try {
+      String? token = await _messaging.getToken();
+      if (token != null) {
+        await _saveTokenToDatabase(token);
+        print('FCM token refreshed and saved');
+      }
+    } catch (e) {
+      print('Error refreshing FCM token: $e');
+    }
+  }
+  
+
+  
+
 }
 
 @pragma('vm:entry-point')

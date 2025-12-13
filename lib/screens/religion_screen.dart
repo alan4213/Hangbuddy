@@ -3,6 +3,7 @@ import '../theme/app_theme.dart';
 import '../widgets/loading_widget.dart';
 import '../models/signup_data.dart';
 import 'interests_screen.dart';
+import '../widgets/progress_bar.dart';
 
 class ReligionScreen extends StatefulWidget {
   final SignupData signupData;
@@ -39,10 +40,14 @@ class _ReligionScreenState extends State<ReligionScreen> {
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: Column(
+          children: [
+            const ProgressBar(currentStep: 7, totalSteps: 8),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'What\'s your religion?',
@@ -50,6 +55,14 @@ class _ReligionScreenState extends State<ReligionScreen> {
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Share your beliefs to find people who respect and understand your values.',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: AppTheme.textSecondary,
                 ),
               ),
               
@@ -113,8 +126,11 @@ class _ReligionScreenState extends State<ReligionScreen> {
                 },
               ),
               const SizedBox(height: 32),
-            ],
-          ),
+                ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

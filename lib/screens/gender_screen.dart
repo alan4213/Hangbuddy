@@ -4,6 +4,7 @@ import '../widgets/loading_widget.dart';
 import '../models/signup_data.dart';
 import '../utils/responsive.dart';
 import 'height_screen.dart';
+import '../widgets/progress_bar.dart';
 
 class GenderScreen extends StatefulWidget {
   final SignupData signupData;
@@ -37,10 +38,14 @@ class _GenderScreenState extends State<GenderScreen> {
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(Responsive.padding(context, Responsive.largePadding)),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: Column(
+          children: [
+            const ProgressBar(currentStep: 3, totalSteps: 8),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(Responsive.padding(context, Responsive.largePadding)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'What\'s your gender?',
@@ -48,6 +53,14 @@ class _GenderScreenState extends State<GenderScreen> {
                   fontSize: Responsive.fontSize(context, Responsive.titleFontSize),
                   fontWeight: FontWeight.bold,
                   color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Help us create a comfortable and inclusive community for everyone.',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: AppTheme.textSecondary,
                 ),
               ),
               
@@ -111,8 +124,11 @@ class _GenderScreenState extends State<GenderScreen> {
                 },
               ),
               const SizedBox(height: 32),
-            ],
-          ),
+                ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

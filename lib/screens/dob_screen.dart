@@ -3,6 +3,7 @@ import '../theme/app_theme.dart';
 import '../widgets/loading_widget.dart';
 import '../models/signup_data.dart';
 import 'gender_screen.dart';
+import '../widgets/progress_bar.dart';
 
 class DobScreen extends StatefulWidget {
   final SignupData signupData;
@@ -35,9 +36,13 @@ class _DobScreenState extends State<DobScreen> {
         ),
       ),
       body: SafeArea(
-        child: Stack(
+        child: Column(
           children: [
-            SingleChildScrollView(
+            const ProgressBar(currentStep: 2, totalSteps: 8),
+            Expanded(
+              child: Stack(
+                children: [
+                  SingleChildScrollView(
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               padding: EdgeInsets.only(
                 left: MediaQuery.of(context).size.width * 0.08,
@@ -54,6 +59,14 @@ class _DobScreenState extends State<DobScreen> {
                       fontSize: MediaQuery.of(context).size.width * 0.07,
                       fontWeight: FontWeight.bold,
                       color: AppTheme.textPrimary,
+                    ),
+                  ),
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.015),
+                  Text(
+                    'We use this to calculate your age and find age-appropriate hangout buddies.',
+                    style: TextStyle(
+                      fontSize: MediaQuery.of(context).size.width * 0.04,
+                      color: AppTheme.textSecondary,
                     ),
                   ),
                   
@@ -210,6 +223,9 @@ class _DobScreenState extends State<DobScreen> {
                     );
                   }
                 },
+              ),
+                  ),
+                ],
               ),
             ),
           ],

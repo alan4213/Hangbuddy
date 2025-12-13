@@ -4,6 +4,7 @@ import '../theme/app_theme.dart';
 import '../widgets/loading_widget.dart';
 import '../models/signup_data.dart';
 import 'dob_screen.dart';
+import '../widgets/progress_bar.dart';
 
 class NameScreen extends StatefulWidget {
   final SignupData? signupData;
@@ -51,9 +52,13 @@ class _NameScreenState extends State<NameScreen> {
         ),
       ),
       body: SafeArea(
-        child: Stack(
+        child: Column(
           children: [
-            SingleChildScrollView(
+            const ProgressBar(currentStep: 1, totalSteps: 8),
+            Expanded(
+              child: Stack(
+                children: [
+                  SingleChildScrollView(
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               padding: EdgeInsets.only(
                 left: MediaQuery.of(context).size.width * 0.08,
@@ -70,6 +75,14 @@ class _NameScreenState extends State<NameScreen> {
                       fontSize: MediaQuery.of(context).size.width * 0.07,
                       fontWeight: FontWeight.bold,
                       color: AppTheme.textPrimary,
+                    ),
+                  ),
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.015),
+                  Text(
+                    'This is how you\'ll appear to other users. Use your real name to build trust.',
+                    style: TextStyle(
+                      fontSize: MediaQuery.of(context).size.width * 0.04,
+                      color: AppTheme.textSecondary,
                     ),
                   ),
                   
@@ -212,6 +225,9 @@ class _NameScreenState extends State<NameScreen> {
                     );
                   }
                 },
+              ),
+                  ),
+                ],
               ),
             ),
           ],

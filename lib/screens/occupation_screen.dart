@@ -3,6 +3,7 @@ import '../theme/app_theme.dart';
 import '../widgets/loading_widget.dart';
 import '../models/signup_data.dart';
 import 'religion_screen.dart';
+import '../widgets/progress_bar.dart';
 
 class OccupationScreen extends StatefulWidget {
   final SignupData signupData;
@@ -43,10 +44,14 @@ class _OccupationScreenState extends State<OccupationScreen> {
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: Column(
+          children: [
+            const ProgressBar(currentStep: 6, totalSteps: 8),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'What\'s your occupation?',
@@ -54,6 +59,14 @@ class _OccupationScreenState extends State<OccupationScreen> {
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Let others know what you do for work - it\'s a great conversation starter!',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: AppTheme.textSecondary,
                 ),
               ),
               
@@ -145,8 +158,11 @@ class _OccupationScreenState extends State<OccupationScreen> {
                 },
               ),
               const SizedBox(height: 32),
-            ],
-          ),
+                ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

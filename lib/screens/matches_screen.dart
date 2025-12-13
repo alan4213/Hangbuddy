@@ -4,7 +4,9 @@ import '../widgets/upcoming_hangouts_tab.dart';
 import '../theme/app_theme.dart';
 
 class MatchesScreen extends StatefulWidget {
-  const MatchesScreen({super.key});
+  final int initialTabIndex;
+  
+  const MatchesScreen({super.key, this.initialTabIndex = 0});
 
   @override
   State<MatchesScreen> createState() => _MatchesScreenState();
@@ -16,7 +18,11 @@ class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProvider
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(
+      length: 2, 
+      vsync: this,
+      initialIndex: widget.initialTabIndex,
+    );
   }
 
   @override

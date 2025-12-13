@@ -5,6 +5,7 @@ import '../models/user_model.dart';
 import '../services/match_service.dart';
 import '../screens/profile_detail_screen.dart';
 import '../screens/chat_window_screen.dart';
+import '../theme/app_theme.dart';
 
 class UpcomingHangoutsTab extends StatefulWidget {
   const UpcomingHangoutsTab({super.key});
@@ -227,7 +228,7 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
                   right: 12,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: AppTheme.primaryColor,
                       shape: BoxShape.circle,
                     ),
                     child: IconButton(

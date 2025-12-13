@@ -103,10 +103,18 @@ class HangoutService {
       final hangoutDoc = await _firestore.collection('hangout_requests').doc(hangoutId).get();
       if (hangoutDoc.exists) {
         final hangout = HangoutRequest.fromMap(hangoutDoc.data()!, hangoutId);
+        
+        // Get interested user's name
+        final interestedUserDoc = await _firestore.collection('users').doc(user.uid).get();
+        final interestedUserName = interestedUserDoc.exists 
+            ? '${interestedUserDoc.data()?['firstName'] ?? ''} ${interestedUserDoc.data()?['lastName'] ?? ''}'.trim()
+            : 'Someone';
+        
         await NotificationService.sendHangoutInterestNotification(
           hangout.creatorId,
           hangout.title,
-          hangoutId
+          hangoutId,
+          interestedUserName.isEmpty ? 'Someone' : interestedUserName,
         );
       }
     } catch (e) {

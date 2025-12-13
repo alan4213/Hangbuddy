@@ -58,10 +58,39 @@ class _PhotosScreenState extends State<PhotosScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Upload at least 2 photos (maximum 4)',
+                'Show your personality! Upload at least 2 photos to help others get to know you.',
                 style: TextStyle(
                   fontSize: 16,
                   color: AppTheme.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.primaryColor.withOpacity(0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.lightbulb_outline,
+                      color: AppTheme.primaryColor,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Tip: Choose photos that show your face clearly and represent your interests!',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: AppTheme.primaryColor,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 32),

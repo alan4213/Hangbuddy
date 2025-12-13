@@ -188,20 +188,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     
                     const SizedBox(height: 16),
                     
-                    // Test Notification
-                    _buildMenuCard(
-                      Icons.bug_report,
-                      'Test Notification',
-                      'Create a test notification',
-                      () async {
-                        await HangoutService.createTestNotification();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Test notification created')),
-                        );
-                      },
-                    ),
-                    
-                    const SizedBox(height: 16),
                     
                     // Verify Profile
                     _buildMenuCard(

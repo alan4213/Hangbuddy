@@ -275,7 +275,7 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
       context: context,
       initialDate: _selectedDate,
       firstDate: DateTime.now(),
-      lastDate: DateTime.now().add(const Duration(days: 365)),
+      lastDate: DateTime.now().add(const Duration(days: 7)),
     );
     if (date != null) {
       setState(() => _selectedDate = date);
@@ -300,16 +300,41 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
       return;
     }
 
+    final dateTime = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      _selectedTime.hour,
+      _selectedTime.minute,
+    );
+
+    final now = DateTime.now();
+    final minTime = now.add(const Duration(minutes: 30));
+    final maxTime = now.add(const Duration(days: 7));
+
+    if (dateTime.isBefore(minTime)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Hangout must be at least 30 minutes from now'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (dateTime.isAfter(maxTime)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Hangout cannot be more than 7 days from now'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isCreating = true);
 
     try {
-      final dateTime = DateTime(
-        _selectedDate.year,
-        _selectedDate.month,
-        _selectedDate.day,
-        _selectedTime.hour,
-        _selectedTime.minute,
-      );
 
       await HangoutService.createHangoutRequest(
         title: _titleController.text,
@@ -395,6 +420,37 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
                         ],
                       ),
                       constraints: const BoxConstraints(maxHeight: 150),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        itemCount: _locationSuggestions.length,
+                        itemBuilder: (context, index) {
+                          return ListTile(
+                            dense: true,
+                            leading: const Icon(Icons.location_on, size: 16),
+                            title: Text(
+                              _locationSuggestions[index],
+                              style: const TextStyle(fontSize: 14),
+                            ),
+                            onTap: () => _selectLocation(_locationSuggestions[index]),
+                          );
+                        },
+                      ),
+                    ),
+                  if (_showSuggestions && _locationSuggestions.isNotEmpty)
+                    Container(
+                      margin: const EdgeInsets.only(top: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      constraints: const BoxConstraints(maxHeight: 200),
                       child: ListView.builder(
                         shrinkWrap: true,
                         itemCount: _locationSuggestions.length,
@@ -553,7 +609,7 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
     }
   }
 
-  void _updateLocationSuggestions(String query) {
+  void _updateLocationSuggestions(String query) async {
     if (query.length < 2) {
       setState(() {
         _showSuggestions = false;
@@ -562,39 +618,19 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
       return;
     }
     
-    // Popular locations in Kerala/India - you can expand this list
-    final allSuggestions = [
-      'MG Road, Ernakulam',
-      'Marine Drive, Kochi',
-      'Lulu Mall, Kochi',
-      'Forum Mall, Kochi',
-      'Kakkanad, Kochi',
-      'Edappally, Kochi',
-      'Kaloor, Kochi',
-      'Palarivattom, Kochi',
-      'Vytilla, Kochi',
-      'Fort Kochi',
-      'Mattancherry, Kochi',
-      'Aluva, Ernakulam',
-      'Perumbavoor, Ernakulam',
-      'Angamaly, Ernakulam',
-      'Muvattupuzha, Ernakulam',
-      'Kothamangalam, Ernakulam',
-      'Thrissur',
-      'Kozhikode',
-      'Thiruvananthapuram',
-      'Kollam',
-    ];
-    
-    final filteredSuggestions = allSuggestions
-        .where((location) => location.toLowerCase().contains(query.toLowerCase()))
-        .take(5)
-        .toList();
-    
-    setState(() {
-      _locationSuggestions = filteredSuggestions;
-      _showSuggestions = filteredSuggestions.isNotEmpty;
-    });
+    try {
+      final suggestions = await LocationService.getLocationSuggestions(query);
+      setState(() {
+        _locationSuggestions = suggestions;
+        _showSuggestions = suggestions.isNotEmpty;
+      });
+    } catch (e) {
+      print('Error getting location suggestions: $e');
+      setState(() {
+        _locationSuggestions = [];
+        _showSuggestions = false;
+      });
+    }
   }
   
   void _selectLocation(String location) async {

@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
+import 'notification_service.dart';
 
 class AuthService {
   static String? _verificationId;
@@ -57,6 +58,9 @@ class AuthService {
       );
       
       await FirebaseAuth.instance.signInWithCredential(credential);
+      
+      // Refresh FCM token after successful login
+      await NotificationService.refreshFCMToken();
       
       // Store phone number in Firestore immediately
       if (_phoneNumber != null) {
@@ -203,6 +207,10 @@ class AuthService {
       print('Signing in with Firebase using Google credential...');
       final result = await FirebaseAuth.instance.signInWithCredential(credential);
       print('Firebase sign-in successful: ${result.user?.email}');
+      
+      // Refresh FCM token after successful login
+      await NotificationService.refreshFCMToken();
+      
       print('=== Google Sign-In Complete ===');
       return result;
     } catch (e, stackTrace) {

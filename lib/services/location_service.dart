@@ -1,5 +1,7 @@
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class LocationService {
   static Future<bool> _handleLocationPermission() async {
@@ -160,5 +162,53 @@ class LocationService {
       print('Error getting short address: $e');
     }
     return null;
+  }
+  
+  static Future<List<String>> getLocationSuggestions(String query) async {
+    try {
+      final String url = 'https://nominatim.openstreetmap.org/search'
+          '?q=${Uri.encodeComponent(query)}'
+          '&format=json'
+          '&addressdetails=1'
+          '&limit=8';
+      
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {'User-Agent': 'HangBuddy App'},
+      );
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body) as List;
+        
+        return data
+            .map((item) => item['display_name'] as String)
+            .where((name) => !_isUnwantedLocation(name))
+            .map((name) => _cleanLocationName(name))
+            .take(8)
+            .toList();
+      }
+    } catch (e) {
+      print('Error getting location suggestions: $e');
+    }
+    
+    return [];
+  }
+  
+  static String _cleanLocationName(String name) {
+    final parts = name.split(', ');
+    if (parts.length > 3) {
+      return '${parts[0]}, ${parts[1]}, ${parts[2]}';
+    }
+    return name;
+  }
+  
+  static bool _isUnwantedLocation(String description) {
+    final unwantedKeywords = [
+      'ground floor', 'room', 'floor', 'apartment', 'flat',
+      'building', 'tower', 'block', 'wing', 'unit'
+    ];
+    
+    return unwantedKeywords.any((keyword) => 
+        description.toLowerCase().contains(keyword));
   }
 }

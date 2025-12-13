@@ -3,6 +3,7 @@ import '../theme/app_theme.dart';
 import '../widgets/loading_widget.dart';
 import '../models/signup_data.dart';
 import 'photos_screen.dart';
+import '../widgets/progress_bar.dart';
 
 class InterestsScreen extends StatefulWidget {
   final SignupData signupData;
@@ -50,10 +51,14 @@ class _InterestsScreenState extends State<InterestsScreen> {
         ),
       ),
       body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.08),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: Column(
+          children: [
+            const ProgressBar(currentStep: 8, totalSteps: 8),
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.08),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Your Interests',
@@ -160,8 +165,11 @@ class _InterestsScreenState extends State<InterestsScreen> {
                   }
                 },
               ),
-            ],
-          ),
+                ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

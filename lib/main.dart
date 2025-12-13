@@ -68,6 +68,7 @@ class MainNavigation extends StatefulWidget {
 
 class _MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
+  int _matchesTabIndex = 0;
 
   @override
   void initState() {
@@ -77,12 +78,18 @@ class _MainNavigationState extends State<MainNavigation> {
         _selectedIndex = index;
       });
     });
+    NotificationService.setMatchesTabCallback((tabIndex) {
+      setState(() {
+        _matchesTabIndex = tabIndex;
+        _selectedIndex = 1; // Go to matches screen
+      });
+    });
     _listenForNotifications();
   }
 
-  final List<Widget> _screens = [
+  List<Widget> get _screens => [
     const HomeScreen(),
-    const MatchesScreen(),
+    MatchesScreen(initialTabIndex: _matchesTabIndex),
     ChatScreen(),
     const ProfileScreen(),
   ];
@@ -122,7 +129,13 @@ class _MainNavigationState extends State<MainNavigation> {
             currentIndex: _selectedIndex,
             onTap: (index) {
               HapticFeedback.selectionClick();
-              setState(() => _selectedIndex = index);
+              setState(() {
+                _selectedIndex = index;
+                // Reset matches tab index when manually navigating
+                if (index == 1) {
+                  _matchesTabIndex = 0;
+                }
+              });
             },
             type: BottomNavigationBarType.fixed,
             selectedItemColor: AppTheme.primaryColor,

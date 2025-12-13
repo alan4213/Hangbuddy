@@ -3,6 +3,7 @@ import '../theme/app_theme.dart';
 import '../widgets/loading_widget.dart';
 import '../models/signup_data.dart';
 import 'occupation_screen.dart';
+import '../widgets/progress_bar.dart';
 
 class EducationScreen extends StatefulWidget {
   final SignupData signupData;
@@ -38,10 +39,14 @@ class _EducationScreenState extends State<EducationScreen> {
         ),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        child: Column(
+          children: [
+            const ProgressBar(currentStep: 5, totalSteps: 8),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'What\'s your education level?',
@@ -49,6 +54,14 @@ class _EducationScreenState extends State<EducationScreen> {
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                   color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Share your educational background to connect with like-minded people.',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: AppTheme.textSecondary,
                 ),
               ),
               
@@ -112,8 +125,11 @@ class _EducationScreenState extends State<EducationScreen> {
                 },
               ),
               const SizedBox(height: 32),
-            ],
-          ),
+                ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

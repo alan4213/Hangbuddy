@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/chat_model.dart';
+import 'notification_service.dart';
+import 'user_service.dart';
 
 class ChatService {
   static Stream<int> getUnreadMessageCount() {
@@ -108,6 +110,25 @@ class ChatService {
     }, SetOptions(merge: true));
     
     await batch.commit();
+    
+    // Send notification
+    try {
+      final senderProfile = await UserService.getUserProfile();
+      final senderName = senderProfile != null 
+          ? '${senderProfile.firstName} ${senderProfile.lastName}'.trim()
+          : 'Someone';
+      
+      print('sendMessageWithId: From ${currentUser.uid} to $receiverId');
+      await NotificationService.sendMessageNotification(
+        receiverId,
+        senderName.isEmpty ? 'Someone' : senderName,
+        message,
+        currentUser.uid,
+      );
+    } catch (e) {
+      print('Error sending message notification: $e');
+    }
+    
     return messageRef.id;
   }
   
@@ -234,6 +255,24 @@ class ChatService {
       'lastMessageTime': timestamp.millisecondsSinceEpoch,
       'unreadCount_$receiverId': FieldValue.increment(1),
     }, SetOptions(merge: true));
+    
+    // Send notification
+    try {
+      final senderProfile = await UserService.getUserProfile();
+      final senderName = senderProfile != null 
+          ? '${senderProfile.firstName} ${senderProfile.lastName}'.trim()
+          : 'Someone';
+      
+      print('sendMessage: From ${currentUser.uid} to $receiverId');
+      await NotificationService.sendMessageNotification(
+        receiverId,
+        senderName.isEmpty ? 'Someone' : senderName,
+        message,
+        currentUser.uid,
+      );
+    } catch (e) {
+      print('Error sending message notification: $e');
+    }
   }
   
   static Future<void> updateMessageStatus(String otherUserId, String messageId, String status) async {

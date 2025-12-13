@@ -32,6 +32,22 @@ class _ChatScreenState extends State<ChatScreen> {
           padding: EdgeInsets.all((MediaQuery.of(context).size.width * 0.05).clamp(12.0, 20.0)),
           child: Column(
             children: [
+              // Header
+              Padding(
+                padding: EdgeInsets.only(bottom: (MediaQuery.of(context).size.height * 0.02).clamp(12.0, 20.0)),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Chats',
+                    style: TextStyle(
+                      fontSize: (MediaQuery.of(context).size.width * 0.07).clamp(20.0, 28.0),
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                ),
+              ),
+              
               // Search Bar
               Container(
                 decoration: BoxDecoration(

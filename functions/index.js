@@ -42,3 +42,34 @@ exports.sendPushNotification = onDocumentCreated('notifications/{notificationId}
     console.error('Error:', error);
   }
 });
+
+exports.sendFCMNotifications = onDocumentCreated('fcm_messages/{messageId}', async (event) => {
+  const data = event.data.data();
+  
+  try {
+    const message = {
+      token: data.token,
+      notification: {
+        title: data.title,
+        body: data.body,
+      },
+      data: data.data || {},
+      android: {
+        notification: {
+          channelId: 'hangbuddy_notifications',
+          priority: 'high',
+        },
+      },
+    };
+    
+    console.log('Sending FCM with data:', data.data);
+    await getMessaging().send(message);
+    console.log('FCM notification sent');
+    
+    // Delete the processed message
+    await event.data.ref.delete();
+    
+  } catch (error) {
+    console.error('FCM Error:', error);
+  }
+});
