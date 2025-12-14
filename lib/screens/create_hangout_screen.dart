@@ -157,8 +157,11 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
                             children: [
                               const Icon(Icons.calendar_today, color: Colors.grey),
                               const SizedBox(width: 8),
-                              Text(
-                                '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
+                              Flexible(
+                                child: Text(
+                                  '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                               ),
                             ],
                           ),
@@ -186,7 +189,12 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
                             children: [
                               const Icon(Icons.access_time, color: Colors.grey),
                               const SizedBox(width: 8),
-                              Text(_selectedTime.format(context)),
+                              Flexible(
+                                child: Text(
+                                  _selectedTime.format(context),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
                             ],
                           ),
                         ),

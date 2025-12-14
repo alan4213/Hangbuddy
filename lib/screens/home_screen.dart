@@ -311,7 +311,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   color: Colors.white,
                                 ),
                                 const SizedBox(width: 6),
-                                Expanded(
+                                Flexible(
                                   child: Text(
                                     hangout.title,
                                     style: const TextStyle(
@@ -335,7 +335,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 children: [
                                   const Icon(Icons.location_on, size: 14, color: Colors.white70),
                                   const SizedBox(width: 4),
-                                  Expanded(
+                                  Flexible(
                                     child: Text(
                                       locationText,
                                       style: const TextStyle(
@@ -355,11 +355,15 @@ class _HomeScreenState extends State<HomeScreen> {
                             children: [
                               const Icon(Icons.access_time, size: 14, color: Colors.white70),
                               const SizedBox(width: 4),
-                              Text(
-                                "${_formatDate(hangout.dateTime)} ${_formatTime(hangout.dateTime)}",
-                                style: const TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 12,
+                              Flexible(
+                                child: Text(
+                                  "${_formatDate(hangout.dateTime)} ${_formatTime(hangout.dateTime)}",
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 12,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],

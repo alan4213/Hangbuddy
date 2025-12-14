@@ -143,24 +143,30 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
                   : Color(0xFF8B5CF6),
             ),
             SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  widget.match['name'] ?? widget.match['firstName'] ?? 'User',
-                  style: TextStyle(color: Colors.white, fontSize: 18),
-                ),
-                StreamBuilder<bool>(
-                  stream: _otherUserId != null ? _getOnlineStatus(_otherUserId!) : Stream.value(false),
-                  builder: (context, snapshot) {
-                    final isOnline = snapshot.data ?? false;
-                    return Text(
-                      isOnline ? 'Online' : 'Last seen recently',
-                      style: TextStyle(color: Colors.white70, fontSize: 12),
-                    );
-                  },
-                ),
-              ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.match['name'] ?? widget.match['firstName'] ?? 'User',
+                    style: TextStyle(color: Colors.white, fontSize: 18),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                  StreamBuilder<bool>(
+                    stream: _otherUserId != null ? _getOnlineStatus(_otherUserId!) : Stream.value(false),
+                    builder: (context, snapshot) {
+                      final isOnline = snapshot.data ?? false;
+                      return Text(
+                        isOnline ? 'Online' : 'Last seen recently',
+                        style: TextStyle(color: Colors.white70, fontSize: 12),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
           ],
         ),
