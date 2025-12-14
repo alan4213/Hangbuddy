@@ -83,22 +83,31 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.primaryColor, // Gather primary color background
       resizeToAvoidBottomInset: true,
-      body: SafeArea(
-        child: Padding(
-          padding: EdgeInsets.all(20),
-          child: Column(
-            children: [
-              // Back button
-              Row(
+      body: Stack(
+        children: [
+          // Full-bleed background - ignores system insets
+          Container(
+            width: double.infinity,
+            height: double.infinity,
+            color: AppTheme.primaryColor,
+          ),
+          // Foreground content - respects system insets
+          SafeArea(
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
                 children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Icon(Icons.arrow_back, color: Colors.white, size: 24),
+                  SizedBox(height: 20),
+                  // Back button
+                  Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Icon(Icons.arrow_back, color: Colors.white, size: 24),
+                      ),
+                    ],
                   ),
-                ],
-              ),
               
               Expanded(
                 child: SingleChildScrollView(
@@ -226,34 +235,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                         ),
                       ),
                       
-                      // Continue with email button
-                      Container(
-                        width: double.infinity,
-                        height: 50,
-                        margin: EdgeInsets.only(bottom: 16),
-                        child: OutlinedButton(
-                          onPressed: _isLoading ? null : () async {
-                            // Show email sign-in dialog
-                            _showEmailSignInDialog();
-                          },
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            side: BorderSide(color: Colors.white, width: 2),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.email, size: 18, color: Colors.white),
-                              SizedBox(width: 12),
-                              Text(
-                                'CONTINUE WITH EMAIL',
-                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 0.5),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+
                     ] else ...[
                       // Phone input for new users
                       Container(
@@ -322,7 +304,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                         ),
                       ),
                     ],
-                      SizedBox(height: MediaQuery.of(context).size.height * 0.1),
+                      SizedBox(height: 20),
                       
                       // Trouble signing in
                       if (widget.showGoogleSignIn)
@@ -345,10 +327,12 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                     ],
                   ),
                 ),
+                ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

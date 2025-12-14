@@ -21,12 +21,28 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
   DateTime? _selectedDate;
   String? _selectedGender;
   List<String> _selectedInterests = [];
+  String? _selectedReligion;
+  String? _selectedOccupation;
+  String? _selectedEducation;
   File? _selectedImage;
   UserModel? _userProfile;
   bool _isLoading = false;
   final ImagePicker _picker = ImagePicker();
   
   final List<String> _genderOptions = ['Male', 'Female', 'Other'];
+  final List<String> _religionOptions = [
+    'Christianity', 'Islam', 'Judaism', 'Hinduism', 'Buddhism', 
+    'Sikhism', 'Atheist', 'Agnostic', 'Spiritual', 'Other', 'Prefer not to say'
+  ];
+  final List<String> _occupationOptions = [
+    'Student', 'Teacher', 'Engineer', 'Doctor', 'Nurse', 'Lawyer', 
+    'Business Owner', 'Marketing', 'Sales', 'Finance', 'IT/Tech', 
+    'Artist', 'Writer', 'Consultant', 'Manager', 'Other'
+  ];
+  final List<String> _educationOptions = [
+    'High School', 'Some College', 'Bachelor\'s Degree', 'Master\'s Degree', 
+    'PhD', 'Trade School', 'Professional Certification', 'Other'
+  ];
   final List<String> _interestOptions = [
     'Coffee & Chat',
     'Fitness & Sports',
@@ -57,6 +73,9 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
           _selectedDate = userProfile.birthday;
           _selectedGender = userProfile.gender;
           _selectedInterests = userProfile.interests ?? [];
+          _selectedReligion = userProfile.religion;
+          _selectedOccupation = userProfile.occupation;
+          _selectedEducation = userProfile.education;
           // Profile image will be loaded from URL, no need to set _selectedImage
         });
       }
@@ -366,6 +385,153 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
 
             const SizedBox(height: 24),
 
+            // Religion Field
+            const Text(
+              'Religion',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.black87,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _selectedReligion,
+                  hint: const Text(
+                    'Select religion',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                  isExpanded: true,
+                  items: _religionOptions.map((String religion) {
+                    return DropdownMenuItem<String>(
+                      value: religion,
+                      child: Text(religion),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      _selectedReligion = newValue;
+                    });
+                  },
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // Occupation Field
+            const Text(
+              'Occupation',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.black87,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _selectedOccupation,
+                  hint: const Text(
+                    'Select occupation',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                  isExpanded: true,
+                  items: _occupationOptions.map((String occupation) {
+                    return DropdownMenuItem<String>(
+                      value: occupation,
+                      child: Text(occupation),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      _selectedOccupation = newValue;
+                    });
+                  },
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // Education Field
+            const Text(
+              'Education',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.black87,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _selectedEducation,
+                  hint: const Text(
+                    'Select education',
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                  isExpanded: true,
+                  items: _educationOptions.map((String education) {
+                    return DropdownMenuItem<String>(
+                      value: education,
+                      child: Text(education),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    setState(() {
+                      _selectedEducation = newValue;
+                    });
+                  },
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
             // Birthday Field
             GestureDetector(
               onTap: _selectBirthday,
@@ -544,6 +710,9 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
             gender: _selectedGender,
             interests: _selectedInterests,
             profileImageUrl: imageUrl,
+            religion: _selectedReligion,
+            occupation: _selectedOccupation,
+            education: _selectedEducation,
           );
         } else {
           await UserService.updateUserProfile(
@@ -552,6 +721,9 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
             birthday: _selectedDate,
             gender: _selectedGender,
             interests: _selectedInterests,
+            religion: _selectedReligion,
+            occupation: _selectedOccupation,
+            education: _selectedEducation,
           );
         }
       }

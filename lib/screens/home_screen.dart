@@ -17,6 +17,7 @@ import 'package:geolocator/geolocator.dart';
 import '../theme/app_theme.dart';
 import '../widgets/loading_widget.dart';
 import '../utils/responsive.dart';
+import 'dart:math' as math;
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,7 +26,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   final Map<String, UserModel> _userCache = {};
   double _distanceFilter = 40.0;
   double? _userLatitude;
@@ -36,56 +37,98 @@ class _HomeScreenState extends State<HomeScreen> {
   RangeValues _ageRange = const RangeValues(18, 65);
   String? _genderFilter;
   RangeValues _timeRange = const RangeValues(0, 24); // 0-24 hours
+  
+  // Swipe variables
+  PageController _pageController = PageController();
+  int _currentIndex = 0;
+  List<HangoutRequest> _hangouts = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _getCurrentLocation();
   }
+  
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+  
+  void _loadHangouts() async {
+    if (_userLatitude == null || _userLongitude == null) {
+      setState(() => _isLoading = false);
+      return;
+    }
+    
+    setState(() => _isLoading = true);
+    try {
+      final hangouts = await HangoutService.getActiveHangoutRequests(
+        userLatitude: _userLatitude,
+        userLongitude: _userLongitude,
+        maxDistanceFilter: _distanceFilter,
+      ).first;
+      
+      final filtered = await _applyFilters(hangouts);
+      setState(() {
+        _hangouts = filtered;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading hangouts: $e');
+      setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    User? user = FirebaseAuth.instance.currentUser;
-    
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            SizedBox(height: Responsive.padding(context, 0.02)),
-            // Filter bar
-            Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: Responsive.padding(context, Responsive.mediumPadding),
-              vertical: Responsive.padding(context, 0.012)
-            ),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _buildFilterChip('Distance', Icons.location_on, onTap: _showDistanceFilter),
-                  _buildFilterChip('Age', Icons.person, onTap: _showAgeFilter),
-                  _buildFilterChip('Gender', Icons.people, onTap: _showGenderFilter),
-                  _buildFilterChip('Time', Icons.access_time, onTap: _showTimeFilter),
-                ],
-              ),
+      body: Stack(
+        children: [
+          // Full-bleed background
+          Container(
+            width: double.infinity,
+            height: double.infinity,
+            color: Colors.white,
+          ),
+          // Foreground content
+          SafeArea(
+            child: Column(
+              children: [
+                // Header with filters
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Text(
+                        'Discover',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        onPressed: _showFilters,
+                        icon: Icon(Icons.tune, color: AppTheme.primaryColor),
+                      ),
+                    ],
+                  ),
+                ),
+                // Swipeable cards
+                Expanded(
+                  child: _buildSwipeableCards(),
+                ),
+                // Action buttons
+                _buildActionButtons(),
+                const SizedBox(height: 20),
+              ],
             ),
           ),
-            Expanded(child: _buildDiscoverTab()),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Navigator.pushNamed(context, '/create'),
-        backgroundColor: AppTheme.primaryColor,
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.add),
-        label: const Text(
-          'Create Hangout',
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        ],
       ),
     );
   }
@@ -512,87 +555,69 @@ class _HomeScreenState extends State<HomeScreen> {
     return '$displayHour:${minute.toString().padLeft(2, '0')} $period';
   }
 
-  Widget _buildDiscoverTab() {
-    return Padding(
-      padding: const EdgeInsets.all(15),
-      child: StreamBuilder<List<HangoutRequest>>(
-        stream: HangoutService.getActiveHangoutRequests(
-          userLatitude: _userLatitude,
-          userLongitude: _userLongitude,
-          maxDistanceFilter: _distanceFilter,
+  Widget _buildSwipeableCards() {
+    if (_isLoading) {
+      return const Center(
+        child: LoadingWidget(
+          message: 'Loading hangouts...',
+          size: 32,
         ),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting || _userLatitude == null) {
-            return LoadingWidget(
-              message: _isGettingLocation ? 'Getting your location...' : 'Loading hangouts...',
-              size: 32,
-            );
-          }
-          
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
-          
-          final allHangouts = snapshot.data ?? [];
-          
-          return FutureBuilder<List<HangoutRequest>>(
-            future: _applyFilters(allHangouts),
-            builder: (context, filterSnapshot) {
-              if (filterSnapshot.connectionState == ConnectionState.waiting) {
-                return const LoadingWidget(
-                  message: 'Applying filters...',
-                  size: 24,
-                );
-              }
-              
-              final hangouts = filterSnapshot.data ?? [];
-          
-          if (hangouts.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _AnimatedMeetingScene(),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Looking for company?',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Check back later or create your own hangout',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+      );
+    }
+    
+    if (_hangouts.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _AnimatedMeetingScene(),
+            const SizedBox(height: 20),
+            const Text(
+              'Looking for company?',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
               ),
-            );
-          }
-          
-          return GridView.builder(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              childAspectRatio: 0.45,
             ),
-            itemCount: hangouts.length,
-            itemBuilder: (context, index) {
-              final hangout = hangouts[index];
-              return _buildHangoutCard(context, hangout);
-            },
-          );
-            },
-          );
-        },
-      ),
+            const SizedBox(height: 8),
+            const Text(
+              'Check back later or create your own hangout',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () => Navigator.pushNamed(context, '/create'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
+              child: const Text(
+                'Create Hangout',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    
+    return PageView.builder(
+      controller: _pageController,
+      onPageChanged: (index) {
+        setState(() => _currentIndex = index);
+      },
+      itemCount: _hangouts.length,
+      itemBuilder: (context, index) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: _buildHingeCard(_hangouts[index]),
+        );
+      },
     );
   }
 
@@ -608,6 +633,8 @@ class _HomeScreenState extends State<HomeScreen> {
           _userLatitude = position.latitude;
           _userLongitude = position.longitude;
         });
+        // Load hangouts after getting location
+        _loadHangouts();
       }
     } catch (e) {
       print('Error getting location: $e');
@@ -972,6 +999,282 @@ class _HomeScreenState extends State<HomeScreen> {
       default:
         return Icons.group;
     }
+  }
+
+  Widget _buildHingeCard(HangoutRequest hangout) {
+    return FutureBuilder<UserModel?>(
+      future: _getUserData(hangout.creatorId),
+      builder: (context, userSnapshot) {
+        final user = userSnapshot.data;
+        if (user == null) {
+          return const Center(child: LoadingWidget(message: 'Loading...'));
+        }
+        
+        return Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: Column(
+              children: [
+                // User photo section
+                Expanded(
+                  flex: 3,
+                  child: Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      image: user.profileImageUrl != null
+                          ? DecorationImage(
+                              image: NetworkImage(user.profileImageUrl!),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
+                      color: user.profileImageUrl == null ? Colors.grey[300] : null,
+                    ),
+                    child: user.profileImageUrl == null
+                        ? const Icon(Icons.person, size: 80, color: Colors.grey)
+                        : null,
+                  ),
+                ),
+                // User info and hangout details
+                Expanded(
+                  flex: 2,
+                  child: Container(
+                    width: double.infinity,
+                    color: Colors.white,
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Name and age
+                        Text(
+                          '${user.firstName} ${user.lastName}${user.age != null ? ', ${user.age}' : ''}',
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        // Basic info
+                        if (user.occupation != null || user.education != null)
+                          Text(
+                            [user.occupation, user.education].where((e) => e != null).join(' • '),
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        const SizedBox(height: 16),
+                        // Hangout prompt and details
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[50],
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Let\'s hang out at',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                hangout.title.toUpperCase(),
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Icon(Icons.location_on, size: 16, color: Colors.grey[600]),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      _cleanLocation(hangout.location),
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${_formatDate(hangout.dateTime)} at ${_formatTime(hangout.dateTime)}',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+  
+  Widget _buildActionButtons() {
+    if (_hangouts.isEmpty) return const SizedBox();
+    
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 40),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          // Pass button
+          GestureDetector(
+            onTap: _passCurrentHangout,
+            child: Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white,
+                border: Border.all(color: Colors.grey[300]!, width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.close,
+                color: Colors.red,
+                size: 30,
+              ),
+            ),
+          ),
+          // Like button
+          GestureDetector(
+            onTap: _likeCurrentHangout,
+            child: Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppTheme.primaryColor,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primaryColor.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.favorite,
+                color: Colors.white,
+                size: 30,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  void _passCurrentHangout() {
+    if (_currentIndex < _hangouts.length) {
+      _handleReject(_hangouts[_currentIndex]);
+      _nextCard();
+    }
+  }
+  
+  void _likeCurrentHangout() {
+    if (_currentIndex < _hangouts.length) {
+      _handleAccept(_hangouts[_currentIndex]);
+      _nextCard();
+    }
+  }
+  
+  void _nextCard() {
+    if (_currentIndex < _hangouts.length - 1) {
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    } else {
+      // No more cards, reload
+      _loadHangouts();
+    }
+  }
+  
+  void _showFilters() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Filters',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            ListTile(
+              leading: const Icon(Icons.location_on),
+              title: const Text('Distance'),
+              subtitle: Text('${_distanceFilter.toInt()} km'),
+              onTap: () {
+                Navigator.pop(context);
+                _showDistanceFilter();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.person),
+              title: const Text('Age'),
+              subtitle: Text('${_ageRange.start.toInt()} - ${_ageRange.end.toInt()} years'),
+              onTap: () {
+                Navigator.pop(context);
+                _showAgeFilter();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.people),
+              title: const Text('Gender'),
+              subtitle: Text(_genderFilter ?? 'All'),
+              onTap: () {
+                Navigator.pop(context);
+                _showGenderFilter();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

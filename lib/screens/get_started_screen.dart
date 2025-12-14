@@ -18,11 +18,12 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundColor,
       body: Stack(
         children: [
-          // Background Image
+          // Full-bleed background - ignores system insets
           Container(
+            width: double.infinity,
+            height: double.infinity,
             decoration: BoxDecoration(
               image: DecorationImage(
                 image: AssetImage('assets/images/coffee_hangout.png'),
@@ -30,8 +31,10 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
               ),
             ),
           ),
-          // Overlay gradient
+          // Overlay gradient - also ignores system insets
           Container(
+            width: double.infinity,
+            height: double.infinity,
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
@@ -43,34 +46,35 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
               ),
             ),
           ),
-          Column(
-            children: [
-              SafeArea(
-                child: SizedBox(),
-              ),
-              // Header
-              Padding(
-                padding: EdgeInsets.all((MediaQuery.of(context).size.width * 0.06).clamp(16.0, 24.0)),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // Foreground content - respects system insets
+          SafeArea(
+            child: Column(
+              children: [
+              // Main content area - centered text
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
                       'Gather',
                       style: TextStyle(
-                        fontSize: (MediaQuery.of(context).size.width * 0.06).clamp(18.0, 24.0),
+                        fontSize: (MediaQuery.of(context).size.width * 0.12).clamp(32.0, 48.0),
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.primaryColor,
+                        color: Colors.white,
                       ),
-                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
                     ),
-                    SizedBox(),
+                    SizedBox(height: (MediaQuery.of(context).size.height * 0.02).clamp(12.0, 16.0)),
+                    Text(
+                      'Your people are closer than you think',
+                      style: TextStyle(
+                        fontSize: (MediaQuery.of(context).size.width * 0.045).clamp(16.0, 20.0),
+                        color: Colors.white70,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   ],
                 ),
-              ),
-              
-              // Main content area - spacer
-              Expanded(
-                child: SizedBox(),
               ),
               
               // Bottom sheet container
@@ -81,52 +85,20 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                   20,
                   16,
                   20,
-                  MediaQuery.of(context).padding.bottom + 4
+                  0
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Colors.transparent,
                   borderRadius: BorderRadius.only(
                     topLeft: Radius.circular((MediaQuery.of(context).size.width * 0.08).clamp(24.0, 32.0)),
                     topRight: Radius.circular((MediaQuery.of(context).size.width * 0.08).clamp(24.0, 32.0)),
                   ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 20,
-                      offset: Offset(0, -5),
-                    ),
-                  ],
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Your ideal hangout. Your\nideal buddy.',
-                      style: TextStyle(
-                        fontSize: (MediaQuery.of(context).size.width * 0.055).clamp(18.0, 26.0),
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.textPrimary,
-                        height: 1.2,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 2,
-                    ),
-                    
-                    SizedBox(height: (MediaQuery.of(context).size.height * 0.015).clamp(8.0, 12.0)),
-                    
-                    Text(
-                      'Find amazing people to explore\nactivities and create memories together.',
-                      style: TextStyle(
-                        fontSize: (MediaQuery.of(context).size.width * 0.035).clamp(12.0, 16.0),
-                        color: AppTheme.textSecondary,
-                        height: 1.4,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 3,
-                    ),
-                    
-                    SizedBox(height: (MediaQuery.of(context).size.height * 0.04).clamp(16.0, 32.0)),
+                    SizedBox(height: (MediaQuery.of(context).size.height * 0.02).clamp(16.0, 24.0)),
                     
                     // Create an account button
                     LoadingButton(
@@ -148,7 +120,7 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                       },
                     ),
                     
-                    SizedBox(height: (MediaQuery.of(context).size.height * 0.015).clamp(8.0, 12.0)),
+                    SizedBox(height: (MediaQuery.of(context).size.height * 0.02).clamp(12.0, 16.0)),
                     
                     // I have an account button
                     Container(
@@ -191,7 +163,8 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                   ],
                 ),
               ),
-            ],
+              ],
+            ),
           ),
         ],
       ),

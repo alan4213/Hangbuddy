@@ -143,6 +143,9 @@ class UserService {
     List<String>? photoUrls,
     String? phoneNumber,
     String? email,
+    String? religion,
+    String? occupation,
+    String? education,
   }) async {
     final user = _auth.currentUser;
     if (user == null) throw Exception('No authenticated user');
@@ -163,6 +166,9 @@ class UserService {
     if (photoUrls != null) updates['photoUrls'] = photoUrls;
     if (phoneNumber != null) updates['phoneNumber'] = phoneNumber;
     if (email != null) updates['email'] = email;
+    if (religion != null) updates['religion'] = religion;
+    if (occupation != null) updates['occupation'] = occupation;
+    if (education != null) updates['education'] = education;
 
     print('=== UPDATING USER PROFILE ===');
     print('photoUrls: $photoUrls');
