@@ -17,7 +17,7 @@ class GenderScreen extends StatefulWidget {
 class _GenderScreenState extends State<GenderScreen> {
   String? _selectedGender;
   bool _isLoading = false;
-  final List<String> _genders = ['Male', 'Female', 'Other'];
+  final List<String> _genders = ['Man', 'Woman', 'Transgender', 'Non-binary', 'Other'];
 
   @override
   void initState() {

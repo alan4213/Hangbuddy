@@ -769,7 +769,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               const Text('Gender Filter', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 20),
-              ...['All', 'Man', 'Woman'].map((gender) => ListTile(
+              ...['All', 'Man', 'Woman', 'Transgender', 'Non-binary', 'Other'].map((gender) => ListTile(
                 title: Text(gender),
                 leading: Radio<String?>(
                   value: gender == 'All' ? null : gender,

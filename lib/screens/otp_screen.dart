@@ -6,6 +6,7 @@ import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import '../services/account_manager.dart';
 import '../theme/app_theme.dart';
+import '../utils/responsive.dart';
 
 class OTPScreen extends StatefulWidget {
   const OTPScreen({super.key});
@@ -290,16 +291,16 @@ class _OTPScreenState extends State<OTPScreen> {
       body: SafeArea(
         child: Padding(
           padding: EdgeInsets.symmetric(
-            horizontal: 20,
-            vertical: 12,
+            horizontal: Responsive.padding(context, Responsive.mediumPadding),
+            vertical: Responsive.padding(context, 0.015),
           ),
           child: Column(
             children: [
-              const SizedBox(height: 40),
+              SizedBox(height: Responsive.padding(context, 0.05)),
               // Timer with circle
               Container(
-                width: 80,
-                height: 80,
+                width: Responsive.padding(context, 0.2),
+                height: Responsive.padding(context, 0.2),
                 decoration: BoxDecoration(
                   color: AppTheme.primaryColor.withOpacity(0.1),
                   shape: BoxShape.circle,
@@ -308,44 +309,44 @@ class _OTPScreenState extends State<OTPScreen> {
                   child: Text(
                     "00:${_secondsRemaining.toString().padLeft(2, '0')}",
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: Responsive.fontSize(context, Responsive.bodyFontSize),
                       fontWeight: FontWeight.bold,
                       color: AppTheme.primaryColor,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 32),
-              const Text(
+              SizedBox(height: Responsive.padding(context, 0.04)),
+              Text(
                 'Verify Your Number',
                 style: TextStyle(
-                  fontSize: 24,
+                  fontSize: Responsive.fontSize(context, Responsive.titleFontSize),
                   fontWeight: FontWeight.bold,
                   color: Colors.black,
                 ),
               ),
-              const SizedBox(height: 12),
-              const Text(
+              SizedBox(height: Responsive.padding(context, 0.015)),
+              Text(
                 'Enter the 6-digit code we sent\nto your phone number',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: Responsive.fontSize(context, Responsive.bodyFontSize),
                   color: Colors.grey,
                 ),
               ),
-              const SizedBox(height: 48),
+              SizedBox(height: Responsive.padding(context, 0.06)),
               // OTP boxes
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: EdgeInsets.symmetric(horizontal: Responsive.padding(context, Responsive.mediumPadding)),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: List.generate(6, (index) {
                     bool filled = index < _otp.length;
                     return Flexible(
                       child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        height: 56,
-                        constraints: const BoxConstraints(maxWidth: 48),
+                        margin: EdgeInsets.symmetric(horizontal: Responsive.padding(context, 0.01)),
+                        height: Responsive.padding(context, 0.14),
+                        constraints: BoxConstraints(maxWidth: Responsive.padding(context, 0.12)),
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
                           color: filled ? AppTheme.primaryColor : Colors.white,
@@ -358,7 +359,7 @@ class _OTPScreenState extends State<OTPScreen> {
                         child: Text(
                           filled ? _otp[index] : "",
                           style: TextStyle(
-                            fontSize: 20,
+                            fontSize: Responsive.fontSize(context, Responsive.headingFontSize),
                             fontWeight: FontWeight.bold,
                             color: filled ? Colors.white : Colors.black,
                           ),
@@ -368,16 +369,16 @@ class _OTPScreenState extends State<OTPScreen> {
                   }),
                 ),
               ),
-              const SizedBox(height: 48),
+              SizedBox(height: Responsive.padding(context, 0.06)),
               // Numeric keypad
               Expanded(
                 child: GridView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
+                  padding: EdgeInsets.symmetric(horizontal: Responsive.padding(context, 0.1)),
                   physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 3,
-                    mainAxisSpacing: 16,
-                    crossAxisSpacing: 16,
+                    mainAxisSpacing: Responsive.padding(context, 0.04),
+                    crossAxisSpacing: Responsive.padding(context, 0.04),
                     childAspectRatio: 1.2,
                   ),
                   itemCount: 12,
@@ -402,7 +403,7 @@ class _OTPScreenState extends State<OTPScreen> {
                   style: TextStyle(
                     color: _secondsRemaining == 0 ? AppTheme.primaryColor : Colors.grey,
                     fontWeight: FontWeight.w600,
-                    fontSize: 16,
+                    fontSize: Responsive.fontSize(context, Responsive.bodyFontSize),
                   ),
                 ),
               ),
@@ -429,8 +430,8 @@ class _OTPScreenState extends State<OTPScreen> {
           child: Center(
             child: Text(
               number,
-              style: const TextStyle(
-                fontSize: 24,
+              style: TextStyle(
+                fontSize: Responsive.fontSize(context, Responsive.titleFontSize),
                 fontWeight: FontWeight.w600,
                 color: Colors.black,
               ),
@@ -453,7 +454,7 @@ class _OTPScreenState extends State<OTPScreen> {
         child: Center(
           child: Icon(
             Icons.backspace_outlined,
-            size: 24,
+            size: Responsive.fontSize(context, Responsive.titleFontSize),
             color: AppTheme.primaryColor,
           ),
         ),

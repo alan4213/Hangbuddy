@@ -7,7 +7,7 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
-        android:label="hangbuddy_app"
+        android:label="Gather"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

@@ -9,6 +9,7 @@ import '../services/user_service.dart';
 import '../models/user_model.dart';
 import '../theme/app_theme.dart';
 import '../widgets/profile_image_widget.dart';
+import '../widgets/photo_verified_sheet.dart';
 import 'settings_screen.dart';
 import 'notifications_screen.dart';
 import 'edit_photos_screen.dart';
@@ -194,7 +195,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       Icons.verified_user,
                       'Verify Profile',
                       'Verify your identity for trust',
-                      () => _showVerificationDialog(),
+                      () => _showVerificationSheet(),
                     ),
                     
                     const SizedBox(height: 16),
@@ -260,50 +261,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _showVerificationDialog() {
-    showDialog(
+  void _showVerificationSheet() {
+    showModalBottomSheet(
       context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Row(
-            children: [
-              Icon(Icons.verified_user, color: AppTheme.primaryColor),
-              SizedBox(width: 8),
-              Text('Profile Verification'),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (_verificationStatus == 'verified') ...[
-                Icon(Icons.check_circle, size: 48, color: Colors.green),
-                SizedBox(height: 8),
-                Text('Your profile is verified!', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-                SizedBox(height: 8),
-                Text('(Testing: You can verify again)', style: TextStyle(color: Colors.grey, fontSize: 12)),
-              ] else ...[
-                Text('Take a selfie to verify your identity and build trust with other users.'),
-                SizedBox(height: 16),
-                Icon(Icons.photo_camera, size: 48, color: AppTheme.primaryColor),
-              ],
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Close'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                _startPhotoVerification();
-              },
-              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
-              child: Text(_verificationStatus == 'verified' ? 'Verify Again' : 'Take Photo', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-        );
-      },
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => const PhotoVerifiedSheet(),
     );
   }
 
