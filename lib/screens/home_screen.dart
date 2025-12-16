@@ -97,34 +97,43 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           SafeArea(
             child: Column(
               children: [
-                // Header with filters
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Text(
-                        'Discover',
-                        style: TextStyle(
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.textPrimary,
+                // Filter chips at top
+                Container(
+                  height: 60,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _buildFilterChip(
+                          '${_distanceFilter.toInt()} km',
+                          Icons.location_on,
+                          onTap: _showDistanceFilter,
                         ),
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        onPressed: _showFilters,
-                        icon: Icon(Icons.tune, color: AppTheme.primaryColor),
-                      ),
-                    ],
+                        _buildFilterChip(
+                          '${_ageRange.start.toInt()}-${_ageRange.end.toInt()} yrs',
+                          Icons.person,
+                          onTap: _showAgeFilter,
+                        ),
+                        _buildFilterChip(
+                          _genderFilter ?? 'All genders',
+                          Icons.people,
+                          onTap: _showGenderFilter,
+                        ),
+                        _buildFilterChip(
+                          '${_formatHour(_timeRange.start)}-${_formatHour(_timeRange.end)}',
+                          Icons.access_time,
+                          onTap: _showTimeFilter,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 // Swipeable cards
                 Expanded(
                   child: _buildSwipeableCards(),
                 ),
-                // Action buttons
-                _buildActionButtons(),
-                const SizedBox(height: 20),
+
               ],
             ),
           ),
@@ -1010,134 +1019,369 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           return const Center(child: LoadingWidget(message: 'Loading...'));
         }
         
-        return Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 10,
-                offset: const Offset(0, 5),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: Column(
-              children: [
-                // User photo section
-                Expanded(
-                  flex: 3,
-                  child: Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      image: user.profileImageUrl != null
-                          ? DecorationImage(
-                              image: NetworkImage(user.profileImageUrl!),
-                              fit: BoxFit.cover,
-                            )
+        return Stack(
+          children: [
+            // Scrollable content
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    // User photo section
+                    Container(
+                      width: double.infinity,
+                      height: 400,
+                      decoration: BoxDecoration(
+                        image: user.profileImageUrl != null
+                            ? DecorationImage(
+                                image: NetworkImage(user.profileImageUrl!),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                        color: user.profileImageUrl == null ? Colors.grey[300] : null,
+                      ),
+                      child: user.profileImageUrl == null
+                          ? const Icon(Icons.person, size: 80, color: Colors.grey)
                           : null,
-                      color: user.profileImageUrl == null ? Colors.grey[300] : null,
                     ),
-                    child: user.profileImageUrl == null
-                        ? const Icon(Icons.person, size: 80, color: Colors.grey)
-                        : null,
-                  ),
-                ),
-                // User info and hangout details
-                Expanded(
-                  flex: 2,
-                  child: Container(
-                    width: double.infinity,
-                    color: Colors.white,
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Name and age
-                        Text(
-                          '${user.firstName} ${user.lastName}${user.age != null ? ', ${user.age}' : ''}',
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        // Basic info
-                        if (user.occupation != null || user.education != null)
+                    // User info and hangout details
+                    Container(
+                      width: double.infinity,
+                      color: Colors.white,
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Name and age
                           Text(
-                            [user.occupation, user.education].where((e) => e != null).join(' • '),
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[600],
+                            '${user.firstName} ${user.lastName}${user.age != null ? ', ${user.age}' : ''}',
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                        const SizedBox(height: 16),
-                        // Hangout prompt and details
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[50],
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Let\'s hang out at',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey[600],
-                                ),
+                          const SizedBox(height: 4),
+                          // Basic info
+                          if (user.gender != null)
+                            Text(
+                              user.gender!,
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey[600],
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                hangout.title.toUpperCase(),
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
+                            ),
+                          const SizedBox(height: 16),
+                          // Hangout details card
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
                                 ),
-                              ),
-                              const SizedBox(height: 8),
-                              Row(
-                                children: [
-                                  Icon(Icons.location_on, size: 16, color: Colors.grey[600]),
-                                  const SizedBox(width: 4),
-                                  Expanded(
-                                    child: Text(
-                                      _cleanLocation(hangout.location),
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.grey[600],
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Let\'s hang out at',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey[600],
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  hangout.title.toUpperCase(),
+                                  style: const TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Icon(Icons.location_on, size: 20, color: Colors.grey[700]),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text(
+                                        _cleanLocation(hangout.location),
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '${_formatDate(hangout.dateTime)} at ${_formatTime(hangout.dateTime)}',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.grey[600],
+                                  ],
+                                ),
+                                const SizedBox(height: 12),
+                                Row(
+                                  children: [
+                                    Icon(Icons.access_time, size: 20, color: Colors.grey[700]),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      '${_formatDate(hangout.dateTime)} at ${_formatTime(hangout.dateTime)}',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          // Second image card
+                          if (user.photoUrls != null && user.photoUrls!.length > 1)
+                            Container(
+                              width: double.infinity,
+                              height: 300,
+                              margin: const EdgeInsets.only(bottom: 16),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
                                   ),
                                 ],
                               ),
-                            ],
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(16),
+                                child: Image.network(
+                                  user.photoUrls![1],
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) => Container(
+                                    color: Colors.grey[300],
+                                    child: const Icon(Icons.image, size: 80, color: Colors.grey),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          // Profile details card
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(20),
+
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              children: [
+                                // Basic info row
+                                Row(
+                                  children: [
+                                    if (user.age != null)
+                                      Expanded(
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.cake, size: 20, color: Colors.grey[700]),
+                                            const SizedBox(width: 8),
+                                            Text('${user.age}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                                          ],
+                                        ),
+                                      ),
+                                    if (user.gender != null)
+                                      Expanded(
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.person, size: 20, color: Colors.grey[700]),
+                                            const SizedBox(width: 8),
+                                            Text(user.gender!, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                                          ],
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                // Other details
+                                if (user.occupation != null) ...[
+                                  Row(
+                                    children: [
+                                      Icon(Icons.work, size: 20, color: Colors.grey[700]),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          user.occupation!,
+                                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                ],
+                                if (user.education != null) ...[
+                                  Row(
+                                    children: [
+                                      Icon(Icons.school, size: 20, color: Colors.grey[700]),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          user.education!,
+                                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                ],
+                                if (user.religion != null) ...[
+                                  Row(
+                                    children: [
+                                      Icon(Icons.church, size: 20, color: Colors.grey[700]),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          user.religion!,
+                                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                ],
+                                if (user.ethnicity != null || user.race != null) ...[
+                                  Row(
+                                    children: [
+                                      Icon(Icons.public, size: 20, color: Colors.grey[700]),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Text(
+                                          user.ethnicity ?? user.race!,
+                                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                          // Additional photo cards
+                          if (user.photoUrls != null && user.photoUrls!.length > 2)
+                            ...user.photoUrls!.skip(2).map((photoUrl) => Container(
+                              width: double.infinity,
+                              height: 300,
+                              margin: const EdgeInsets.only(top: 16),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(16),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(16),
+                                child: Image.network(
+                                  photoUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) => Container(
+                                    color: Colors.grey[300],
+                                    child: const Icon(Icons.image, size: 80, color: Colors.grey),
+                                  ),
+                                ),
+                              ),
+                            )),
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
+            // Pass button (left edge)
+            Positioned(
+              bottom: 20,
+              left: 20,
+              child: GestureDetector(
+                onTap: () => _handleReject(hangout),
+                child: Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white,
+                    border: Border.all(color: Colors.grey[300]!, width: 2),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(Icons.close, color: Colors.red, size: 30),
+                ),
+              ),
+            ),
+            // Like button (right edge)
+            Positioned(
+              bottom: 20,
+              right: 20,
+              child: GestureDetector(
+                onTap: () => _handleAccept(hangout),
+                child: Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: AppTheme.primaryColor,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(Icons.favorite, color: Colors.white, size: 30),
+                ),
+              ),
+            ),
+            // Page indicator dots
+            if (_hangouts.length > 1)
+              Positioned(
+                bottom: 90,
+                left: 0,
+                right: 0,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(_hangouts.length, (index) {
+                    return Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: index == _currentIndex 
+                            ? AppTheme.primaryColor 
+                            : Colors.grey.withOpacity(0.5),
+                      ),
+                    );
+                  }),
+                ),
+              ),
+          ],
         );
       },
     );
@@ -1231,51 +1475,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
   }
   
-  void _showFilters() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Filters',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            ListTile(
-              leading: const Icon(Icons.location_on),
-              title: const Text('Distance'),
-              subtitle: Text('${_distanceFilter.toInt()} km'),
-              onTap: () {
-                Navigator.pop(context);
-                _showDistanceFilter();
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.person),
-              title: const Text('Age'),
-              subtitle: Text('${_ageRange.start.toInt()} - ${_ageRange.end.toInt()} years'),
-              onTap: () {
-                Navigator.pop(context);
-                _showAgeFilter();
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.people),
-              title: const Text('Gender'),
-              subtitle: Text(_genderFilter ?? 'All'),
-              onTap: () {
-                Navigator.pop(context);
-                _showGenderFilter();
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+
 }
 
 class HangoutIllustrationPainter extends CustomPainter {
