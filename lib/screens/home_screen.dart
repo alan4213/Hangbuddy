@@ -106,24 +106,28 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     child: Row(
                       children: [
                         _buildFilterChip(
-                          '${_distanceFilter.toInt()} km',
+                          _getDistanceLabel(),
                           Icons.location_on,
                           onTap: _showDistanceFilter,
+                          isActive: _isDistanceFilterActive(),
                         ),
                         _buildFilterChip(
-                          '${_ageRange.start.toInt()}-${_ageRange.end.toInt()} yrs',
+                          _getAgeLabel(),
                           Icons.person,
                           onTap: _showAgeFilter,
+                          isActive: _isAgeFilterActive(),
                         ),
                         _buildFilterChip(
-                          _genderFilter ?? 'All genders',
+                          _getGenderLabel(),
                           Icons.people,
                           onTap: _showGenderFilter,
+                          isActive: _isGenderFilterActive(),
                         ),
                         _buildFilterChip(
-                          '${_formatHour(_timeRange.start)}-${_formatHour(_timeRange.end)}',
+                          _getTimeLabel(),
                           Icons.access_time,
                           onTap: _showTimeFilter,
+                          isActive: _isTimeFilterActive(),
                         ),
                       ],
                     ),
@@ -179,7 +183,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildFilterChip(String label, IconData icon, {VoidCallback? onTap}) {
+  Widget _buildFilterChip(String label, IconData icon, {VoidCallback? onTap, bool isActive = false}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -189,7 +193,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           vertical: Responsive.padding(context, 0.012)
         ),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isActive ? AppTheme.primaryColor : Colors.white,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
@@ -202,7 +206,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: AppTheme.primaryColor, size: Responsive.fontSize(context, Responsive.bodyFontSize)),
+            Icon(
+              icon, 
+              color: isActive ? Colors.white : AppTheme.primaryColor, 
+              size: Responsive.fontSize(context, Responsive.bodyFontSize)
+            ),
             SizedBox(width: Responsive.padding(context, 0.015)),
             Flexible(
               child: Text(
@@ -210,7 +218,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 style: TextStyle(
                   fontSize: Responsive.fontSize(context, Responsive.smallFontSize),
                   fontWeight: FontWeight.w500,
-                  color: Color(0xFF334155),
+                  color: isActive ? Colors.white : Color(0xFF334155),
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -334,15 +342,40 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
-                            "$userName${userAge > 0 ? ', $userAge' : ''}",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: (MediaQuery.of(context).size.width * 0.045).clamp(16.0, 20.0),
-                              fontWeight: FontWeight.bold,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  "$userName${userAge > 0 ? ', $userAge' : ''}",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: (MediaQuery.of(context).size.width * 0.045).clamp(16.0, 20.0),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () => _handleAccept(hangout),
+                                child: Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: AppTheme.primaryColor,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.2),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Icon(Icons.favorite, color: Colors.white, size: 20),
+                                ),
+                              ),
+                            ],
                           ),
                           SizedBox(height: MediaQuery.of(context).size.height * 0.007),
                           Container(
@@ -416,41 +449,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: () => _handleReject(hangout),
-                                  child: Container(
-                                    height: 40,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.2),
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(color: Colors.white.withOpacity(0.3)),
-                                    ),
-                                    child: const Icon(Icons.close, color: Colors.white, size: 20),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: GestureDetector(
-                                  onTap: () => _handleAccept(hangout),
-                                  child: Container(
-                                    height: 40,
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [AppTheme.primaryColor, AppTheme.primaryColor.withOpacity(0.8)],
-                                      ),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: const Icon(Icons.favorite, color: Colors.white, size: 20),
-                                  ),
                                 ),
                               ),
                             ],
@@ -703,7 +701,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     ),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () => Navigator.pop(context),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _loadHangouts(); // Apply filter
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primaryColor,
                         ),
@@ -736,7 +737,22 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       }
       
       // Gender filter
-      if (_genderFilter != null && user.gender != _genderFilter) continue;
+      if (_genderFilter != null) {
+        final userGender = user.gender?.toLowerCase();
+        final filterGender = _genderFilter!.toLowerCase();
+        
+        // Handle different gender format variations
+        bool genderMatches = false;
+        if (filterGender == 'man' && (userGender == 'male' || userGender == 'man')) {
+          genderMatches = true;
+        } else if (filterGender == 'woman' && (userGender == 'female' || userGender == 'woman')) {
+          genderMatches = true;
+        } else if (userGender == filterGender) {
+          genderMatches = true;
+        }
+        
+        if (!genderMatches) continue;
+      }
       
       // Time filter
       final hangoutHour = hangout.dateTime.hour + (hangout.dateTime.minute / 60.0);
@@ -780,7 +796,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _loadHangouts(); // Apply filter
+                  },
                   style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
                   child: const Text('Apply', style: TextStyle(color: Colors.white)),
                 ),
@@ -818,6 +837,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                   onChanged: (value) {
                     setState(() => _genderFilter = value);
                     Navigator.pop(context);
+                    _loadHangouts(); // Apply filter
                   },
                 ),
               )),
@@ -872,7 +892,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                     ),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () => Navigator.pop(context),
+                        onPressed: () {
+                          Navigator.pop(context);
+                          _loadHangouts(); // Apply filter
+                        },
                         style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
                         child: const Text('Apply', style: TextStyle(color: Colors.white)),
                       ),
@@ -891,6 +914,33 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     final h = hour.toInt();
     return h == 24 ? '12:00 AM' : h == 0 ? '12:00 AM' : h > 12 ? '${h - 12}:00 PM' : '$h:00 AM';
   }
+
+  // Filter label helpers
+  String _getDistanceLabel() {
+    return _distanceFilter != 40.0 ? '${_distanceFilter.toInt()} km' : 'Distance';
+  }
+
+  String _getAgeLabel() {
+    return (_ageRange.start != 18 || _ageRange.end != 65) 
+        ? '${_ageRange.start.toInt()}-${_ageRange.end.toInt()} yrs' 
+        : 'Age';
+  }
+
+  String _getGenderLabel() {
+    return _genderFilter ?? 'Gender';
+  }
+
+  String _getTimeLabel() {
+    return (_timeRange.start != 0 || _timeRange.end != 24)
+        ? '${_formatHour(_timeRange.start)}-${_formatHour(_timeRange.end)}'
+        : 'Time';
+  }
+
+  // Filter active state helpers
+  bool _isDistanceFilterActive() => _distanceFilter != 40.0;
+  bool _isAgeFilterActive() => _ageRange.start != 18 || _ageRange.end != 65;
+  bool _isGenderFilterActive() => _genderFilter != null;
+  bool _isTimeFilterActive() => _timeRange.start != 0 || _timeRange.end != 24;
 
   double _calculateDistance(double? lat, double? lng) {
     if (_userLatitude == null || _userLongitude == null || lat == null || lng == null) {
@@ -1052,24 +1102,54 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Name and age
-                          Text(
-                            '${user.firstName} ${user.lastName}${user.age != null ? ', ${user.age}' : ''}',
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          // Basic info
-                          if (user.gender != null)
-                            Text(
-                              user.gender!,
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.grey[600],
+                          // Name, age and like button
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '${user.firstName} ${user.lastName}${user.age != null ? ', ${user.age}' : ''}',
+                                      style: const TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    if (user.gender != null)
+                                      Text(
+                                        user.gender!,
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ),
+                                  ],
+                                ),
                               ),
-                            ),
+                              GestureDetector(
+                                onTap: () => _handleAccept(hangout),
+                                child: Container(
+                                  width: 50,
+                                  height: 50,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: AppTheme.primaryColor,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.2),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: const Icon(Icons.favorite, color: Colors.white, size: 24),
+                                ),
+                              ),
+                            ],
+                          ),
                           const SizedBox(height: 16),
                           // Hangout details card
                           Container(
@@ -1309,37 +1389,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 ),
               ),
             ),
-            // Pass button (left edge)
-            Positioned(
-              bottom: 20,
-              left: 20,
-              child: GestureDetector(
-                onTap: () => _handleReject(hangout),
-                child: Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white,
-                    border: Border.all(color: Colors.grey[300]!, width: 2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.2),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(Icons.close, color: Colors.red, size: 30),
-                ),
-              ),
-            ),
-            // Like button (right edge)
+            // Create hangout button (bottom-right)
             Positioned(
               bottom: 20,
               right: 20,
               child: GestureDetector(
-                onTap: () => _handleAccept(hangout),
+                onTap: () => Navigator.pushNamed(context, '/create'),
                 child: Container(
                   width: 60,
                   height: 60,
@@ -1354,7 +1409,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       ),
                     ],
                   ),
-                  child: const Icon(Icons.favorite, color: Colors.white, size: 30),
+                  child: const Icon(Icons.add, color: Colors.white, size: 30),
                 ),
               ),
             ),

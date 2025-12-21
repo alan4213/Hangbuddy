@@ -9,6 +9,8 @@ class AuthService {
   static String? _phoneNumber;
   static final GoogleSignIn _googleSignIn = GoogleSignIn();
   
+  static String? getStoredPhoneNumber() => _phoneNumber;
+  
   static Future<void> sendOTP(String phone) async {
     _phoneNumber = phone;
     await FirebaseAuth.instance.verifyPhoneNumber(
@@ -40,6 +42,7 @@ class AuthService {
       },
       codeAutoRetrievalTimeout: (verificationId) {
         print('Auto retrieval timeout');
+        _verificationId = verificationId;
       },
     );
   }
@@ -62,21 +65,10 @@ class AuthService {
       // Refresh FCM token after successful login
       await NotificationService.refreshFCMToken();
       
-      // Store phone number in Firestore immediately
+      // Store phone number in Firestore
       if (_phoneNumber != null) {
         final user = FirebaseAuth.instance.currentUser;
         if (user != null) {
-          // Check if there's already a Google account with same email in Firestore
-          final existingGoogleUser = await _checkExistingGoogleAccount(user.email);
-          if (existingGoogleUser != null) {
-            print('Found existing Google account, merging phone number');
-            // Delete current phone-only account and use existing Google account
-            await user.delete();
-            // Sign in with existing Google account and add phone number
-            await _mergeWithExistingGoogleAccount(existingGoogleUser, _phoneNumber!);
-            return true;
-          }
-          
           await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
             'phoneNumber': _phoneNumber,
             'uid': user.uid,

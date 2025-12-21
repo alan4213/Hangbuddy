@@ -284,6 +284,26 @@ class _OTPScreenState extends State<OTPScreen> {
     }
   }
 
+  void _resendOTP() async {
+    try {
+      await AuthService.sendOTP(AuthService.getStoredPhoneNumber() ?? '');
+      startTimer();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('OTP sent successfully'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to resend OTP: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -397,7 +417,7 @@ class _OTPScreenState extends State<OTPScreen> {
               ),
               // Send again
               GestureDetector(
-                onTap: _secondsRemaining == 0 ? () => startTimer() : null,
+                onTap: _secondsRemaining == 0 ? _resendOTP : null,
                 child: Text(
                   _secondsRemaining == 0 ? 'Resend Code' : 'Resend in ${_secondsRemaining}s',
                   style: TextStyle(

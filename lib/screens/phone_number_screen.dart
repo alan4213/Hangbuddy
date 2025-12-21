@@ -90,7 +90,27 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
           Container(
             width: double.infinity,
             height: double.infinity,
-            color: AppTheme.primaryColor,
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/images/coffee_hangout.png'),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          // Overlay gradient - also ignores system insets
+          Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.black.withOpacity(0.3),
+                  Colors.black.withOpacity(0.6),
+                ],
+              ),
+            ),
           ),
           // Foreground content - respects system insets
           SafeArea(
@@ -119,7 +139,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                     Container(
                       margin: EdgeInsets.only(bottom: 60),
                       child: Text(
-                        'gather',
+                        'Gather',
                         style: TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.bold,
@@ -261,7 +281,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                             ),
                             contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                           ),
-                          initialCountryCode: 'US',
+                          initialCountryCode: 'IN',
                           dropdownIcon: Icon(Icons.arrow_drop_down, color: Colors.white),
                           onChanged: (phone) => _fullPhoneNumber = phone.completeNumber,
                         ),
