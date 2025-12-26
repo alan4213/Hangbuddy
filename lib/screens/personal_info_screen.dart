@@ -30,7 +30,7 @@ class _PersonalInfoScreenState extends State<PersonalInfoScreen> {
     _selectedRace = widget.signupData.race;
   }
 
-  final List<String> _genders = ['Male', 'Female', 'Other'];
+  final List<String> _genders = ['Man', 'Woman', 'Transgender', 'Non-binary', 'Other'];
   final List<String> _occupations = [
     'Software Engineer', 'Product Manager', 'Designer', 'Data Scientist', 'Marketing Manager',
     'Sales Representative', 'Consultant', 'Teacher', 'Doctor', 'Nurse', 'Lawyer', 'Accountant',

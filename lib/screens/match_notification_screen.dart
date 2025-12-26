@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'chat_window_screen.dart';
+import '../theme/app_theme.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MatchNotificationScreen extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -13,10 +16,12 @@ class MatchNotificationScreen extends StatefulWidget {
 class _MatchNotificationScreenState extends State<MatchNotificationScreen> with TickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _scaleAnimation;
+  String? _currentUserImage;
 
   @override
   void initState() {
     super.initState();
+    _loadCurrentUserImage();
     _animationController = AnimationController(
       duration: Duration(milliseconds: 1200),
       vsync: this,
@@ -32,6 +37,26 @@ class _MatchNotificationScreenState extends State<MatchNotificationScreen> with 
       }
     });
   }
+  
+  void _loadCurrentUserImage() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        final userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+        if (userDoc.exists && mounted) {
+          final userData = userDoc.data()!;
+          setState(() {
+            _currentUserImage = userData['profileImageUrl'];
+          });
+        }
+      } catch (e) {
+        print('Error loading current user image: $e');
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -45,44 +70,6 @@ class _MatchNotificationScreenState extends State<MatchNotificationScreen> with 
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // Background decorative elements
-          Positioned(
-            top: 100,
-            left: 50,
-            child: Container(
-              width: 20,
-              height: 20,
-              decoration: BoxDecoration(
-                color: Colors.pink.withOpacity(0.3),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          Positioned(
-            top: 150,
-            right: 80,
-            child: Container(
-              width: 15,
-              height: 15,
-              decoration: BoxDecoration(
-                color: Colors.purple.withOpacity(0.3),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 200,
-            left: 30,
-            child: Container(
-              width: 25,
-              height: 25,
-              decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.3),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          
           // Main content
           Center(
             child: Column(
@@ -96,7 +83,7 @@ class _MatchNotificationScreenState extends State<MatchNotificationScreen> with 
                     height: 120,
                     child: Stack(
                       children: [
-                        // User's profile (left circle)
+                        // Current user's profile (left circle)
                         Positioned(
                           left: 0,
                           child: Container(
@@ -108,15 +95,20 @@ class _MatchNotificationScreenState extends State<MatchNotificationScreen> with 
                             ),
                             child: CircleAvatar(
                               radius: 47,
-                              backgroundColor: Color(0xFF5E3D9B),
-                              child: Text(
-                                'You',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
+                              backgroundImage: _currentUserImage != null 
+                                  ? NetworkImage(_currentUserImage!) 
+                                  : null,
+                              backgroundColor: AppTheme.primaryColor,
+                              child: _currentUserImage == null
+                                  ? Text(
+                                      'You',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    )
+                                  : null,
                             ),
                           ),
                         ),
@@ -135,10 +127,10 @@ class _MatchNotificationScreenState extends State<MatchNotificationScreen> with 
                               backgroundImage: widget.user['image'] != null 
                                   ? NetworkImage(widget.user['image']!) 
                                   : null,
-                              backgroundColor: Color(0xFFEF4C5E),
+                              backgroundColor: AppTheme.secondaryColor,
                               child: widget.user['image'] == null 
                                   ? Text(
-                                      widget.user['name'][0],
+                                      (widget.user['name'] ?? 'U')[0],
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontSize: 20,
@@ -157,7 +149,7 @@ class _MatchNotificationScreenState extends State<MatchNotificationScreen> with 
                             width: 40,
                             height: 40,
                             decoration: BoxDecoration(
-                              color: Color(0xFFEF4C5E),
+                              color: AppTheme.accentColor,
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
@@ -180,7 +172,7 @@ class _MatchNotificationScreenState extends State<MatchNotificationScreen> with 
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF5E3D9B),
+                    color: AppTheme.primaryColor,
                   ),
                 ),
                 
@@ -235,12 +227,17 @@ class _MatchNotificationScreenState extends State<MatchNotificationScreen> with 
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => ChatWindowScreen(match: widget.user),
+                                builder: (context) => ChatWindowScreen(
+                                  match: {
+                                    'name': widget.user['name'] ?? 'User',
+                                    'image': widget.user['image'],
+                                  },
+                                ),
                               ),
                             );
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Color(0xFFEF4C5E),
+                            backgroundColor: AppTheme.primaryColor,
                             foregroundColor: Colors.white,
                             padding: EdgeInsets.symmetric(vertical: 12),
                             shape: RoundedRectangleBorder(

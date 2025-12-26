@@ -8,6 +8,8 @@ import 'package:geolocator/geolocator.dart';
 import '../theme/app_theme.dart';
 import '../widgets/loading_widget.dart';
 import '../utils/responsive.dart';
+import '../widgets/tutorial_overlay.dart';
+import '../utils/error_handler.dart';
 
 class CreateHangoutScreen extends StatefulWidget {
   const CreateHangoutScreen({super.key});
@@ -29,6 +31,14 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
   bool _isGettingLocation = false;
   List<String> _locationSuggestions = [];
   bool _showSuggestions = false;
+  
+  // Tutorial keys
+  final GlobalKey _titleKey = GlobalKey();
+  final GlobalKey _categoryKey = GlobalKey();
+  final GlobalKey _locationKey = GlobalKey();
+  final GlobalKey _dateTimeKey = GlobalKey();
+  final GlobalKey _createButtonKey = GlobalKey();
+  bool _showTutorial = false;
 
 
   final List<String> _categories = [
@@ -43,8 +53,24 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _checkAndShowTutorial();
+  }
+  
+  void _checkAndShowTutorial() async {
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        setState(() {
+          _showTutorial = true;
+        });
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    final createContent = Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
@@ -85,6 +111,7 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
                 children: [
                     // Title
             _buildTextField(
+              key: _titleKey,
               controller: _titleController,
               label: 'Hangout Title',
               hint: 'What are you planning?',
@@ -95,6 +122,7 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
                     // Category
             _buildSectionTitle('Category'),
             Container(
+              key: _categoryKey,
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
               decoration: BoxDecoration(
@@ -138,6 +166,7 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
 
                     // Date & Time
             Row(
+              key: _dateTimeKey,
               children: [
                 Expanded(
                   child: Column(
@@ -209,6 +238,7 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
 
             // Create Button
             LoadingButton(
+              key: _createButtonKey,
               isLoading: _isCreating,
               text: 'Create Hangout',
               onPressed: _createHangout,
@@ -221,6 +251,62 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
         ),
       ),
     );
+    
+    if (_showTutorial) {
+      return TutorialOverlay(
+        steps: [
+          TutorialStep(
+            title: 'Create Your Hangout',
+            description: 'This is where you create hangouts for others to join. Fill in the details about what you want to do.',
+            bubblePosition: const Offset(20, 150),
+          ),
+          TutorialStep(
+            title: 'Hangout Title',
+            description: 'Give your hangout a catchy title that describes what you\'re planning to do.',
+            targetKey: _titleKey,
+            bubblePosition: const Offset(20, 280),
+            highlightAsRectangle: true,
+          ),
+          TutorialStep(
+            title: 'Choose Category',
+            description: 'Select the category that best fits your hangout activity.',
+            targetKey: _categoryKey,
+            bubblePosition: const Offset(20, 350),
+            highlightAsRectangle: true,
+          ),
+          TutorialStep(
+            title: 'Set Location',
+            description: 'Enter where you want to meet or use GPS to set your current location.',
+            targetKey: _locationKey,
+            bubblePosition: const Offset(20, 450),
+            highlightAsRectangle: true,
+          ),
+          TutorialStep(
+            title: 'Choose Date & Time',
+            description: 'Select when your hangout will take place. Must be at least 30 minutes from now and within 7 days.',
+            targetKey: _dateTimeKey,
+            bubblePosition: const Offset(20, 520),
+            highlightAsRectangle: true,
+          ),
+          TutorialStep(
+            title: 'Create & Share',
+            description: 'Tap here to create your hangout and make it visible to people nearby.',
+            targetKey: _createButtonKey,
+            bubblePosition: const Offset(20, 600),
+            highlightAsRectangle: true,
+          ),
+        ],
+        onComplete: () {
+          setState(() {
+            _showTutorial = false;
+          });
+          TutorialService.markTutorialCompleted('create_hangout');
+        },
+        child: createContent,
+      );
+    }
+    
+    return createContent;
   }
 
   Widget _buildSectionTitle(String title) {
@@ -238,6 +324,7 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
   }
 
   Widget _buildTextField({
+    Key? key,
     required TextEditingController controller,
     required String label,
     required String hint,
@@ -245,6 +332,7 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
     IconData? prefixIcon,
   }) {
     return Column(
+      key: key,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle(label),
@@ -343,7 +431,6 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
     setState(() => _isCreating = true);
 
     try {
-
       await HangoutService.createHangoutRequest(
         title: _titleController.text,
         category: _selectedCategory,
@@ -367,12 +454,11 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
         Navigator.pop(context); // Go back to previous screen
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(e.toString().replaceAll('Exception: ', '')),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 3),
-        ),
+      ErrorHandler.showErrorSnackBar(
+        context,
+        e,
+        onRetry: _createHangout,
+        retryLabel: 'Try Again',
       );
     } finally {
       setState(() => _isCreating = false);
@@ -381,6 +467,7 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
 
   Widget _buildLocationField() {
     return Column(
+      key: _locationKey,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionTitle('Location'),
@@ -606,11 +693,11 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
+      ErrorHandler.showErrorSnackBar(
+        context,
+        e,
+        onRetry: _getCurrentLocation,
+        retryLabel: 'Retry Location',
       );
     } finally {
       setState(() => _isGettingLocation = false);

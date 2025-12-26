@@ -100,6 +100,41 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                   children: [
                     SizedBox(height: (MediaQuery.of(context).size.height * 0.02).clamp(16.0, 24.0)),
                     
+                    // Terms and Privacy text
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: RichText(
+                        textAlign: TextAlign.center,
+                        text: TextSpan(
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.white70,
+                          ),
+                          children: [
+                            TextSpan(text: 'By tapping "Create an account", you agree to our '),
+                            TextSpan(
+                              text: 'Terms of Service',
+                              style: TextStyle(
+                                decoration: TextDecoration.underline,
+                                color: Colors.white,
+                              ),
+                            ),
+                            TextSpan(text: ' and '),
+                            TextSpan(
+                              text: 'Privacy Policy',
+                              style: TextStyle(
+                                decoration: TextDecoration.underline,
+                                color: Colors.white,
+                              ),
+                            ),
+                            TextSpan(text: '.'),
+                          ],
+                        ),
+                      ),
+                    ),
+                    
+                    SizedBox(height: 16),
+                    
                     // Create an account button
                     LoadingButton(
                       isLoading: _isLoading,

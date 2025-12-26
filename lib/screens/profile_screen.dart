@@ -200,26 +200,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     
                     const SizedBox(height: 16),
                     
-                    // Subscription
-                    _buildMenuCard(
-                      Icons.star_outline,
-                      'Subscription',
-                      'Upgrade options, current plan',
-                      () {},
-                    ),
-                    
-                    const SizedBox(height: 16),
-                    
-                    // Safety & Security
-                    _buildMenuCard(
-                      Icons.security_outlined,
-                      'Safety & Security',
-                      'Report issues, safety tips',
-                      () {},
-                    ),
-                    
-                    const SizedBox(height: 16),
-                    
                     // Help Centre
                     _buildMenuCard(
                       Icons.help_outline,

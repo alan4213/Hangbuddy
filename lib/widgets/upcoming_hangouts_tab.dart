@@ -53,6 +53,14 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
           
           final matches = snapshot.data ?? [];
           
+          // Sort matches by createdAt in descending order (latest first)
+          matches.sort((a, b) {
+            final aCreatedAt = a['createdAt'] as Timestamp?;
+            final bCreatedAt = b['createdAt'] as Timestamp?;
+            if (aCreatedAt == null || bCreatedAt == null) return 0;
+            return bCreatedAt.compareTo(aCreatedAt);
+          });
+          
           if (matches.isEmpty) {
             return Center(
               child: Column(
@@ -101,9 +109,9 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
           return GridView.builder(
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
-              childAspectRatio: 0.75,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 0.6,
             ),
             itemCount: matches.length,
             itemBuilder: (context, index) {
@@ -159,6 +167,13 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
               MaterialPageRoute(
                 builder: (context) => ProfileDetailScreen(
                   user: matchData,
+                  hangout: {
+                    'title': match['hangoutTitle'],
+                    'location': match['hangoutLocation'],
+                    'dateTime': hangoutDateTime.toIso8601String(),
+                  },
+                  hangoutId: match['id'],
+                  showChatButton: true,
                   onMatch: () {},
                 ),
               ),
@@ -273,6 +288,13 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
                             color: Colors.white,
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black,
+                                blurRadius: 3,
+                                offset: Offset(1, 1),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -299,6 +321,13 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
                           style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 10,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black,
+                                blurRadius: 2,
+                                offset: Offset(1, 1),
+                              ),
+                            ],
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -309,6 +338,13 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
                           style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 10,
+                            shadows: [
+                              Shadow(
+                                color: Colors.black,
+                                blurRadius: 2,
+                                offset: Offset(1, 1),
+                              ),
+                            ],
                           ),
                         ),
                       ],

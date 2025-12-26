@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../widgets/my_hangouts_tab.dart';
 import '../widgets/upcoming_hangouts_tab.dart';
 import '../theme/app_theme.dart';
+import '../widgets/tutorial_overlay.dart';
 
 class MatchesScreen extends StatefulWidget {
   final int initialTabIndex;
@@ -14,6 +15,11 @@ class MatchesScreen extends StatefulWidget {
 
 class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  
+  // Tutorial keys
+  final GlobalKey _createdTabKey = GlobalKey();
+  final GlobalKey _matchedTabKey = GlobalKey();
+  bool _showTutorial = false;
 
   @override
   void initState() {
@@ -23,6 +29,17 @@ class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProvider
       vsync: this,
       initialIndex: widget.initialTabIndex,
     );
+    _checkAndShowTutorial();
+  }
+  
+  void _checkAndShowTutorial() async {
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        setState(() {
+          _showTutorial = true;
+        });
+      }
+    });
   }
 
   @override
@@ -33,7 +50,7 @@ class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProvider
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    final matchesContent = Scaffold(
       backgroundColor: Colors.white,
       body: Column(
         children: [
@@ -54,16 +71,16 @@ class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProvider
                 fontWeight: FontWeight.w400,
                 fontSize: (MediaQuery.of(context).size.width * 0.04).clamp(14.0, 18.0),
               ),
-              tabs: const [
-                Tab(text: 'My Hangouts'),
-                Tab(text: 'Upcoming Hangouts'),
+              tabs: [
+                Tab(key: _createdTabKey, text: 'Created'),
+                Tab(key: _matchedTabKey, text: 'Matched'),
               ],
             ),
           ),
           Expanded(
             child: TabBarView(
               controller: _tabController,
-              children: const [
+              children: [
                 MyHangoutsTab(),
                 UpcomingHangoutsTab(),
               ],
@@ -72,6 +89,39 @@ class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProvider
         ],
       ),
     );
+    
+    if (_showTutorial) {
+      return TutorialOverlay(
+        steps: [
+          TutorialStep(
+            title: 'Your Hangouts Hub',
+            description: 'This is where you manage all your hangout activities - both created and matched.',
+            bubblePosition: const Offset(20, 150),
+          ),
+          TutorialStep(
+            title: 'Created Hangouts',
+            description: 'View hangouts you\'ve created and manage people who want to join you.',
+            targetKey: _createdTabKey,
+            bubblePosition: const Offset(20, 200),
+          ),
+          TutorialStep(
+            title: 'Matched Hangouts',
+            description: 'See hangouts you\'ve been accepted to join and chat with your matches.',
+            targetKey: _matchedTabKey,
+            bubblePosition: const Offset(20, 200),
+          ),
+        ],
+        onComplete: () {
+          setState(() {
+            _showTutorial = false;
+          });
+          TutorialService.markTutorialCompleted('matches_screen');
+        },
+        child: matchesContent,
+      );
+    }
+    
+    return matchesContent;
   }
 
 }

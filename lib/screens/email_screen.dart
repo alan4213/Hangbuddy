@@ -134,7 +134,7 @@ class _EmailScreenState extends State<EmailScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                _otpSent ? 'Verify Email' : 'Enter Email',
+                _otpSent ? 'Verify Email' : 'Connect Your Account',
                 style: TextStyle(
                   fontSize: MediaQuery.of(context).size.width * 0.07,
                   fontWeight: FontWeight.bold,
@@ -143,7 +143,7 @@ class _EmailScreenState extends State<EmailScreen> {
               ),
               SizedBox(height: MediaQuery.of(context).size.height * 0.015),
               Text(
-                'Google Sign-in is optional. If you don\'t have Gmail, you can skip this step.',
+                'Link your Google account for seamless sign-in and backup.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: MediaQuery.of(context).size.width * 0.04,
@@ -157,7 +157,7 @@ class _EmailScreenState extends State<EmailScreen> {
                   width: double.infinity,
                   height: MediaQuery.of(context).size.height * 0.06,
                   margin: EdgeInsets.only(bottom: MediaQuery.of(context).size.height * 0.02),
-                  child: OutlinedButton(
+                  child: ElevatedButton(
                     onPressed: () async {
                       setState(() => _isLoading = true);
                       try {
@@ -193,30 +193,36 @@ class _EmailScreenState extends State<EmailScreen> {
                       }
                       setState(() => _isLoading = false);
                     },
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: Colors.grey.shade300),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: AppTheme.primaryColor,
+                      elevation: 0,
+                      side: BorderSide(color: AppTheme.primaryColor),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(25),
                       ),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(
-                          'G',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue,
+                        Container(
+                          width: 20,
+                          height: 20,
+                          child: Text(
+                            'G',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue,
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 12),
                         Text(
                           'Continue with Google',
                           style: TextStyle(
                             fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: AppTheme.textPrimary,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
@@ -226,21 +232,30 @@ class _EmailScreenState extends State<EmailScreen> {
               
               SizedBox(height: MediaQuery.of(context).size.height * 0.04),
               
-              TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => NameScreen(signupData: SignupData()),
+              Container(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => NameScreen(signupData: SignupData()),
+                      ),
+                    );
+                  },
+                  style: TextButton.styleFrom(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25),
                     ),
-                  );
-                },
-                child: Text(
-                  'Skip for now',
-                  style: TextStyle(
-                    color: AppTheme.primaryColor,
-                    fontSize: MediaQuery.of(context).size.width * 0.04,
-                    decoration: TextDecoration.underline,
+                  ),
+                  child: Text(
+                    'Skip for now',
+                    style: TextStyle(
+                      color: AppTheme.primaryColor,
+                      fontSize: MediaQuery.of(context).size.width * 0.04,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),

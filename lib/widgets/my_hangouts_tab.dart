@@ -7,13 +7,41 @@ import '../services/match_service.dart';
 import '../theme/app_theme.dart';
 import '../screens/hangout_interested_users_screen.dart';
 import '../screens/profile_detail_screen.dart';
+import '../widgets/tutorial_overlay.dart';
+import '../utils/error_handler.dart';
+import '../screens/match_notification_screen.dart';
 
-class MyHangoutsTab extends StatelessWidget {
+class MyHangoutsTab extends StatefulWidget {
   const MyHangoutsTab({super.key});
 
   @override
+  State<MyHangoutsTab> createState() => _MyHangoutsTabState();
+}
+
+class _MyHangoutsTabState extends State<MyHangoutsTab> {
+  // Tutorial keys
+  final GlobalKey _hangoutCardKey = GlobalKey();
+  final GlobalKey _interestedUsersKey = GlobalKey();
+  final GlobalKey _acceptButtonKey = GlobalKey();
+  bool _showTutorial = false;
+  bool _hasHangouts = false;
+
+  void _checkAndShowTutorial(List<HangoutRequest> hangouts) {
+    if (hangouts.isNotEmpty && hangouts.any((h) => h.interestedUsers.isNotEmpty) && !_hasHangouts) {
+      _hasHangouts = true;
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          setState(() {
+            _showTutorial = true;
+          });
+        }
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Padding(
+    final myHangoutsContent = Padding(
       padding: const EdgeInsets.all(12.0),
       child: StreamBuilder<List<HangoutRequest>>(
         stream: HangoutService.getUserHangouts(),
@@ -23,6 +51,7 @@ class MyHangoutsTab extends StatelessWidget {
           }
           
           final hangouts = snapshot.data ?? [];
+          _checkAndShowTutorial(hangouts);
           
           if (hangouts.isEmpty) {
             return Center(
@@ -75,9 +104,10 @@ class MyHangoutsTab extends StatelessWidget {
               final hangout = hangouts[index];
               return Column(
                 children: [
-                  _buildHangoutCard(context, hangout),
+                  _buildHangoutCard(context, hangout, index == 0),
                   if (hangout.interestedUsers.isNotEmpty)
                     GridView.builder(
+                      key: index == 0 ? _interestedUsersKey : null,
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -90,7 +120,7 @@ class MyHangoutsTab extends StatelessWidget {
                       itemCount: hangout.interestedUsers.length,
                       itemBuilder: (context, userIndex) {
                         final userId = hangout.interestedUsers[userIndex];
-                        return _buildMatchCard(context, userId, hangout);
+                        return _buildMatchCard(context, userId, hangout, index == 0 && userIndex == 0);
                       },
                     ),
                 ],
@@ -100,10 +130,33 @@ class MyHangoutsTab extends StatelessWidget {
         },
       ),
     );
+    
+    if (_showTutorial) {
+      return TutorialOverlay(
+        steps: [
+          TutorialStep(
+            title: 'Accept People',
+            description: 'Tap the check button to accept someone into your hangout. This will create a match and start a conversation.',
+            targetKey: _acceptButtonKey,
+            bubblePosition: const Offset(20, 500),
+          ),
+        ],
+        onComplete: () {
+          setState(() {
+            _showTutorial = false;
+          });
+          TutorialService.markTutorialCompleted('my_hangouts');
+        },
+        child: myHangoutsContent,
+      );
+    }
+    
+    return myHangoutsContent;
   }
 
-  Widget _buildHangoutCard(BuildContext context, HangoutRequest hangout) {
+  Widget _buildHangoutCard(BuildContext context, HangoutRequest hangout, [bool isFirst = false]) {
     return Container(
+      key: isFirst ? _hangoutCardKey : null,
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
@@ -275,7 +328,7 @@ class MyHangoutsTab extends StatelessWidget {
     );
   }
 
-  Widget _buildMatchCard(BuildContext context, String userId, HangoutRequest hangout) {
+  Widget _buildMatchCard(BuildContext context, String userId, HangoutRequest hangout, [bool isFirst = false]) {
     return FutureBuilder<Map<String, dynamic>?>(
       future: _getUserData(userId),
       builder: (context, snapshot) {
@@ -313,6 +366,12 @@ class MyHangoutsTab extends StatelessWidget {
               MaterialPageRoute(
                 builder: (context) => ProfileDetailScreen(
                   user: matchData,
+                  hangout: {
+                    'title': hangout.title,
+                    'location': hangout.location,
+                    'dateTime': hangout.dateTime.toIso8601String(),
+                  },
+                  hangoutId: hangout.id,
                   onMatch: () {},
                 ),
               ),
@@ -398,6 +457,7 @@ class MyHangoutsTab extends StatelessWidget {
                     child: GestureDetector(
                       onTap: () => _acceptUser(context, userId, hangout),
                       child: Container(
+                        key: isFirst ? _acceptButtonKey : null,
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
@@ -475,8 +535,37 @@ class MyHangoutsTab extends StatelessWidget {
   void _acceptUser(BuildContext context, String userId, HangoutRequest hangout) async {
     try {
       final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser == null) return;
+      if (currentUser == null) {
+        print('No current user found');
+        return;
+      }
       
+      // Get user data for match notification first
+      final userData = await _getUserData(userId);
+      print('User data for match notification: $userData');
+      
+      if (userData != null && mounted) {
+        final userName = '${userData['firstName'] ?? ''} ${userData['lastName'] ?? ''}'.trim();
+        print('Navigating to match notification with user: $userName');
+        
+        // Show match notification screen immediately
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MatchNotificationScreen(
+              user: {
+                'name': userName.isEmpty ? 'User' : userName,
+                'image': userData['profileImageUrl'],
+              },
+            ),
+          ),
+        );
+        print('Navigation to match notification completed');
+      }
+      
+      print('Creating match between ${currentUser.uid} and $userId');
+      
+      // Create match in background
       await MatchService.createMatch(
         user1Id: currentUser.uid,
         user2Id: userId,
@@ -485,22 +574,15 @@ class MyHangoutsTab extends StatelessWidget {
         hangoutDateTime: hangout.dateTime,
       );
       
+      print('Match created successfully');
+      
       // Remove user from interested users list
       await HangoutService.acceptUser(hangout.id, userId);
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('User accepted! Match created.'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      print('User removed from interested list');
+      
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      print('Error in _acceptUser: $e');
     }
   }
 
@@ -530,9 +612,9 @@ class MyHangoutsTab extends StatelessWidget {
             ),
             TextButton(
               onPressed: () async {
+                Navigator.of(context).pop();
                 try {
                   await HangoutService.deleteHangout(hangoutId);
-                  Navigator.of(context).pop();
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Hangout deleted successfully'),
@@ -540,12 +622,11 @@ class MyHangoutsTab extends StatelessWidget {
                     ),
                   );
                 } catch (e) {
-                  Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Error: $e'),
-                      backgroundColor: Colors.red,
-                    ),
+                  ErrorHandler.showErrorSnackBar(
+                    context,
+                    e,
+                    onRetry: () => _deleteHangout(context, hangoutId),
+                    retryLabel: 'Try Again',
                   );
                 }
               },

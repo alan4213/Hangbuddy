@@ -1,0 +1,253 @@
+import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
+
+class TutorialOverlay extends StatefulWidget {
+  final List<TutorialStep> steps;
+  final VoidCallback onComplete;
+  final Widget child;
+
+  const TutorialOverlay({
+    super.key,
+    required this.steps,
+    required this.onComplete,
+    required this.child,
+  });
+
+  @override
+  State<TutorialOverlay> createState() => _TutorialOverlayState();
+}
+
+class _TutorialOverlayState extends State<TutorialOverlay> {
+  int _currentStep = 0;
+  bool _showTutorial = true;
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_showTutorial) {
+      return widget.child;
+    }
+
+    return Stack(
+      children: [
+        widget.child,
+        if (_currentStep < widget.steps.length)
+          _buildTutorialOverlay(widget.steps[_currentStep]),
+      ],
+    );
+  }
+
+  Widget _buildTutorialOverlay(TutorialStep step) {
+    return Positioned.fill(
+      child: Material(
+        color: Colors.black.withOpacity(0.7),
+        child: Stack(
+          children: [
+            // Highlight area
+            if (step.targetKey != null)
+              _buildHighlight(step),
+            
+            // Tutorial bubble
+            _buildTutorialBubble(step),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHighlight(TutorialStep step) {
+    return CustomPaint(
+      painter: HighlightPainter(
+        targetKey: step.targetKey!,
+        highlightRadius: step.highlightRadius,
+        highlightAsRectangle: step.highlightAsRectangle,
+      ),
+      child: Container(),
+    );
+  }
+
+  Widget _buildTutorialBubble(TutorialStep step) {
+    return Positioned(
+      top: step.bubblePosition?.dy ?? MediaQuery.of(context).size.height * 0.3,
+      left: 20,
+      right: 20,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              step.title,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              step.description,
+              style: TextStyle(
+                fontSize: 14,
+                color: AppTheme.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '${_currentStep + 1} of ${widget.steps.length}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+                Row(
+                  children: [
+                    if (_currentStep > 0)
+                      TextButton(
+                        onPressed: _previousStep,
+                        child: Text('Back'),
+                      ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: _nextStep,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                      ),
+                      child: Text(
+                        _currentStep == widget.steps.length - 1 ? 'Got it!' : 'Next',
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _nextStep() {
+    if (_currentStep < widget.steps.length - 1) {
+      setState(() {
+        _currentStep++;
+      });
+    } else {
+      setState(() {
+        _showTutorial = false;
+      });
+      widget.onComplete();
+    }
+  }
+
+  void _previousStep() {
+    if (_currentStep > 0) {
+      setState(() {
+        _currentStep--;
+      });
+    }
+  }
+}
+
+class TutorialStep {
+  final String title;
+  final String description;
+  final GlobalKey? targetKey;
+  final Offset? bubblePosition;
+  final double highlightRadius;
+  final bool highlightAsRectangle;
+
+  TutorialStep({
+    required this.title,
+    required this.description,
+    this.targetKey,
+    this.bubblePosition,
+    this.highlightRadius = 60,
+    this.highlightAsRectangle = false,
+  });
+}
+
+class HighlightPainter extends CustomPainter {
+  final GlobalKey targetKey;
+  final double highlightRadius;
+  final bool highlightAsRectangle;
+
+  HighlightPainter({
+    required this.targetKey,
+    required this.highlightRadius,
+    this.highlightAsRectangle = false,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final RenderBox? renderBox = targetKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox == null || !renderBox.attached) return;
+
+    final position = renderBox.localToGlobal(Offset.zero);
+    final targetSize = renderBox.size;
+
+    final paint = Paint()
+      ..color = Colors.white.withOpacity(0.1)
+      ..style = PaintingStyle.fill;
+
+    final borderPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+
+    if (highlightAsRectangle) {
+      final rect = RRect.fromRectAndRadius(
+        Rect.fromLTWH(
+          position.dx - 8,
+          position.dy - 8,
+          targetSize.width + 16,
+          targetSize.height + 16,
+        ),
+        const Radius.circular(16),
+      );
+      canvas.drawRRect(rect, paint);
+      canvas.drawRRect(rect, borderPaint);
+    } else {
+      final center = Offset(
+        position.dx + targetSize.width / 2,
+        position.dy + targetSize.height / 2,
+      );
+      canvas.drawCircle(center, highlightRadius, paint);
+      canvas.drawCircle(center, highlightRadius, borderPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// Tutorial service to manage tutorial state
+class TutorialService {
+  static const String _tutorialKey = 'tutorial_completed_';
+
+  static Future<bool> isTutorialCompleted(String screenName) async {
+    // In a real app, you'd use SharedPreferences
+    // For now, return false to always show tutorial
+    return false;
+  }
+
+  static Future<void> markTutorialCompleted(String screenName) async {
+    // In a real app, you'd save to SharedPreferences
+    print('Tutorial completed for $screenName');
+  }
+}

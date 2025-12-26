@@ -18,6 +18,8 @@ import '../theme/app_theme.dart';
 import '../widgets/loading_widget.dart';
 import '../utils/responsive.dart';
 import 'dart:math' as math;
+import '../widgets/tutorial_overlay.dart';
+import '../utils/error_handler.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -43,11 +45,31 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   int _currentIndex = 0;
   List<HangoutRequest> _hangouts = [];
   bool _isLoading = true;
+  
+  // Tutorial keys
+  final GlobalKey _filterKey = GlobalKey();
+  final GlobalKey _createButtonKey = GlobalKey();
+  final GlobalKey _likeButtonKey = GlobalKey();
+  final GlobalKey _hangoutDetailsCardKey = GlobalKey();
+  bool _showTutorial = false;
 
   @override
   void initState() {
     super.initState();
     _getCurrentLocation();
+  }
+  
+  void _checkAndShowTutorial() async {
+    // Show tutorial only if hangouts are loaded and not empty
+    if (!_isLoading && _hangouts.isNotEmpty && mounted) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted) {
+          setState(() {
+            _showTutorial = true;
+          });
+        }
+      });
+    }
   }
   
   @override
@@ -75,6 +97,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         _hangouts = filtered;
         _isLoading = false;
       });
+      
+      // Show tutorial after hangouts are loaded
+      _checkAndShowTutorial();
     } catch (e) {
       print('Error loading hangouts: $e');
       setState(() => _isLoading = false);
@@ -83,7 +108,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    final homeContent = Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
         children: [
@@ -99,6 +124,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               children: [
                 // Filter chips at top
                 Container(
+                  key: _filterKey,
                   height: 60,
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: SingleChildScrollView(
@@ -137,13 +163,58 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 Expanded(
                   child: _buildSwipeableCards(),
                 ),
-
               ],
             ),
           ),
         ],
       ),
     );
+    
+    if (_showTutorial) {
+      return TutorialOverlay(
+        steps: [
+          TutorialStep(
+            title: 'Welcome to Discover',
+            description: 'This is where you\'ll find hangouts created by people near you. Swipe through profiles and find activities you\'d like to join.',
+            bubblePosition: const Offset(20, 200),
+          ),
+          TutorialStep(
+            title: 'Hangout Details Card',
+            description: 'This white card shows the hangout information - what activity, where, and when. This is what you\'ll be joining.',
+            targetKey: _hangoutDetailsCardKey,
+            bubblePosition: const Offset(20, 150),
+            highlightAsRectangle: true,
+          ),
+          TutorialStep(
+            title: 'Filter Your Matches',
+            description: 'Use these filters to find hangouts that match your preferences - distance, age, gender, and time.',
+            targetKey: _filterKey,
+            bubblePosition: const Offset(20, 120),
+          ),
+          TutorialStep(
+            title: 'Show Interest',
+            description: 'Tap the heart button to show interest in a hangout. The creator will see your interest and can accept you.',
+            targetKey: _likeButtonKey,
+            bubblePosition: const Offset(20, 200),
+          ),
+          TutorialStep(
+            title: 'Create Your Own Hangout',
+            description: 'Tap the + button to create your own hangout and invite people to join you.',
+            targetKey: _createButtonKey,
+            bubblePosition: const Offset(20, 500),
+          ),
+        ],
+        onComplete: () {
+          setState(() {
+            _showTutorial = false;
+          });
+          TutorialService.markTutorialCompleted('home_screen');
+        },
+        child: homeContent,
+      );
+    }
+    
+    return homeContent;
   }
 
   Widget _buildCreateHangoutButton(BuildContext context) {
@@ -467,6 +538,60 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   void _handleAccept(HangoutRequest hangout) async {
+    // Show popup dialog immediately
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.favorite,
+                color: AppTheme.primaryColor,
+                size: 50,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Interest Sent!',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Wait for hangout creator to respond',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25),
+                  ),
+                ),
+                child: const Text(
+                  'Got it!',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    
+    // Handle database operations in background
     try {
       final currentUser = auth.FirebaseAuth.instance.currentUser;
       if (currentUser == null) return;
@@ -476,21 +601,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       
       // Only express interest, don't create match yet
       await HangoutService.expressInterest(hangout.id);
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Interest sent! Wait for hangout creator to accept.'),
-          backgroundColor: Colors.green,
-          duration: const Duration(seconds: 2),
-        ),
-      );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      // If there's an error, show it after the popup is dismissed
+      Future.delayed(Duration(milliseconds: 500), () {
+        if (mounted) {
+          ErrorHandler.showErrorSnackBar(
+            context,
+            e,
+            onRetry: () => _handleAccept(hangout),
+            retryLabel: 'Try Again',
+          );
+        }
+      });
     }
   }
 
@@ -507,11 +629,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
+      ErrorHandler.showErrorSnackBar(
+        context,
+        e,
+        onRetry: () => _handleReject(hangout),
+        retryLabel: 'Try Again',
       );
     }
   }
@@ -1130,6 +1252,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                 ),
                               ),
                               GestureDetector(
+                                key: _likeButtonKey,
                                 onTap: () => _handleAccept(hangout),
                                 child: Container(
                                   width: 50,
@@ -1153,6 +1276,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           const SizedBox(height: 16),
                           // Hangout details card
                           Container(
+                            key: _hangoutDetailsCardKey,
                             width: double.infinity,
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
@@ -1394,6 +1518,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               bottom: 20,
               right: 20,
               child: GestureDetector(
+                key: _createButtonKey,
                 onTap: () => Navigator.pushNamed(context, '/create'),
                 child: Container(
                   width: 60,

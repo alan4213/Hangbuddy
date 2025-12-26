@@ -7,6 +7,7 @@ import '../services/hangout_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/app_theme.dart';
 import 'profile_detail_screen.dart';
+import 'match_notification_screen.dart';
 
 class HangoutInterestedUsersScreen extends StatefulWidget {
   final HangoutRequest hangout;
@@ -149,7 +150,15 @@ class _HangoutInterestedUsersScreenState extends State<HangoutInterestedUsersScr
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => ProfileDetailScreen(user: user.toMap()),
+                                        builder: (context) => ProfileDetailScreen(
+                                          user: user.toMap(),
+                                          hangout: {
+                                            'title': currentHangout.title,
+                                            'location': currentHangout.location,
+                                            'dateTime': currentHangout.dateTime.toIso8601String(),
+                                          },
+                                          hangoutId: currentHangout.id,
+                                        ),
                                       ),
                                     );
                                   },
@@ -230,7 +239,12 @@ class _HangoutInterestedUsersScreenState extends State<HangoutInterestedUsersScr
   void _acceptUser(UserModel user, HangoutRequest currentHangout) async {
     try {
       final currentUser = FirebaseAuth.instance.currentUser;
-      if (currentUser == null) return;
+      if (currentUser == null) {
+        print('No current user found');
+        return;
+      }
+      
+      print('Creating match between ${currentUser.uid} and ${user.uid}');
       
       // Create match between hangout creator and interested user
       await MatchService.createMatch(
@@ -241,16 +255,30 @@ class _HangoutInterestedUsersScreenState extends State<HangoutInterestedUsersScr
         hangoutDateTime: currentHangout.dateTime,
       );
       
+      print('Match created successfully');
+      
       // Remove user from interested list but keep hangout active
       await HangoutService.acceptUser(currentHangout.id, user.uid);
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Matched with ${user.firstName}! You can accept more users.'),
-          backgroundColor: Colors.green,
+      print('User removed from interested list');
+      
+      // Navigate to match notification screen
+      print('Navigating to match notification screen');
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MatchNotificationScreen(
+            user: {
+              'name': '${user.firstName} ${user.lastName}',
+              'image': user.profileImageUrl,
+            },
+          ),
         ),
       );
+      
+      print('Navigation completed');
     } catch (e) {
+      print('Error in _acceptUser: $e');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: $e'),
