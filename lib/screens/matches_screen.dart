@@ -3,6 +3,8 @@ import '../widgets/my_hangouts_tab.dart';
 import '../widgets/upcoming_hangouts_tab.dart';
 import '../theme/app_theme.dart';
 import '../widgets/tutorial_overlay.dart';
+import '../services/hangout_service.dart';
+import '../services/match_service.dart';
 
 class MatchesScreen extends StatefulWidget {
   final int initialTabIndex;
@@ -72,8 +74,75 @@ class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProvider
                 fontSize: (MediaQuery.of(context).size.width * 0.04).clamp(14.0, 18.0),
               ),
               tabs: [
-                Tab(key: _createdTabKey, text: 'Created'),
-                Tab(key: _matchedTabKey, text: 'Matched'),
+                StreamBuilder<List<dynamic>>(
+                  stream: HangoutService.getUserHangouts(),
+                  builder: (context, snapshot) {
+                    final hangouts = snapshot.data ?? [];
+                    final interestedCount = hangouts.fold<int>(0, (sum, hangout) => sum + (hangout.interestedUsers?.length ?? 0) as int);
+                    return Tab(
+                      key: _createdTabKey,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('Created'),
+                          if (interestedCount > 0) ...
+                          [
+                            SizedBox(width: 8),
+                            Container(
+                              padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryColor,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                interestedCount.toString(),
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    );
+                  },
+                ),
+                StreamBuilder<List<Map<String, dynamic>>>(
+                  stream: MatchService.getUserMatches(),
+                  builder: (context, snapshot) {
+                    final count = snapshot.data?.length ?? 0;
+                    return Tab(
+                      key: _matchedTabKey,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('Matched'),
+                          if (count > 0) ...
+                          [
+                            SizedBox(width: 8),
+                            Container(
+                              padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryColor,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                count.toString(),
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    );
+                  },
+                ),
               ],
             ),
           ),

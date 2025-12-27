@@ -157,174 +157,209 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
   Widget _buildHangoutCard(BuildContext context, HangoutRequest hangout, [bool isFirst = false]) {
     return Container(
       key: isFirst ? _hangoutCardKey : null,
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        color: AppTheme.primaryColor,
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppTheme.primaryColor, AppTheme.primaryColor.withOpacity(0.8)],
+        ),
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryColor.withOpacity(0.3),
-            blurRadius: 20,
+            color: AppTheme.primaryColor.withOpacity(0.25),
+            blurRadius: 15,
             offset: const Offset(0, 8),
           ),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(24),
         child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      hangout.title,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        fontFamily: 'SF Pro Display',
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    hangout.title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    hangout.category,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.location_on, color: Colors.white, size: 18),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    hangout.location,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.access_time, color: Colors.white, size: 18),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  _formatDateTime(hangout.dateTime),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(20),
                       ),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      hangout.category,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  const Icon(Icons.location_on, color: Colors.white70, size: 16),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      hangout.location,
-                      style: const TextStyle(color: Colors.white70, fontSize: 14),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  const Icon(Icons.access_time, color: Colors.white70, size: 16),
-                  const SizedBox(width: 4),
-                  Text(
-                    _formatDateTime(hangout.dateTime),
-                    style: const TextStyle(color: Colors.white70, fontSize: 14),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.people, color: Colors.white, size: 16),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${hangout.interestedUsers.length} interested',
-                              style: const TextStyle(color: Colors.white, fontSize: 12),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.people, color: Colors.white, size: 18),
+                          const SizedBox(width: 6),
+                          Text(
+                            '${hangout.interestedUsers.length} interested',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      SizedBox(
-                        width: hangout.interestedUsers.length > 3 ? 80 : (hangout.interestedUsers.length * 20 + 20),
-                        height: 40,
-                        child: Stack(
-                          children: [
-                            ...hangout.interestedUsers.take(3).toList().asMap().entries.map((entry) {
-                              final index = entry.key;
-                              final userId = entry.value;
-                              return Positioned(
-                                left: index * 15.0,
-                                child: FutureBuilder<Map<String, dynamic>?>(
-                                  future: _getUserData(userId),
-                                  builder: (context, snapshot) {
-                                    if (!snapshot.hasData) return const SizedBox();
-                                    final user = snapshot.data!;
-                                    final imageUrl = user['profileImageUrl'] ?? 
-                                        (user['photoUrls']?.isNotEmpty == true ? user['photoUrls'][0] : null);
-                                    return Container(
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        border: Border.all(color: Colors.white, width: 2),
-                                      ),
-                                      child: CircleAvatar(
-                                        radius: 18,
-                                        backgroundImage: imageUrl != null ? NetworkImage(imageUrl) : null,
-                                        backgroundColor: AppTheme.primaryColor,
-                                        child: imageUrl == null ? Text(
-                                          (user['firstName'] ?? 'U')[0],
-                                          style: const TextStyle(color: Colors.white, fontSize: 14),
-                                        ) : null,
-                                      ),
-                                    );
-                                  },
-                                ),
-                              );
-                            }).toList(),
-                            if (hangout.interestedUsers.length > 3)
-                              Positioned(
-                                left: 45.0,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: Colors.white, width: 2),
-                                  ),
-                                  child: CircleAvatar(
-                                    radius: 18,
-                                    backgroundColor: Colors.white.withOpacity(0.3),
-                                    child: Text(
-                                      '+${hangout.interestedUsers.length - 3}',
-                                      style: const TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                    const SizedBox(width: 12),
+                    SizedBox(
+                      width: hangout.interestedUsers.length > 3 ? 80 : (hangout.interestedUsers.length * 20 + 20),
+                      height: 40,
+                      child: Stack(
+                        children: [
+                          ...hangout.interestedUsers.take(3).toList().asMap().entries.map((entry) {
+                            final index = entry.key;
+                            final userId = entry.value;
+                            return Positioned(
+                              left: index * 15.0,
+                              child: FutureBuilder<Map<String, dynamic>?>(
+                                future: _getUserData(userId),
+                                builder: (context, snapshot) {
+                                  if (!snapshot.hasData) return const SizedBox();
+                                  final user = snapshot.data!;
+                                  final imageUrl = user['profileImageUrl'] ?? 
+                                      (user['photoUrls']?.isNotEmpty == true ? user['photoUrls'][0] : null);
+                                  return Container(
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: Colors.white, width: 2),
                                     ),
+                                    child: CircleAvatar(
+                                      radius: 18,
+                                      backgroundImage: imageUrl != null ? NetworkImage(imageUrl) : null,
+                                      backgroundColor: Colors.white.withOpacity(0.3),
+                                      child: imageUrl == null ? Text(
+                                        (user['firstName'] ?? 'U')[0],
+                                        style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                                      ) : null,
+                                    ),
+                                  );
+                                },
+                              ),
+                            );
+                          }).toList(),
+                          if (hangout.interestedUsers.length > 3)
+                            Positioned(
+                              left: 45.0,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white, width: 2),
+                                ),
+                                child: CircleAvatar(
+                                  radius: 18,
+                                  backgroundColor: Colors.white.withOpacity(0.3),
+                                  child: Text(
+                                    '+${hangout.interestedUsers.length - 3}',
+                                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
                                   ),
                                 ),
                               ),
-                          ],
-                        ),
+                            ),
+                        ],
                       ),
-                    ],
+                    ),
+                  ],
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  IconButton(
+                  child: IconButton(
                     onPressed: () => _deleteHangout(context, hangout.id),
-                    icon: const Icon(Icons.delete, color: Colors.white70),
+                    icon: const Icon(Icons.delete_outline, color: Colors.white),
                     style: IconButton.styleFrom(
-                      backgroundColor: Colors.red.withOpacity(0.2),
+                      padding: const EdgeInsets.all(8),
                     ),
                   ),
-                ],
-              ),
-            ],
-          ),
+                ),
+              ],
+            ),
+          ],
         ),
+      ),
     );
   }
 
@@ -602,37 +637,93 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Delete Hangout'),
-          content: const Text('Are you sure you want to delete this hangout?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            margin: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
             ),
-            TextButton(
-              onPressed: () async {
-                Navigator.of(context).pop();
-                try {
-                  await HangoutService.deleteHangout(hangoutId);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Hangout deleted successfully'),
-                      backgroundColor: Colors.green,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Delete Hangout',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Are you sure you want to delete this hangout?',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
                     ),
-                  );
-                } catch (e) {
-                  ErrorHandler.showErrorSnackBar(
-                    context,
-                    e,
-                    onRetry: () => _deleteHangout(context, hangoutId),
-                    retryLabel: 'Try Again',
-                  );
-                }
-              },
-              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                    Expanded(
+                      child: Container(
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: Color(0xFF6366F1),
+                          borderRadius: BorderRadius.circular(22),
+                        ),
+                        child: TextButton(
+                          onPressed: () async {
+                            Navigator.of(context).pop();
+                            try {
+                              await HangoutService.deleteHangout(hangoutId);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Hangout deleted successfully'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            } catch (e) {
+                              ErrorHandler.showErrorSnackBar(
+                                context,
+                                e,
+                                onRetry: () => _deleteHangout(context, hangoutId),
+                                retryLabel: 'Try Again',
+                              );
+                            }
+                          },
+                          child: const Text(
+                            'Delete',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         );
       },
     );

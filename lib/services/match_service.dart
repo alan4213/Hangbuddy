@@ -39,6 +39,7 @@ class MatchService {
       'hangoutDateTime': Timestamp.fromDate(hangoutDateTime),
       'createdAt': Timestamp.fromDate(DateTime.now()),
       'status': 'active',
+      'hangoutStatus': 'active',
     };
 
     await _firestore.collection('matches').doc(matchId).set(matchData);
@@ -70,6 +71,18 @@ class MatchService {
       await NotificationService.sendMatchNotification(userId, matchedUserName.isEmpty ? 'Someone' : matchedUserName);
     } catch (e) {
       print('Error sending match notification: $e');
+    }
+  }
+
+  static Future<void> markHangoutAsDeleted(String hangoutTitle) async {
+    final matchesSnapshot = await _firestore
+        .collection('matches')
+        .where('hangoutTitle', isEqualTo: hangoutTitle)
+        .where('status', isEqualTo: 'active')
+        .get();
+    
+    for (final doc in matchesSnapshot.docs) {
+      await doc.reference.update({'hangoutStatus': 'deleted'});
     }
   }
 

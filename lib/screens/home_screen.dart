@@ -45,6 +45,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   int _currentIndex = 0;
   List<HangoutRequest> _hangouts = [];
   bool _isLoading = true;
+  Set<String> _likedHangouts = {}; // Track locally liked hangouts
   
   // Tutorial keys
   final GlobalKey _filterKey = GlobalKey();
@@ -428,13 +429,24 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                 ),
                               ),
                               GestureDetector(
-                                onTap: () => _handleAccept(hangout),
+                                onTap: () {
+                                  final currentUser = auth.FirebaseAuth.instance.currentUser;
+                                  if (currentUser != null && !hangout.interestedUsers.contains(currentUser.uid) && !_likedHangouts.contains(hangout.id)) {
+                                    _handleAccept(hangout);
+                                  }
+                                },
                                 child: Container(
                                   width: 40,
                                   height: 40,
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
-                                    color: AppTheme.primaryColor,
+                                    color: () {
+                                      final currentUser = auth.FirebaseAuth.instance.currentUser;
+                                      if (currentUser != null && (hangout.interestedUsers.contains(currentUser.uid) || _likedHangouts.contains(hangout.id))) {
+                                        return Colors.grey;
+                                      }
+                                      return AppTheme.primaryColor;
+                                    }(),
                                     boxShadow: [
                                       BoxShadow(
                                         color: Colors.black.withOpacity(0.2),
@@ -443,7 +455,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                       ),
                                     ],
                                   ),
-                                  child: const Icon(Icons.favorite, color: Colors.white, size: 20),
+                                  child: Icon(
+                                    Icons.favorite,
+                                    color: Colors.white, 
+                                    size: 20
+                                  ),
                                 ),
                               ),
                             ],
@@ -538,6 +554,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   void _handleAccept(HangoutRequest hangout) async {
+    final currentUser = auth.FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+    
+    // Add to local liked set immediately
+    setState(() {
+      _likedHangouts.add(hangout.id);
+    });
+    
     // Show popup dialog immediately
     showDialog(
       context: context,
@@ -593,16 +617,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     
     // Handle database operations in background
     try {
-      final currentUser = auth.FirebaseAuth.instance.currentUser;
-      if (currentUser == null) return;
-      
       // Mark as viewed first (this will hide it from discover feed)
       await HangoutService.markAsViewed(hangout.id);
       
       // Only express interest, don't create match yet
       await HangoutService.expressInterest(hangout.id);
     } catch (e) {
-      // If there's an error, show it after the popup is dismissed
+      // If there's an error, remove from local set and show error
+      setState(() {
+        _likedHangouts.remove(hangout.id);
+      });
+      
       Future.delayed(Duration(milliseconds: 500), () {
         if (mounted) {
           ErrorHandler.showErrorSnackBar(
@@ -1252,14 +1277,25 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                 ),
                               ),
                               GestureDetector(
-                                key: _likeButtonKey,
-                                onTap: () => _handleAccept(hangout),
+                                key: _showTutorial && _currentIndex == 0 ? _likeButtonKey : null,
+                                onTap: () {
+                                  final currentUser = auth.FirebaseAuth.instance.currentUser;
+                                  if (currentUser != null && !hangout.interestedUsers.contains(currentUser.uid) && !_likedHangouts.contains(hangout.id)) {
+                                    _handleAccept(hangout);
+                                  }
+                                },
                                 child: Container(
                                   width: 50,
                                   height: 50,
                                   decoration: BoxDecoration(
                                     shape: BoxShape.circle,
-                                    color: AppTheme.primaryColor,
+                                    color: () {
+                                      final currentUser = auth.FirebaseAuth.instance.currentUser;
+                                      if (currentUser != null && (hangout.interestedUsers.contains(currentUser.uid) || _likedHangouts.contains(hangout.id))) {
+                                        return Colors.grey;
+                                      }
+                                      return AppTheme.primaryColor;
+                                    }(),
                                     boxShadow: [
                                       BoxShadow(
                                         color: Colors.black.withOpacity(0.2),
@@ -1268,7 +1304,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                       ),
                                     ],
                                   ),
-                                  child: const Icon(Icons.favorite, color: Colors.white, size: 24),
+                                  child: Icon(
+                                    Icons.favorite,
+                                    color: Colors.white, 
+                                    size: 24
+                                  ),
                                 ),
                               ),
                             ],
@@ -1276,7 +1316,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           const SizedBox(height: 16),
                           // Hangout details card
                           Container(
-                            key: _hangoutDetailsCardKey,
+                            key: _showTutorial && _currentIndex == 0 ? _hangoutDetailsCardKey : null,
                             width: double.infinity,
                             padding: const EdgeInsets.all(20),
                             decoration: BoxDecoration(
@@ -1518,7 +1558,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               bottom: 20,
               right: 20,
               child: GestureDetector(
-                key: _createButtonKey,
+                key: _showTutorial && _currentIndex == 0 ? _createButtonKey : null,
                 onTap: () => Navigator.pushNamed(context, '/create'),
                 child: Container(
                   width: 60,

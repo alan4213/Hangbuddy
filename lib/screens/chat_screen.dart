@@ -453,7 +453,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 Icon(
                   Icons.chat_bubble_outline,
-                  color: Color(0xFFEF4C5E),
+                  color: AppTheme.primaryColor,
                 ),
               ],
             ),

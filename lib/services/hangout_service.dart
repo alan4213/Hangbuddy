@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/hangout_request_model.dart';
 import 'location_service.dart';
 import 'notification_service.dart';
+import 'match_service.dart';
 
 class HangoutService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -149,7 +150,35 @@ class HangoutService {
     });
   }
 
+  static Stream<int> getPendingInterestRequestsCount() {
+    final user = _auth.currentUser;
+    if (user == null) return Stream.value(0);
+
+    return _firestore
+        .collection('hangout_requests')
+        .where('creatorId', isEqualTo: user.uid)
+        .where('status', isEqualTo: 'active')
+        .snapshots()
+        .map((snapshot) {
+      int totalCount = 0;
+      for (final doc in snapshot.docs) {
+        final hangout = HangoutRequest.fromMap(doc.data(), doc.id);
+        totalCount += hangout.interestedUsers.length;
+      }
+      return totalCount;
+    });
+  }
+
   static Future<void> deleteHangout(String hangoutId) async {
+    // Get hangout data before deletion
+    final hangoutDoc = await _firestore.collection('hangout_requests').doc(hangoutId).get();
+    if (hangoutDoc.exists) {
+      final hangout = HangoutRequest.fromMap(hangoutDoc.data()!, hangoutId);
+      
+      // Mark related matches as having deleted hangout
+      await MatchService.markHangoutAsDeleted(hangout.title);
+    }
+    
     await _firestore.collection('hangout_requests').doc(hangoutId).delete();
   }
 

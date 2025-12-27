@@ -185,6 +185,9 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
           ),
           PopupMenuButton<String>(
             icon: Icon(Icons.more_vert, color: Colors.white),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            color: Colors.white,
+            elevation: 8,
             onSelected: (value) {
               switch (value) {
                 case 'clear':
@@ -206,9 +209,16 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
                 value: 'clear',
                 child: Row(
                   children: [
-                    Icon(Icons.clear_all, color: Colors.grey[600]),
+                    Container(
+                      padding: EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(Icons.clear_all, color: AppTheme.primaryColor, size: 20),
+                    ),
                     SizedBox(width: 12),
-                    Text('Clear chat'),
+                    Text('Clear chat', style: TextStyle(fontSize: 16)),
                   ],
                 ),
               ),
@@ -216,9 +226,16 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
                 value: 'mute',
                 child: Row(
                   children: [
-                    Icon(Icons.notifications_off, color: Colors.grey[600]),
+                    Container(
+                      padding: EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(Icons.notifications_off, color: AppTheme.primaryColor, size: 20),
+                    ),
                     SizedBox(width: 12),
-                    Text('Mute notifications'),
+                    Text('Mute notifications', style: TextStyle(fontSize: 16)),
                   ],
                 ),
               ),
@@ -226,9 +243,16 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
                 value: 'block',
                 child: Row(
                   children: [
-                    Icon(Icons.block, color: Colors.red),
+                    Container(
+                      padding: EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(Icons.block, color: Colors.red, size: 20),
+                    ),
                     SizedBox(width: 12),
-                    Text('Block user', style: TextStyle(color: Colors.red)),
+                    Text('Block user', style: TextStyle(color: Colors.red, fontSize: 16)),
                   ],
                 ),
               ),
@@ -236,9 +260,16 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
                 value: 'report',
                 child: Row(
                   children: [
-                    Icon(Icons.report, color: Colors.red),
+                    Container(
+                      padding: EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(Icons.report, color: Colors.red, size: 20),
+                    ),
                     SizedBox(width: 12),
-                    Text('Report user', style: TextStyle(color: Colors.red)),
+                    Text('Report user', style: TextStyle(color: Colors.red, fontSize: 16)),
                   ],
                 ),
               ),
@@ -1185,12 +1216,27 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
   void _showEmojiGifPicker() {
     showModalBottomSheet(
       context: context,
-      builder: (context) => DefaultTabController(
-        length: 2,
-        child: Container(
-          height: 300,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        height: 350,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: DefaultTabController(
+          length: 2,
           child: Column(
             children: [
+              Container(
+                margin: EdgeInsets.only(top: 8),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              SizedBox(height: 16),
               TabBar(
                 tabs: [
                   Tab(text: 'Emojis'),
@@ -1198,37 +1244,57 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
                 ],
                 labelColor: AppTheme.primaryColor,
                 unselectedLabelColor: Colors.grey,
+                indicatorColor: AppTheme.primaryColor,
+                labelStyle: TextStyle(fontWeight: FontWeight.w600),
               ),
               Expanded(
                 child: TabBarView(
                   children: [
-                    // Emoji Tab
                     Container(
-                      padding: EdgeInsets.all(16),
+                      padding: EdgeInsets.all(20),
                       child: GridView.count(
                         crossAxisCount: 8,
+                        mainAxisSpacing: 8,
+                        crossAxisSpacing: 8,
                         children: [
                           '😀', '😂', '🥰', '😍', '🤔', '😎', '😴', '🤤',
                           '❤️', '💙', '💚', '💛', '🧡', '💜', '🖤', '🤍',
                           '👍', '👎', '👌', '✌️', '🤞', '🤟', '🤘', '👏',
                           '🔥', '💯', '✨', '⭐', '🌟', '💫', '🎉', '🎊',
+                          '😭', '😱', '🤯', '🥳', '🤩', '😇', '🤗', '🤭',
+                          '😘', '😋', '🤪', '😜', '🙃', '😌', '😊', '☺️',
+                          '🥺', '😤', '😡', '🤬', '😈', '👿', '💀', '☠️',
+                          '🤡', '👻', '👽', '🤖', '💩', '🔥', '💥', '💢',
+                          '💨', '💦', '💤', '🗯️', '💭', '🗨️', '💬', '💌',
+                          '💕', '💖', '💗', '💘', '💝', '💟', '♥️', '💔',
+                          '🙏', '👋', '🤚', '🖐️', '✋', '🖖', '👌', '🤏',
+                          '✌️', '🤞', '🤟', '🤘', '🤙', '👈', '👉', '👆',
+                          '🖕', '👇', '☝️', '👍', '👎', '👊', '✊', '🤛',
+                          '🤜', '👏', '🙌', '👐', '🤲', '🤝', '🙏', '✍️',
+                          '💪', '🦾', '🦿', '🦵', '🦶', '👂', '🦻', '👃',
                         ].map((emoji) => GestureDetector(
                           onTap: () {
                             _messageController.text += emoji;
                             Navigator.pop(context);
                           },
                           child: Container(
-                            margin: EdgeInsets.all(4),
-                            child: Text(emoji, style: TextStyle(fontSize: 24)),
+                            decoration: BoxDecoration(
+                              color: Colors.grey[50],
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Center(
+                              child: Text(emoji, style: TextStyle(fontSize: 28)),
+                            ),
                           ),
                         )).toList(),
                       ),
                     ),
-                    // GIF Tab
                     Container(
-                      padding: EdgeInsets.all(16),
+                      padding: EdgeInsets.all(20),
                       child: GridView.count(
                         crossAxisCount: 2,
+                        mainAxisSpacing: 12,
+                        crossAxisSpacing: 12,
                         children: [
                           'https://media.giphy.com/media/3o7abKhOpu0NwenH3O/giphy.gif',
                           'https://media.giphy.com/media/26u4cqiYI30juCOGY/giphy.gif',
@@ -1240,20 +1306,34 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
                             Navigator.pop(context);
                           },
                           child: Container(
-                            margin: EdgeInsets.all(4),
                             decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.grey[300]!),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 8,
+                                  offset: Offset(0, 4),
+                                ),
+                              ],
                             ),
                             child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
+                              borderRadius: BorderRadius.circular(16),
                               child: Image.network(
                                 gifUrl,
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) => 
                                   Container(
-                                    color: Colors.grey[200],
-                                    child: Icon(Icons.gif, size: 50),
+                                    color: Colors.grey[100],
+                                    child: Center(
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(Icons.gif, size: 40, color: AppTheme.primaryColor),
+                                          SizedBox(height: 8),
+                                          Text('GIF', style: TextStyle(color: AppTheme.primaryColor)),
+                                        ],
+                                      ),
+                                    ),
                                   ),
                               ),
                             ),

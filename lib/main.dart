@@ -22,6 +22,7 @@ import 'screens/interests_screen.dart';
 import 'screens/photos_screen.dart';
 import 'services/chat_service.dart';
 import 'services/match_service.dart';
+import 'services/hangout_service.dart';
 import 'theme/app_theme.dart';
 import 'widgets/notification_badge.dart';
 import 'widgets/notification_overlay.dart';
@@ -80,10 +81,12 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   int _selectedIndex = 0;
   int _matchesTabIndex = 0;
+  int _interestCount = 0;
 
   @override
   void initState() {
     super.initState();
+    _listenToInterestRequests();
     NotificationService.setTabChangeCallback((index) {
       setState(() {
         _selectedIndex = index;
@@ -96,6 +99,16 @@ class _MainNavigationState extends State<MainNavigation> {
       });
     });
     _listenForNotifications();
+  }
+
+  void _listenToInterestRequests() {
+    HangoutService.getPendingInterestRequestsCount().listen((count) {
+      if (mounted) {
+        setState(() {
+          _interestCount = count;
+        });
+      }
+    });
   }
 
   List<Widget> get _screens => [
@@ -163,7 +176,39 @@ class _MainNavigationState extends State<MainNavigation> {
             ),
             items: [
               const BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
-              const BottomNavigationBarItem(icon: Icon(Icons.favorite), label: ''),
+              BottomNavigationBarItem(
+                icon: Stack(
+                  children: [
+                    const Icon(Icons.favorite),
+                    if (_interestCount > 0)
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          constraints: const BoxConstraints(
+                            minWidth: 16,
+                            minHeight: 16,
+                          ),
+                          child: Text(
+                            _interestCount > 99 ? '99+' : _interestCount.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                label: '',
+              ),
               BottomNavigationBarItem(
                 icon: Stack(
                   children: [

@@ -245,7 +245,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                                         child: const Icon(Icons.check, color: Colors.white, size: 28),
                                       ),
                                     ),
-                                  if (widget.showChatButton)
+                                  if (widget.showChatButton && widget.hangout?['status'] != 'deleted' && !_isHangoutExpired())
                                     GestureDetector(
                                       onTap: () {
                                         Navigator.push(
@@ -312,7 +312,11 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                                       ),
                                       const SizedBox(height: 8),
                                       Text(
-                                        widget.hangout!['title'] ?? 'Hangout',
+                                        widget.hangout!['status'] == 'deleted' 
+                                            ? 'Hangout Cancelled'
+                                            : _isHangoutExpired()
+                                            ? 'Hangout Expired'
+                                            : widget.hangout!['title'] ?? 'Hangout',
                                         style: TextStyle(
                                           fontSize: 20,
                                           fontWeight: FontWeight.bold,
@@ -320,37 +324,58 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                                         ),
                                       ),
                                       const SizedBox(height: 12),
-                                      Row(
-                                        children: [
-                                          Icon(Icons.location_on, size: 16, color: AppTheme.textSecondary),
-                                          const SizedBox(width: 8),
-                                          Expanded(
-                                            child: Text(
-                                              widget.hangout!['location'] ?? 'Location',
+                                      if (widget.hangout!['status'] == 'deleted')
+                                        Text(
+                                          'This hangout has been cancelled and is no longer available.',
+                                          style: TextStyle(
+                                            color: AppTheme.primaryColor,
+                                            fontSize: 14,
+                                            fontStyle: FontStyle.italic,
+                                          ),
+                                        ),
+                                      if (_isHangoutExpired())
+                                        Text(
+                                          'This hangout has expired and is no longer available.',
+                                          style: TextStyle(
+                                            color: AppTheme.primaryColor,
+                                            fontSize: 14,
+                                            fontStyle: FontStyle.italic,
+                                          ),
+                                        ),
+                                      if (widget.hangout!['status'] != 'deleted' && !_isHangoutExpired())
+                                        Row(
+                                          children: [
+                                            Icon(Icons.location_on, size: 16, color: AppTheme.textSecondary),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: Text(
+                                                widget.hangout!['location'] ?? 'Location',
+                                                style: TextStyle(
+                                                  color: AppTheme.textSecondary,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      if (widget.hangout!['status'] != 'deleted' && !_isHangoutExpired())
+                                        const SizedBox(height: 8),
+                                      if (widget.hangout!['status'] != 'deleted' && !_isHangoutExpired())
+                                        Row(
+                                          children: [
+                                            Icon(Icons.access_time, size: 16, color: AppTheme.textSecondary),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              widget.hangout!['dateTime'] != null
+                                                  ? _formatDateTime(DateTime.parse(widget.hangout!['dateTime']))
+                                                  : 'Date & Time',
                                               style: TextStyle(
                                                 color: AppTheme.textSecondary,
                                                 fontSize: 14,
                                               ),
                                             ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Row(
-                                        children: [
-                                          Icon(Icons.access_time, size: 16, color: AppTheme.textSecondary),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            widget.hangout!['dateTime'] != null
-                                                ? _formatDateTime(DateTime.parse(widget.hangout!['dateTime']))
-                                                : 'Date & Time',
-                                            style: TextStyle(
-                                              color: AppTheme.textSecondary,
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                                          ],
+                                        ),
                                     ],
                                   ),
                                 ),
@@ -594,6 +619,11 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
     );
   }
   
+  bool _isHangoutExpired() {
+    if (widget.hangout?['dateTime'] == null) return false;
+    return DateTime.now().isAfter(DateTime.parse(widget.hangout!['dateTime']));
+  }
+
   String _formatDateTime(DateTime dateTime) {
     final now = DateTime.now();
     final difference = dateTime.difference(now).inDays;

@@ -171,6 +171,7 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
                     'title': match['hangoutTitle'],
                     'location': match['hangoutLocation'],
                     'dateTime': hangoutDateTime.toIso8601String(),
+                    'status': match['hangoutStatus'],
                   },
                   hangoutId: match['id'],
                   showChatButton: true,
@@ -237,39 +238,56 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
                   ),
                 ),
 
-                // Chat Icon Button - Top Right
+                // Chat/Delete Icon Button - Top Right
                 Positioned(
                   top: 12,
                   right: 12,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: AppTheme.primaryColor,
-                      shape: BoxShape.circle,
-                    ),
-                    child: IconButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ChatWindowScreen(
-                              match: {
-                                'name': '${matchData['firstName']} ${matchData['lastName']}',
-                                'firstName': matchData['firstName'],
-                                'lastName': matchData['lastName'],
-                                ...matchData,
-                              },
-                              otherUserId: matchData['userId'],
+                  child: match['hangoutStatus'] == 'deleted' || _isHangoutExpired(matchData['dateTime'])
+                      ? GestureDetector(
+                          onTap: () => _deleteMatch(match['id']),
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryColor.withOpacity(0.3),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.delete,
+                              color: Colors.white,
+                              size: 20,
                             ),
                           ),
-                        );
-                      },
-                      icon: const Icon(
-                        Icons.chat_bubble_outline,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                    ),
-                  ),
+                        )
+                      : Container(
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryColor.withOpacity(0.3),
+                            shape: BoxShape.circle,
+                          ),
+                          child: IconButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ChatWindowScreen(
+                                    match: {
+                                      'name': '${matchData['firstName']} ${matchData['lastName']}',
+                                      'firstName': matchData['firstName'],
+                                      'lastName': matchData['lastName'],
+                                      ...matchData,
+                                    },
+                                    otherUserId: matchData['userId'],
+                                  ),
+                                ),
+                              );
+                            },
+                            icon: const Icon(
+                              Icons.chat_bubble_outline,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                        ),
                 ),
                 // User Info at Bottom
                 Positioned(
@@ -299,15 +317,27 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
                         ),
                         const SizedBox(height: 4),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(8),
+                            color: match['hangoutStatus'] == 'deleted' 
+                                ? Colors.white
+                                : _isHangoutExpired(matchData['dateTime'])
+                                ? Colors.white
+                                : Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(16),
                           ),
                           child: Text(
-                            matchData['hangout'],
-                            style: const TextStyle(
-                              color: Colors.white,
+                            match['hangoutStatus'] == 'deleted' 
+                                ? 'Hangout Cancelled'
+                                : _isHangoutExpired(matchData['dateTime'])
+                                ? 'Hangout Expired'
+                                : matchData['hangout'],
+                            style: TextStyle(
+                              color: match['hangoutStatus'] == 'deleted'
+                                  ? AppTheme.primaryColor
+                                  : _isHangoutExpired(matchData['dateTime'])
+                                  ? AppTheme.primaryColor
+                                  : Colors.white,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
@@ -315,38 +345,42 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          matchData['venue'],
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 10,
-                            shadows: [
-                              Shadow(
-                                color: Colors.black,
-                                blurRadius: 2,
-                                offset: Offset(1, 1),
-                              ),
-                            ],
+                        if (match['hangoutStatus'] != 'deleted' && !_isHangoutExpired(matchData['dateTime']))
+                          const SizedBox(height: 4),
+                        if (match['hangoutStatus'] != 'deleted' && !_isHangoutExpired(matchData['dateTime']))
+                          Text(
+                            matchData['venue'],
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 10,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.black,
+                                  blurRadius: 2,
+                                  offset: Offset(1, 1),
+                                ),
+                              ],
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          _formatDateTime(matchData['dateTime']),
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 10,
-                            shadows: [
-                              Shadow(
-                                color: Colors.black,
-                                blurRadius: 2,
-                                offset: Offset(1, 1),
-                              ),
-                            ],
+                        if (match['hangoutStatus'] != 'deleted' && !_isHangoutExpired(matchData['dateTime']))
+                          const SizedBox(height: 2),
+                        if (match['hangoutStatus'] != 'deleted' && !_isHangoutExpired(matchData['dateTime']))
+                          Text(
+                            _formatDateTime(matchData['dateTime']),
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 10,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.black,
+                                  blurRadius: 2,
+                                  offset: Offset(1, 1),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
                       ],
                     ),
                   ),
@@ -360,6 +394,10 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
     );
   }
 
+  bool _isHangoutExpired(DateTime hangoutDateTime) {
+    return DateTime.now().isAfter(hangoutDateTime);
+  }
+
   String _formatDateTime(DateTime dateTime) {
     final now = DateTime.now();
     final difference = dateTime.difference(now).inDays;
@@ -371,6 +409,127 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
     } else {
       return '${dateTime.day}/${dateTime.month} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
     }
+  }
+
+  void _deleteMatch(String matchId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              color: Colors.white,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.delete_outline,
+                    color: AppTheme.primaryColor,
+                    size: 30,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Delete Match',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Are you sure you want to delete this match? This will remove it from your matches.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppTheme.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          'Cancel',
+                          style: TextStyle(
+                            color: AppTheme.textSecondary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          Navigator.of(context).pop();
+                          try {
+                            await MatchService.deleteMatch(matchId);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: const Text('Match deleted successfully'),
+                                backgroundColor: AppTheme.primaryColor,
+                                behavior: SnackBarBehavior.floating,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            );
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Error deleting match'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryColor,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Delete',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void _showFullImage(BuildContext context, String? imageUrl, String name) {

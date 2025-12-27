@@ -207,7 +207,11 @@ class _MatchNotificationScreenState extends State<MatchNotificationScreen> with 
                       Expanded(
                         child: ElevatedButton(
                           onPressed: () {
-                            Navigator.pop(context);
+                            Navigator.pushNamedAndRemoveUntil(
+                              context,
+                              '/home',
+                              (route) => false,
+                            );
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.grey[200],
@@ -217,7 +221,7 @@ class _MatchNotificationScreenState extends State<MatchNotificationScreen> with 
                               borderRadius: BorderRadius.circular(25),
                             ),
                           ),
-                          child: Text('Keep Dating'),
+                          child: Text('Discover Hangouts'),
                         ),
                       ),
                       SizedBox(width: 16),
