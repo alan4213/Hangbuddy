@@ -199,6 +199,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             bubblePosition: const Offset(20, 200),
           ),
           TutorialStep(
+            title: 'Swipe to Browse',
+            description: 'Swipe left or right to see more hangouts and discover new people to meet.',
+            bubblePosition: const Offset(20, 300),
+            customIcon: Icons.swipe_right,
+            showIconHighlight: true,
+          ),
+          TutorialStep(
             title: 'Create Your Own Hangout',
             description: 'Tap the + button to create your own hangout and invite people to join you.',
             targetKey: _createButtonKey,
@@ -1216,179 +1223,183 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           return const Center(child: LoadingWidget(message: 'Loading...'));
         }
         
-        return Stack(
-          children: [
-            // Scrollable content
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: SingleChildScrollView(
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.75,
+          child: Stack(
+            children: [
+              // Scrollable content
+              SingleChildScrollView(
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // User photo section
-                    Container(
-                      width: double.infinity,
-                      height: 400,
-                      decoration: BoxDecoration(
-                        image: user.profileImageUrl != null
-                            ? DecorationImage(
-                                image: NetworkImage(user.profileImageUrl!),
-                                fit: BoxFit.cover,
-                              )
+                      // User photo section
+                      Container(
+                        width: double.infinity,
+                        height: 400,
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        clipBehavior: Clip.antiAlias,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          image: user.profileImageUrl != null
+                              ? DecorationImage(
+                                  image: NetworkImage(user.profileImageUrl!),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
+                          color: user.profileImageUrl == null ? Colors.grey[300] : null,
+                        ),
+                        child: user.profileImageUrl == null
+                            ? const Icon(Icons.person, size: 80, color: Colors.grey)
                             : null,
-                        color: user.profileImageUrl == null ? Colors.grey[300] : null,
                       ),
-                      child: user.profileImageUrl == null
-                          ? const Icon(Icons.person, size: 80, color: Colors.grey)
-                          : null,
-                    ),
-                    // User info and hangout details
-                    Container(
-                      width: double.infinity,
-                      color: Colors.white,
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Name, age and like button
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
+                      // Name, age and like button
+                      Container(
+                        width: double.infinity,
+                        color: Colors.white,
+                        padding: const EdgeInsets.all(20),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${user.firstName} ${user.lastName}${user.age != null ? ', ${user.age}' : ''}',
+                                    style: const TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  if (user.gender != null)
                                     Text(
-                                      '${user.firstName} ${user.lastName}${user.age != null ? ', ${user.age}' : ''}',
-                                      style: const TextStyle(
-                                        fontSize: 24,
-                                        fontWeight: FontWeight.bold,
+                                      user.gender!,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.grey[600],
                                       ),
                                     ),
-                                    const SizedBox(height: 4),
-                                    if (user.gender != null)
-                                      Text(
-                                        user.gender!,
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          color: Colors.grey[600],
-                                        ),
-                                      ),
+                                ],
+                              ),
+                            ),
+                            GestureDetector(
+                              key: _showTutorial && _currentIndex == 0 ? _likeButtonKey : null,
+                              onTap: () {
+                                final currentUser = auth.FirebaseAuth.instance.currentUser;
+                                if (currentUser != null && !hangout.interestedUsers.contains(currentUser.uid) && !_likedHangouts.contains(hangout.id)) {
+                                  _handleAccept(hangout);
+                                }
+                              },
+                              child: Container(
+                                width: 50,
+                                height: 50,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: () {
+                                    final currentUser = auth.FirebaseAuth.instance.currentUser;
+                                    if (currentUser != null && (hangout.interestedUsers.contains(currentUser.uid) || _likedHangouts.contains(hangout.id))) {
+                                      return Colors.grey;
+                                    }
+                                    return AppTheme.primaryColor;
+                                  }(),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.2),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
                                   ],
                                 ),
-                              ),
-                              GestureDetector(
-                                key: _showTutorial && _currentIndex == 0 ? _likeButtonKey : null,
-                                onTap: () {
-                                  final currentUser = auth.FirebaseAuth.instance.currentUser;
-                                  if (currentUser != null && !hangout.interestedUsers.contains(currentUser.uid) && !_likedHangouts.contains(hangout.id)) {
-                                    _handleAccept(hangout);
-                                  }
-                                },
-                                child: Container(
-                                  width: 50,
-                                  height: 50,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: () {
-                                      final currentUser = auth.FirebaseAuth.instance.currentUser;
-                                      if (currentUser != null && (hangout.interestedUsers.contains(currentUser.uid) || _likedHangouts.contains(hangout.id))) {
-                                        return Colors.grey;
-                                      }
-                                      return AppTheme.primaryColor;
-                                    }(),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.2),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Icon(
-                                    Icons.favorite,
-                                    color: Colors.white, 
-                                    size: 24
-                                  ),
+                                child: Icon(
+                                  Icons.favorite,
+                                  color: Colors.white, 
+                                  size: 24
                                 ),
                               ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          // Hangout details card
-                          Container(
-                            key: _showTutorial && _currentIndex == 0 ? _hangoutDetailsCardKey : null,
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // Hangout details card
+                      Container(
+                        key: _showTutorial && _currentIndex == 0 ? _hangoutDetailsCardKey : null,
+                        width: double.infinity,
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        padding: const EdgeInsets.all(20),
+                        clipBehavior: Clip.antiAlias,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Let\'s hang out at',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              hangout.title.toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                Icon(Icons.location_on, size: 20, color: Colors.grey[700]),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    _cleanLocation(hangout.location),
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
                                 ),
                               ],
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                            const SizedBox(height: 12),
+                            Row(
                               children: [
+                                Icon(Icons.access_time, size: 20, color: Colors.grey[700]),
+                                const SizedBox(width: 12),
                                 Text(
-                                  'Let\'s hang out at',
-                                  style: TextStyle(
+                                  '${_formatDate(hangout.dateTime)} at ${_formatTime(hangout.dateTime)}',
+                                  style: const TextStyle(
                                     fontSize: 16,
-                                    color: Colors.grey[600],
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  hangout.title.toUpperCase(),
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 16),
-                                Row(
-                                  children: [
-                                    Icon(Icons.location_on, size: 20, color: Colors.grey[700]),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Text(
-                                        _cleanLocation(hangout.location),
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                Row(
-                                  children: [
-                                    Icon(Icons.access_time, size: 20, color: Colors.grey[700]),
-                                    const SizedBox(width: 12),
-                                    Text(
-                                      '${_formatDate(hangout.dateTime)} at ${_formatTime(hangout.dateTime)}',
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ],
-                                ),
                               ],
                             ),
-                          ),
+                          ],
+                        ),
+                      ),
                           const SizedBox(height: 16),
                           // Second image card
                           if (user.photoUrls != null && user.photoUrls!.length > 1)
                             Container(
                               width: double.infinity,
-                              height: 300,
-                              margin: const EdgeInsets.only(bottom: 16),
+                              height: 400,
+                              margin: const EdgeInsets.fromLTRB(4, 0, 4, 16),
+                              clipBehavior: Clip.antiAlias,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(16),
                                 boxShadow: [
@@ -1414,8 +1425,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           // Profile details card
                           Container(
                             width: double.infinity,
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
                             padding: const EdgeInsets.all(20),
-
+                            clipBehavior: Clip.antiAlias,
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(16),
@@ -1522,8 +1534,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           if (user.photoUrls != null && user.photoUrls!.length > 2)
                             ...user.photoUrls!.skip(2).map((photoUrl) => Container(
                               width: double.infinity,
-                              height: 300,
-                              margin: const EdgeInsets.only(top: 16),
+                              height: 400,
+                              margin: const EdgeInsets.fromLTRB(8, 16, 8, 0),
+                              clipBehavior: Clip.antiAlias,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(16),
                                 boxShadow: [
@@ -1546,12 +1559,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                 ),
                               ),
                             )),
-                        ],
-                      ),
-                    ),
                   ],
                 ),
-              ),
             ),
             // Create hangout button (bottom-right)
             Positioned(
@@ -1602,10 +1611,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                 ),
               ),
           ],
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
   
   Widget _buildActionButtons() {
     if (_hangouts.isEmpty) return const SizedBox();

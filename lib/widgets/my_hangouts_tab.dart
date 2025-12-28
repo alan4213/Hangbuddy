@@ -160,202 +160,227 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [AppTheme.primaryColor, AppTheme.primaryColor.withOpacity(0.8)],
-        ),
+        color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: AppTheme.primaryColor.withOpacity(0.25),
+            color: Colors.black.withOpacity(0.1),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
+            // Category image section
+            Container(
+              height: 200,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: NetworkImage(_getCategoryImage(hangout.category)),
+                  fit: BoxFit.cover,
+                ),
+              ),
+              child: Stack(
+                children: [
+                  // Dark overlay for better text visibility
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.transparent,
+                          Colors.black.withOpacity(0.3),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // Category badge
+                  Positioned(
+                    top: 16,
+                    left: 16,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor,
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Text(
+                        hangout.category,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Delete button
+                  Positioned(
+                    top: 16,
+                    right: 16,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.red.withOpacity(0.8),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: IconButton(
+                        onPressed: () => _deleteHangout(context, hangout.id),
+                        icon: const Icon(Icons.delete_outline, color: Colors.white, size: 20),
+                        style: IconButton.styleFrom(
+                          padding: const EdgeInsets.all(8),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Content section
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
+                  Text(
                     hangout.title,
                     style: const TextStyle(
-                      color: Colors.white,
+                      color: Colors.black87,
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Text(
-                    hangout.category,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.location_on, color: Colors.white, size: 18),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    hangout.location,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.access_time, color: Colors.white, size: 18),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  _formatDateTime(hangout.dateTime),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.people, color: Colors.white, size: 18),
-                          const SizedBox(width: 6),
-                          Text(
-                            '${hangout.interestedUsers.length} interested',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
+                  const SizedBox(height: 16),
+                  // Location
+                  Row(
+                    children: [
+                      Icon(Icons.location_on, color: AppTheme.primaryColor, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          hangout.location,
+                          style: const TextStyle(
+                            color: Colors.black54,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
                           ),
-                        ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    SizedBox(
-                      width: hangout.interestedUsers.length > 3 ? 80 : (hangout.interestedUsers.length * 20 + 20),
-                      height: 40,
-                      child: Stack(
-                        children: [
-                          ...hangout.interestedUsers.take(3).toList().asMap().entries.map((entry) {
-                            final index = entry.key;
-                            final userId = entry.value;
-                            return Positioned(
-                              left: index * 15.0,
-                              child: FutureBuilder<Map<String, dynamic>?>(
-                                future: _getUserData(userId),
-                                builder: (context, snapshot) {
-                                  if (!snapshot.hasData) return const SizedBox();
-                                  final user = snapshot.data!;
-                                  final imageUrl = user['profileImageUrl'] ?? 
-                                      (user['photoUrls']?.isNotEmpty == true ? user['photoUrls'][0] : null);
-                                  return Container(
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  // Time
+                  Row(
+                    children: [
+                      Icon(Icons.access_time, color: AppTheme.primaryColor, size: 18),
+                      const SizedBox(width: 8),
+                      Text(
+                        _formatDateTime(hangout.dateTime),
+                        style: const TextStyle(
+                          color: Colors.black54,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  // Interested users count with avatars
+                  Row(
+                    children: [
+                      Icon(Icons.people, color: AppTheme.primaryColor, size: 18),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${hangout.interestedUsers.length} interested',
+                        style: const TextStyle(
+                          color: Colors.black54,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      if (hangout.interestedUsers.isNotEmpty) const SizedBox(width: 12),
+                      if (hangout.interestedUsers.isNotEmpty)
+                        SizedBox(
+                          height: 40,
+                          width: hangout.interestedUsers.length > 3 ? 100 : (hangout.interestedUsers.length * 20 + 20),
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              ...hangout.interestedUsers.take(3).toList().asMap().entries.map((entry) {
+                                final index = entry.key;
+                                final userId = entry.value;
+                                return Positioned(
+                                  left: index * 16.0,
+                                  child: FutureBuilder<Map<String, dynamic>?>(
+                                    future: _getUserData(userId),
+                                    builder: (context, snapshot) {
+                                      if (!snapshot.hasData) return const SizedBox();
+                                      final user = snapshot.data!;
+                                      final imageUrl = user['profileImageUrl'] ?? 
+                                          (user['photoUrls']?.isNotEmpty == true ? user['photoUrls'][0] : null);
+                                      return Container(
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          border: Border.all(color: AppTheme.primaryColor, width: 2),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: AppTheme.primaryColor.withOpacity(0.3),
+                                              blurRadius: 4,
+                                              offset: const Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: CircleAvatar(
+                                          radius: 16,
+                                          backgroundImage: imageUrl != null ? NetworkImage(imageUrl) : null,
+                                          backgroundColor: AppTheme.primaryColor.withOpacity(0.2),
+                                          child: imageUrl == null ? Text(
+                                            (user['firstName'] ?? 'U')[0],
+                                            style: TextStyle(color: AppTheme.primaryColor, fontSize: 12, fontWeight: FontWeight.bold),
+                                          ) : null,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                );
+                              }).toList(),
+                              if (hangout.interestedUsers.length > 3)
+                                Positioned(
+                                  left: 48.0,
+                                  child: Container(
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.white, width: 2),
+                                      border: Border.all(color: AppTheme.primaryColor, width: 2),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: AppTheme.primaryColor.withOpacity(0.3),
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
                                     ),
                                     child: CircleAvatar(
-                                      radius: 18,
-                                      backgroundImage: imageUrl != null ? NetworkImage(imageUrl) : null,
-                                      backgroundColor: Colors.white.withOpacity(0.3),
-                                      child: imageUrl == null ? Text(
-                                        (user['firstName'] ?? 'U')[0],
-                                        style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
-                                      ) : null,
+                                      radius: 16,
+                                      backgroundColor: AppTheme.primaryColor.withOpacity(0.2),
+                                      child: Text(
+                                        '+${hangout.interestedUsers.length - 3}',
+                                        style: TextStyle(color: AppTheme.primaryColor, fontSize: 10, fontWeight: FontWeight.bold),
+                                      ),
                                     ),
-                                  );
-                                },
-                              ),
-                            );
-                          }).toList(),
-                          if (hangout.interestedUsers.length > 3)
-                            Positioned(
-                              left: 45.0,
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.white, width: 2),
-                                ),
-                                child: CircleAvatar(
-                                  radius: 18,
-                                  backgroundColor: Colors.white.withOpacity(0.3),
-                                  child: Text(
-                                    '+${hangout.interestedUsers.length - 3}',
-                                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
                                   ),
                                 ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
+                            ],
+                          ),
+                        ),
+                    ],
                   ),
-                  child: IconButton(
-                    onPressed: () => _deleteHangout(context, hangout.id),
-                    icon: const Icon(Icons.delete_outline, color: Colors.white),
-                    style: IconButton.styleFrom(
-                      padding: const EdgeInsets.all(8),
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
@@ -630,6 +655,67 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
       return doc.exists ? doc.data() : null;
     } catch (e) {
       return null;
+    }
+  }
+
+  String _getCategoryImage(String category) {
+    switch (category.toLowerCase()) {
+      case 'food & drink':
+      case 'food':
+      case 'dinner':
+      case 'lunch':
+        return 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=600&fit=crop';
+      case 'coffee & tea':
+      case 'coffee':
+        return 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800&h=600&fit=crop';
+      case 'movies & cinema':
+      case 'movie':
+      case 'cinema':
+        return 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=800&h=600&fit=crop';
+      case 'sports & fitness':
+      case 'sports':
+      case 'gym':
+        return 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=600&fit=crop';
+      case 'music & concerts':
+      case 'music':
+      case 'concert':
+        return 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=600&fit=crop';
+      case 'shopping':
+        return 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=600&fit=crop';
+      case 'travel & adventure':
+      case 'travel':
+      case 'adventure':
+        return 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&h=600&fit=crop';
+      case 'party & nightlife':
+      case 'party':
+      case 'nightlife':
+        return 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&h=600&fit=crop';
+      case 'study & work':
+      case 'study':
+      case 'work':
+        return 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&h=600&fit=crop';
+      case 'outdoor & nature':
+      case 'outdoor':
+      case 'nature':
+        return 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop';
+      case 'gaming':
+        return 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=800&h=600&fit=crop';
+      case 'arts & culture':
+        return 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop';
+      case 'books & reading':
+        return 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&h=600&fit=crop';
+      case 'photography':
+        return 'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=800&h=600&fit=crop';
+      case 'cooking':
+        return 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&h=600&fit=crop';
+      case 'dancing':
+        return 'https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=800&h=600&fit=crop';
+      case 'volunteering':
+        return 'https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=800&h=600&fit=crop';
+      case 'networking':
+        return 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=800&h=600&fit=crop';
+      default:
+        return 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=600&fit=crop';
     }
   }
 

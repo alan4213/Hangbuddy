@@ -41,11 +41,11 @@ class AppTheme {
     primarySwatch: Colors.purple,
     primaryColor: primaryColor,
     scaffoldBackgroundColor: Colors.white,
-    textTheme: GoogleFonts.poppinsTextTheme(),
+    textTheme: GoogleFonts.interTextTheme(),
     appBarTheme: AppBarTheme(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      titleTextStyle: GoogleFonts.poppins(
+      titleTextStyle: GoogleFonts.inter(
         fontSize: 20,
         fontWeight: FontWeight.w600,
         color: textPrimary,

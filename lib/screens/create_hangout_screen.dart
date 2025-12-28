@@ -30,6 +30,7 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
   double? _longitude;
   bool _isGettingLocation = false;
   List<String> _locationSuggestions = [];
+  bool _showCategoryDropdown = false;
   bool _showSuggestions = false;
   
   // Tutorial keys
@@ -41,15 +42,26 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
   bool _showTutorial = false;
 
 
-  final List<String> _categories = [
-    'Food & Drink',
-    'Sports',
-    'Entertainment',
-    'Study',
-    'Outdoor',
-    'Gaming',
-    'Arts & Culture',
-    'Other',
+  final List<Map<String, dynamic>> _categories = [
+    {'name': 'Food & Drink', 'icon': Icons.restaurant, 'color': Color(0xFFFF6B6B)},
+    {'name': 'Coffee & Tea', 'icon': Icons.local_cafe, 'color': Color(0xFF8B4513)},
+    {'name': 'Movies & Cinema', 'icon': Icons.movie, 'color': Color(0xFF6366F1)},
+    {'name': 'Sports & Fitness', 'icon': Icons.sports, 'color': Color(0xFF10B981)},
+    {'name': 'Music & Concerts', 'icon': Icons.music_note, 'color': Color(0xFFE91E63)},
+    {'name': 'Shopping', 'icon': Icons.shopping_bag, 'color': Color(0xFFF59E0B)},
+    {'name': 'Travel & Adventure', 'icon': Icons.explore, 'color': Color(0xFF06B6D4)},
+    {'name': 'Party & Nightlife', 'icon': Icons.celebration, 'color': Color(0xFF8B5CF6)},
+    {'name': 'Study & Work', 'icon': Icons.school, 'color': Color(0xFF64748B)},
+    {'name': 'Outdoor & Nature', 'icon': Icons.nature, 'color': Color(0xFF22C55E)},
+    {'name': 'Gaming', 'icon': Icons.sports_esports, 'color': Color(0xFF3B82F6)},
+    {'name': 'Arts & Culture', 'icon': Icons.palette, 'color': Color(0xFFEC4899)},
+    {'name': 'Books & Reading', 'icon': Icons.menu_book, 'color': Color(0xFF7C3AED)},
+    {'name': 'Photography', 'icon': Icons.camera_alt, 'color': Color(0xFF059669)},
+    {'name': 'Cooking', 'icon': Icons.kitchen, 'color': Color(0xFFDC2626)},
+    {'name': 'Dancing', 'icon': Icons.music_video, 'color': Color(0xFFDB2777)},
+    {'name': 'Volunteering', 'icon': Icons.volunteer_activism, 'color': Color(0xFF0891B2)},
+    {'name': 'Networking', 'icon': Icons.people, 'color': Color(0xFF7C2D12)},
+    {'name': 'Other', 'icon': Icons.more_horiz, 'color': Color(0xFF6B7280)},
   ];
 
   @override
@@ -121,36 +133,112 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
 
                     // Category
             _buildSectionTitle('Category'),
-            Container(
+            GestureDetector(
               key: _categoryKey,
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: _selectedCategory,
-                  items: _categories.map((category) {
-                    return DropdownMenuItem(
-                      value: category,
-                      child: Text(category),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    setState(() => _selectedCategory = value!);
-                  },
+              onTap: () => setState(() => _showCategoryDropdown = !_showCategoryDropdown),
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey[300]!),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: _getCategoryColor(_selectedCategory).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        _getCategoryIcon(_selectedCategory),
+                        color: _getCategoryColor(_selectedCategory),
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        _selectedCategory,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      _showCategoryDropdown ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                      color: Colors.grey[600],
+                    ),
+                  ],
                 ),
               ),
             ),
+            if (_showCategoryDropdown)
+              Container(
+                margin: const EdgeInsets.only(top: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                constraints: const BoxConstraints(maxHeight: 250),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: _categories.length,
+                  itemBuilder: (context, index) {
+                    final category = _categories[index];
+                    final isSelected = _selectedCategory == category['name'];
+                    return ListTile(
+                      onTap: () {
+                        setState(() {
+                          _selectedCategory = category['name'];
+                          _showCategoryDropdown = false;
+                        });
+                      },
+                      leading: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: category['color'].withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          category['icon'],
+                          color: category['color'],
+                          size: 20,
+                        ),
+                      ),
+                      title: Text(
+                        category['name'],
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                          color: isSelected ? category['color'] : Colors.black87,
+                        ),
+                      ),
+                      trailing: isSelected
+                          ? Icon(Icons.check, color: category['color'], size: 20)
+                          : null,
+                      dense: true,
+                    );
+                  },
+                ),
+              ),
 
                     const SizedBox(height: 24),
 
@@ -772,6 +860,22 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
     } else {
       return cleanParts[0];
     }
+  }
+
+  IconData _getCategoryIcon(String categoryName) {
+    final category = _categories.firstWhere(
+      (cat) => cat['name'] == categoryName,
+      orElse: () => _categories.last,
+    );
+    return category['icon'];
+  }
+
+  Color _getCategoryColor(String categoryName) {
+    final category = _categories.firstWhere(
+      (cat) => cat['name'] == categoryName,
+      orElse: () => _categories.last,
+    );
+    return category['color'];
   }
 
   @override

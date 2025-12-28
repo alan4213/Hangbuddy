@@ -46,11 +46,60 @@ class _TutorialOverlayState extends State<TutorialOverlay> {
             if (step.targetKey != null)
               _buildHighlight(step),
             
+            // Icon highlight
+            if (step.showIconHighlight && step.customIcon != null)
+              _buildIconHighlight(step),
+            
             // Tutorial bubble
             _buildTutorialBubble(step),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildIconHighlight(TutorialStep step) {
+    return Stack(
+      children: [
+        // Left swipe icon
+        Positioned(
+          bottom: 100,
+          left: 30,
+          child: Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withOpacity(0.2),
+              border: Border.all(color: Colors.white, width: 2),
+            ),
+            child: const Icon(
+              Icons.swipe_left,
+              color: Colors.white,
+              size: 30,
+            ),
+          ),
+        ),
+        // Right swipe icon
+        Positioned(
+          bottom: 100,
+          right: 30,
+          child: Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white.withOpacity(0.2),
+              border: Border.all(color: Colors.white, width: 2),
+            ),
+            child: const Icon(
+              Icons.swipe_right,
+              color: Colors.white,
+              size: 30,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -87,13 +136,27 @@ class _TutorialOverlayState extends State<TutorialOverlay> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              step.title,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.textPrimary,
-              ),
+            Row(
+              children: [
+                if (step.customIcon != null) ...[
+                  Icon(
+                    step.customIcon!,
+                    color: AppTheme.primaryColor,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 12),
+                ],
+                Expanded(
+                  child: Text(
+                    step.title,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             Text(
@@ -171,6 +234,8 @@ class TutorialStep {
   final Offset? bubblePosition;
   final double highlightRadius;
   final bool highlightAsRectangle;
+  final IconData? customIcon;
+  final bool showIconHighlight;
 
   TutorialStep({
     required this.title,
@@ -179,6 +244,8 @@ class TutorialStep {
     this.bubblePosition,
     this.highlightRadius = 60,
     this.highlightAsRectangle = false,
+    this.customIcon,
+    this.showIconHighlight = false,
   });
 }
 
