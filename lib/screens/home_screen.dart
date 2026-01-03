@@ -20,6 +20,7 @@ import '../utils/responsive.dart';
 import 'dart:math' as math;
 import '../widgets/tutorial_overlay.dart';
 import '../utils/error_handler.dart';
+import '../widgets/verified_badge.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -424,15 +425,33 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           Row(
                             children: [
                               Expanded(
-                                child: Text(
-                                  "$userName${userAge > 0 ? ', $userAge' : ''}",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: (MediaQuery.of(context).size.width * 0.045).clamp(16.0, 20.0),
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        "$userName${userAge > 0 ? ', $userAge' : ''}",
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: (MediaQuery.of(context).size.width * 0.045).clamp(16.0, 20.0),
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
+                                      ),
+                                    ),
+                                    FutureBuilder<bool>(
+                                      future: _isUserVerified(user.uid),
+                                      builder: (context, snapshot) {
+                                        if (snapshot.data == true) {
+                                          return const Padding(
+                                            padding: EdgeInsets.only(left: 4),
+                                            child: VerifiedBadge(size: 18),
+                                          );
+                                        }
+                                        return const SizedBox();
+                                      },
+                                    ),
+                                  ],
                                 ),
                               ),
                               GestureDetector(
@@ -1264,12 +1283,30 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    '${user.firstName} ${user.lastName}${user.age != null ? ', ${user.age}' : ''}',
-                                    style: const TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          '${user.firstName} ${user.lastName}${user.age != null ? ', ${user.age}' : ''}',
+                                          style: const TextStyle(
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      FutureBuilder<bool>(
+                                        future: _isUserVerified(user.uid),
+                                        builder: (context, snapshot) {
+                                          if (snapshot.data == true) {
+                                            return const Padding(
+                                              padding: EdgeInsets.only(left: 4),
+                                              child: VerifiedBadge(size: 20),
+                                            );
+                                          }
+                                          return const SizedBox();
+                                        },
+                                      ),
+                                    ],
                                   ),
                                   const SizedBox(height: 4),
                                   if (user.gender != null)
@@ -2039,3 +2076,20 @@ class _MeetingScenePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
+
+  Future<bool> _isUserVerified(String userId) async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+      
+      if (doc.exists) {
+        final verificationStatus = doc.data()?['verificationStatus'];
+        return verificationStatus == 'verified';
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }

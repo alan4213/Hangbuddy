@@ -4,6 +4,45 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    allow read, write: if true;
+    // Users can read/write their own user document
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Users can create/read their own verification requests
+    match /verification_requests/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Hangouts - users can read all, write their own
+    match /hangouts/{hangoutId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == resource.data.createdBy;
+      allow create: if request.auth != null;
+    }
+    
+    // Interests - users can read/write their own
+    match /interests/{interestId} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Matches - users can read/write if they're part of the match
+    match /matches/{matchId} {
+      allow read, write: if request.auth != null && 
+        (request.auth.uid == resource.data.user1Id || request.auth.uid == resource.data.user2Id);
+      allow create: if request.auth != null;
+    }
+    
+    // Chats - users can read/write if they're part of the chat
+    match /chats/{chatId} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid in resource.data.participants;
+      allow create: if request.auth != null;
+    }
+    
+    // Messages - users can read/write if they're part of the chat
+    match /chats/{chatId}/messages/{messageId} {
+      allow read, write: if request.auth != null;
+    }
   }
 }

@@ -15,20 +15,11 @@ class PhotoVerificationScreen extends StatefulWidget {
 }
 
 class _PhotoVerificationScreenState extends State<PhotoVerificationScreen> {
-  int _currentStep = 0;
-  File? _capturedPhoto1;
-  File? _capturedPhoto2;
+  File? _capturedPhoto;
   bool _isUploading = false;
 
-  final List<String> _poseImages = [
-    'assets/images/verification1.jpg',
-    'assets/images/verification2.jpg',
-  ];
-
-  final List<String> _poseInstructions = [
-    'Hold your phone at eye level and look directly at the camera',
-    'Turn your head slightly to the right while looking at the camera',
-  ];
+  final String _poseImage = 'assets/images/verification1.jpg';
+  final String _poseInstruction = 'Hold your phone at eye level and look directly at the camera';
 
   @override
   Widget build(BuildContext context) {
@@ -58,26 +49,15 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen> {
             children: [
               // Progress indicator
               LinearProgressIndicator(
-                value: (_currentStep + 1) / 3,
+                value: _capturedPhoto != null ? 1.0 : 0.5,
                 backgroundColor: Colors.grey[300],
                 valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
-              ),
-              
-              SizedBox(height: Responsive.padding(context, 0.04)),
-              
-              // Step indicator
-              Text(
-                'Step ${_currentStep + 1} of 2',
-                style: TextStyle(
-                  fontSize: Responsive.fontSize(context, Responsive.bodyFontSize),
-                  color: Colors.grey[600],
-                ),
               ),
               
               SizedBox(height: Responsive.padding(context, 0.06)),
               
               Expanded(
-                child: _currentStep < 2 ? _buildPoseStep() : _buildReviewStep(),
+                child: _capturedPhoto == null ? _buildPoseStep() : _buildReviewStep(),
               ),
             ],
           ),
@@ -100,7 +80,7 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen> {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(16),
             child: Image.asset(
-              _poseImages[_currentStep],
+              _poseImage,
               fit: BoxFit.cover,
             ),
           ),
@@ -120,7 +100,7 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen> {
         SizedBox(height: Responsive.padding(context, 0.02)),
         
         Text(
-          _poseInstructions[_currentStep],
+          _poseInstruction,
           textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: Responsive.fontSize(context, Responsive.bodyFontSize),
@@ -176,17 +156,22 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen> {
         
         SizedBox(height: Responsive.padding(context, 0.04)),
         
-        // Photo previews
-        Row(
-          children: [
-            Expanded(
-              child: _buildPhotoPreview(_capturedPhoto1, 'Pose 1'),
+        // Photo preview
+        Center(
+          child: Container(
+            height: 200,
+            width: 150,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey[300]!),
             ),
-            SizedBox(width: Responsive.padding(context, 0.04)),
-            Expanded(
-              child: _buildPhotoPreview(_capturedPhoto2, 'Pose 2'),
-            ),
-          ],
+            child: _capturedPhoto != null
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.file(_capturedPhoto!, fit: BoxFit.cover),
+                  )
+                : const Icon(Icons.photo, size: 50, color: Colors.grey),
+          ),
         ),
         
         SizedBox(height: Responsive.padding(context, 0.04)),
@@ -230,34 +215,7 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen> {
     );
   }
 
-  Widget _buildPhotoPreview(File? photo, String label) {
-    return Column(
-      children: [
-        Container(
-          height: 150,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey[300]!),
-          ),
-          child: photo != null
-              ? ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.file(photo, fit: BoxFit.cover),
-                )
-              : const Icon(Icons.photo, size: 50, color: Colors.grey),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: Responsive.fontSize(context, Responsive.smallFontSize),
-            color: Colors.grey[600],
-          ),
-        ),
-      ],
-    );
-  }
+
 
   void _takePhoto() async {
     final ImagePicker picker = ImagePicker();
@@ -270,12 +228,7 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen> {
       
       if (photo != null) {
         setState(() {
-          if (_currentStep == 0) {
-            _capturedPhoto1 = File(photo.path);
-          } else {
-            _capturedPhoto2 = File(photo.path);
-          }
-          _currentStep++;
+          _capturedPhoto = File(photo.path);
         });
       }
     } catch (e) {
@@ -295,24 +248,16 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen> {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) throw Exception('User not logged in');
       
-      // Upload photos to Firebase Storage
+      // Upload verification photo to Firebase Storage
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       
-      final ref1 = FirebaseStorage.instance
+      final verificationRef = FirebaseStorage.instance
           .ref()
           .child('verification_photos')
-          .child('${user.uid}_pose1_$timestamp.jpg');
+          .child('${user.uid}_verification_$timestamp.jpg');
       
-      final ref2 = FirebaseStorage.instance
-          .ref()
-          .child('verification_photos')
-          .child('${user.uid}_pose2_$timestamp.jpg');
-      
-      await ref1.putFile(_capturedPhoto1!);
-      await ref2.putFile(_capturedPhoto2!);
-      
-      final photo1Url = await ref1.getDownloadURL();
-      final photo2Url = await ref2.getDownloadURL();
+      await verificationRef.putFile(_capturedPhoto!);
+      final verificationPhotoUrl = await verificationRef.getDownloadURL();
       
       // Create verification request in Firestore
       await FirebaseFirestore.instance
@@ -320,8 +265,7 @@ class _PhotoVerificationScreenState extends State<PhotoVerificationScreen> {
           .doc(user.uid)
           .set({
         'userId': user.uid,
-        'pose1PhotoUrl': photo1Url,
-        'pose2PhotoUrl': photo2Url,
+        'verificationPhotoUrl': verificationPhotoUrl,
         'status': 'pending',
         'submittedAt': FieldValue.serverTimestamp(),
         'reviewedAt': null,
