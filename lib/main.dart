@@ -5,6 +5,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'services/notification_service.dart';
+import 'services/user_status_service.dart';
 import 'screens/home_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/profile_details_screen.dart';
@@ -20,6 +21,7 @@ import 'screens/name_dob_screen.dart';
 import 'screens/personal_info_screen.dart';
 import 'screens/interests_screen.dart';
 import 'screens/photos_screen.dart';
+import 'screens/banned_user_screen.dart';
 import 'services/chat_service.dart';
 import 'services/match_service.dart';
 import 'services/hangout_service.dart';
@@ -86,6 +88,7 @@ class _MainNavigationState extends State<MainNavigation> {
   @override
   void initState() {
     super.initState();
+    _checkUserStatus();
     _listenToInterestRequests();
     NotificationService.setTabChangeCallback((index) {
       setState(() {
@@ -99,6 +102,19 @@ class _MainNavigationState extends State<MainNavigation> {
       });
     });
     _listenForNotifications();
+  }
+
+  void _checkUserStatus() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final isBanned = await UserStatusService.isUserBanned(user.uid);
+      if (isBanned && mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const BannedUserScreen()),
+        );
+      }
+    }
   }
 
   void _listenToInterestRequests() {

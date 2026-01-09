@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/chat_model.dart';
 import '../services/chat_service.dart';
+import '../services/report_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_theme.dart';
@@ -1024,24 +1025,68 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
   }
 
   void _showReportDialog() {
+    final reasons = [
+      'Inappropriate messages',
+      'Harassment or bullying',
+      'Spam or scam',
+      'Fake profile',
+      'Inappropriate photos',
+      'Threatening behavior',
+      'Other'
+    ];
+    
+    String? selectedReason;
+    final descriptionController = TextEditingController();
+    
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Report ${widget.match['name']}'),
-        content: Text('Report inappropriate behavior or content.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Text('Report ${widget.match['name']}'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Why are you reporting this user?',
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
+                SizedBox(height: 16),
+                ...reasons.map((reason) => RadioListTile<String>(
+                  title: Text(reason, style: TextStyle(fontSize: 14)),
+                  value: reason,
+                  groupValue: selectedReason,
+                  onChanged: (value) => setState(() => selectedReason = value),
+                  contentPadding: EdgeInsets.zero,
+                )),
+                SizedBox(height: 16),
+                TextField(
+                  controller: descriptionController,
+                  decoration: InputDecoration(
+                    labelText: 'Additional details (optional)',
+                    hintText: 'Describe the issue...',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 3,
+                ),
+              ],
+            ),
           ),
-          TextButton(
-            onPressed: () {
-              _reportUser();
-              Navigator.pop(context);
-            },
-            child: Text('Report', style: TextStyle(color: Colors.red)),
-          ),
-        ],
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: selectedReason != null ? () {
+                _submitReport(selectedReason!, descriptionController.text);
+                Navigator.pop(context);
+              } : null,
+              child: Text('Report', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1086,10 +1131,36 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
     );
   }
 
-  void _reportUser() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${widget.match['name']} has been reported')),
-    );
+  void _submitReport(String reason, String description) async {
+    if (_otherUserId == null) return;
+    
+    try {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) return;
+      
+      final chatId = ChatService.getChatId(currentUser.uid, _otherUserId!);
+      
+      await ReportService.reportUser(
+        reportedUserId: _otherUserId!,
+        reason: reason,
+        description: description,
+        chatId: chatId,
+      );
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Report submitted. We\'ll review it within 24 hours.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error submitting report: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _shareLocation() async {

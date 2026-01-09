@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
+import 'package:video_player/video_player.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
+import '../services/video_service.dart';
 import '../theme/app_theme.dart';
 
 class PhoneNumberScreen extends StatefulWidget {
@@ -17,6 +19,12 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
   final TextEditingController _controller = TextEditingController();
   String _fullPhoneNumber = '';
   bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    VideoService.play();
+  }
 
   void _showEmailSignInDialog() {
     final emailController = TextEditingController();
@@ -86,17 +94,28 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
       resizeToAvoidBottomInset: true,
       body: Stack(
         children: [
-          // Full-bleed background - ignores system insets
-          Container(
-            width: double.infinity,
-            height: double.infinity,
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/images/coffee_hangout.png'),
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
+          // Full-bleed background - use preloaded video or fallback
+          VideoService.isInitialized && VideoService.controller != null
+              ? SizedBox.expand(
+                  child: FittedBox(
+                    fit: BoxFit.cover,
+                    child: SizedBox(
+                      width: VideoService.controller!.value.size.width,
+                      height: VideoService.controller!.value.size.height,
+                      child: VideoPlayer(VideoService.controller!),
+                    ),
+                  ),
+                )
+              : Container(
+                  width: double.infinity,
+                  height: double.infinity,
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('assets/images/coffee_hangout.png'),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
           // Overlay gradient - also ignores system insets
           Container(
             width: double.infinity,

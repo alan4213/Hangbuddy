@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
+import '../services/video_service.dart';
 import 'get_started_screen.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -22,6 +23,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(_animationController);
     
     _animationController.forward();
+    
+    // Preload video during splash delay
+    VideoService.preloadVideo();
     
     Future.delayed(Duration(seconds: 3), () {
       Navigator.pushReplacement(
