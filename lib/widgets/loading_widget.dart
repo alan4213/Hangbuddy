@@ -57,32 +57,55 @@ class LoadingButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(
-      onPressed: isLoading ? null : onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: backgroundColor ?? AppTheme.primaryColor,
-        foregroundColor: Colors.white,
-        minimumSize: const Size(double.infinity, 50),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(25),
+    return Container(
+      width: double.infinity,
+      height: 56,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            backgroundColor ?? AppTheme.primaryColor.withOpacity(0.8),
+            backgroundColor?.withOpacity(0.6) ?? AppTheme.primaryColor.withOpacity(0.6),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: (backgroundColor ?? AppTheme.primaryColor).withOpacity(0.2),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: isLoading ? null : onPressed,
+          borderRadius: BorderRadius.circular(28),
+          child: Container(
+            alignment: Alignment.center,
+            child: isLoading
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      strokeWidth: 2.5,
+                    ),
+                  )
+                : Text(
+                    text,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+          ),
         ),
       ),
-      child: isLoading
-          ? const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                strokeWidth: 2,
-              ),
-            )
-          : Text(
-              text,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
     );
   }
 }

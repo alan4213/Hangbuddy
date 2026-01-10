@@ -161,7 +161,26 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
         };
         
         return GestureDetector(
-          onTap: () {
+          onTap: () async {
+            // Fetch category from original hangout if missing
+            String category = match['hangoutCategory'] ?? 'Other';
+            if (category == 'Other') {
+              try {
+                final hangoutQuery = await FirebaseFirestore.instance
+                    .collection('hangout_requests')
+                    .where('title', isEqualTo: match['hangoutTitle'])
+                    .where('status', isEqualTo: 'active')
+                    .limit(1)
+                    .get();
+                
+                if (hangoutQuery.docs.isNotEmpty) {
+                  category = hangoutQuery.docs.first.data()['category'] ?? 'Other';
+                }
+              } catch (e) {
+                print('Error fetching hangout category: $e');
+              }
+            }
+            
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -172,6 +191,7 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
                     'location': match['hangoutLocation'],
                     'dateTime': hangoutDateTime.toIso8601String(),
                     'status': match['hangoutStatus'],
+                    'category': category,
                   },
                   hangoutId: match['id'],
                   showChatButton: true,

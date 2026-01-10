@@ -35,13 +35,17 @@ class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProvider
   }
   
   void _checkAndShowTutorial() async {
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (mounted) {
-        setState(() {
-          _showTutorial = true;
-        });
-      }
-    });
+    // Only show tutorial if not already completed
+    final isCompleted = await TutorialService.isTutorialCompleted('matches_screen');
+    if (!isCompleted && mounted && !_showTutorial) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted && !_showTutorial) {
+          setState(() {
+            _showTutorial = true;
+          });
+        }
+      });
+    }
   }
 
   @override
@@ -161,6 +165,7 @@ class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProvider
     
     if (_showTutorial) {
       return TutorialOverlay(
+        screenName: 'matches_screen',
         steps: [
           TutorialStep(
             title: 'Your Hangouts Hub',

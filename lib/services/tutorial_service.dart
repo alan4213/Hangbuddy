@@ -1,30 +1,20 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 class TutorialService {
-  static const String _tutorialPrefix = 'tutorial_completed_';
-
-  static Future<bool> isTutorialCompleted(String tutorialId) async {
+  static const String _tutorialCompletedKey = 'tutorial_completed';
+  
+  static Future<bool> isTutorialCompleted() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool('$_tutorialPrefix$tutorialId') ?? false;
+    return prefs.getBool(_tutorialCompletedKey) ?? false;
   }
-
-  static Future<void> markTutorialCompleted(String tutorialId) async {
+  
+  static Future<void> markTutorialCompleted() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('$_tutorialPrefix$tutorialId', true);
+    await prefs.setBool(_tutorialCompletedKey, true);
   }
-
-  static Future<void> resetTutorial(String tutorialId) async {
+  
+  static Future<void> resetTutorial() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('$_tutorialPrefix$tutorialId');
-  }
-
-  static Future<void> resetAllTutorials() async {
-    final prefs = await SharedPreferences.getInstance();
-    final keys = prefs.getKeys();
-    for (final key in keys) {
-      if (key.startsWith(_tutorialPrefix)) {
-        await prefs.remove(key);
-      }
-    }
+    await prefs.remove(_tutorialCompletedKey);
   }
 }

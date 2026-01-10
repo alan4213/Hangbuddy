@@ -71,13 +71,17 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
   }
   
   void _checkAndShowTutorial() async {
-    Future.delayed(const Duration(milliseconds: 500), () {
-      if (mounted) {
-        setState(() {
-          _showTutorial = true;
-        });
-      }
-    });
+    // Only show tutorial if not already completed
+    final isCompleted = await TutorialService.isTutorialCompleted('create_hangout_screen');
+    if (!isCompleted && mounted && !_showTutorial) {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (mounted && !_showTutorial) {
+          setState(() {
+            _showTutorial = true;
+          });
+        }
+      });
+    }
   }
 
   @override
@@ -342,6 +346,7 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
     
     if (_showTutorial) {
       return TutorialOverlay(
+        screenName: 'create_hangout_screen',
         steps: [
           TutorialStep(
             title: 'Create Your Hangout',

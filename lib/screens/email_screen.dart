@@ -118,152 +118,256 @@ class _EmailScreenState extends State<EmailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppTheme.textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.08),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _otpSent ? 'Verify Email' : 'Connect Your Account',
-                style: TextStyle(
-                  fontSize: MediaQuery.of(context).size.width * 0.07,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
-                ),
+      body: Stack(
+        children: [
+          // Background gradient
+          Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  AppTheme.primaryColor.withOpacity(0.1),
+                  Colors.white,
+                ],
               ),
-              SizedBox(height: MediaQuery.of(context).size.height * 0.015),
-              Text(
-                'Link your Google account for seamless sign-in and backup.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: MediaQuery.of(context).size.width * 0.04,
-                  color: AppTheme.textSecondary,
-                ),
-              ),
-              SizedBox(height: MediaQuery.of(context).size.height * 0.06),
-              
-              // Google sign-in button
-                Container(
-                  width: double.infinity,
-                  height: MediaQuery.of(context).size.height * 0.06,
-                  margin: EdgeInsets.only(bottom: MediaQuery.of(context).size.height * 0.02),
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      setState(() => _isLoading = true);
-                      try {
-                        final GoogleSignIn googleSignIn = GoogleSignIn();
-                        await googleSignIn.signOut();
-                        final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-                        
-                        if (googleUser != null) {
-                          final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-                          final AuthCredential credential = GoogleAuthProvider.credential(
-                            accessToken: googleAuth.accessToken,
-                            idToken: googleAuth.idToken,
-                          );
-                          
-                          final currentUser = FirebaseAuth.instance.currentUser;
-                          if (currentUser != null) {
-                            // Link Google to existing phone account
-                            await currentUser.linkWithCredential(credential);
-                            await UserService.updateUserProfile(email: googleUser.email!);
-                          }
-                          
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => NameScreen(signupData: SignupData()),
-                            ),
-                          );
-                        }
-                      } catch (e) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Google sign-in failed: $e')),
-                        );
-                      }
-                      setState(() => _isLoading = false);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: AppTheme.primaryColor,
-                      elevation: 0,
-                      side: BorderSide(color: AppTheme.primaryColor),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 20,
-                          height: 20,
-                          child: Text(
-                            'G',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue,
-                            ),
+            ),
+          ),
+          
+          SafeArea(
+            child: Column(
+              children: [
+                // Header with back button
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Row(
+                    children: [
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Icon(
+                            Icons.arrow_back,
+                            color: AppTheme.textPrimary,
+                            size: 20,
                           ),
                         ),
-                        const SizedBox(width: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                // Main content
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 32),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const SizedBox(height: 40),
+                        
+                        // Icon
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            gradient: AppTheme.primaryGradient,
+                            borderRadius: BorderRadius.circular(40),
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppTheme.primaryColor.withOpacity(0.3),
+                                blurRadius: 20,
+                                offset: const Offset(0, 10),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            Icons.link,
+                            color: Colors.white,
+                            size: 40,
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 32),
+                        
+                        // Title
                         Text(
-                          'Continue with Google',
+                          _otpSent ? 'Verify Email' : 'Connect Your Account',
+                          style: TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        
+                        const SizedBox(height: 16),
+                        
+                        // Subtitle
+                        Text(
+                          'Link your Google account for seamless\nsign-in and secure backup.',
+                          textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                            color: AppTheme.textSecondary,
+                            height: 1.5,
                           ),
                         ),
+                        
+                        const SizedBox(height: 60),
+                        
+                        // Google sign-in button
+                        Container(
+                          width: double.infinity,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(28),
+                            border: Border.all(
+                              color: Colors.grey.shade300,
+                              width: 1.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.08),
+                                blurRadius: 15,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: _isLoading ? null : () async {
+                                setState(() => _isLoading = true);
+                                try {
+                                  final GoogleSignIn googleSignIn = GoogleSignIn();
+                                  await googleSignIn.signOut();
+                                  final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+                                  
+                                  if (googleUser != null) {
+                                    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+                                    final AuthCredential credential = GoogleAuthProvider.credential(
+                                      accessToken: googleAuth.accessToken,
+                                      idToken: googleAuth.idToken,
+                                    );
+                                    
+                                    final currentUser = FirebaseAuth.instance.currentUser;
+                                    if (currentUser != null) {
+                                      await currentUser.linkWithCredential(credential);
+                                      await UserService.updateUserProfile(email: googleUser.email!);
+                                    }
+                                    
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => NameScreen(signupData: SignupData()),
+                                      ),
+                                    );
+                                  }
+                                } catch (e) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Google sign-in failed: $e')),
+                                  );
+                                }
+                                setState(() => _isLoading = false);
+                              },
+                              borderRadius: BorderRadius.circular(28),
+                              child: Container(
+                                alignment: Alignment.center,
+                                child: _isLoading
+                                    ? const SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2.5,
+                                        ),
+                                      )
+                                    : Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Container(
+                                            width: 24,
+                                            height: 24,
+                                            decoration: BoxDecoration(
+                                              color: Color(0xFF4285F4),
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                            child: const Center(
+                                              child: Text(
+                                                'G',
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Text(
+                                            'Continue with Google',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppTheme.textPrimary,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 24),
+                        
+                        // Skip button
+                        TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => NameScreen(signupData: SignupData()),
+                              ),
+                            );
+                          },
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+                          ),
+                          child: Text(
+                            'Skip for now',
+                            style: TextStyle(
+                              color: AppTheme.textSecondary,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 40),
                       ],
                     ),
                   ),
                 ),
-              
-              SizedBox(height: MediaQuery.of(context).size.height * 0.04),
-              
-              Container(
-                width: double.infinity,
-                child: TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => NameScreen(signupData: SignupData()),
-                      ),
-                    );
-                  },
-                  style: TextButton.styleFrom(
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                  ),
-                  child: Text(
-                    'Skip for now',
-                    style: TextStyle(
-                      color: AppTheme.primaryColor,
-                      fontSize: MediaQuery.of(context).size.width * 0.04,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 32),
-            ],
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

@@ -25,12 +25,16 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
   final GlobalKey _acceptButtonKey = GlobalKey();
   bool _showTutorial = false;
   bool _hasHangouts = false;
+  List<HangoutRequest> _cachedHangouts = [];
+  bool _isInitialLoad = true;
 
-  void _checkAndShowTutorial(List<HangoutRequest> hangouts) {
-    if (hangouts.isNotEmpty && hangouts.any((h) => h.interestedUsers.isNotEmpty) && !_hasHangouts) {
+  void _checkAndShowTutorial(List<HangoutRequest> hangouts) async {
+    // Only show tutorial if not already completed and conditions are met
+    final isCompleted = await TutorialService.isTutorialCompleted('my_hangouts_tab');
+    if (!isCompleted && hangouts.isNotEmpty && hangouts.any((h) => h.interestedUsers.isNotEmpty) && !_hasHangouts && !_showTutorial) {
       _hasHangouts = true;
       Future.delayed(const Duration(milliseconds: 500), () {
-        if (mounted) {
+        if (mounted && !_showTutorial) {
           setState(() {
             _showTutorial = true;
           });
@@ -46,11 +50,18 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
       child: StreamBuilder<List<HangoutRequest>>(
         stream: HangoutService.getUserHangouts(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+          if (snapshot.connectionState == ConnectionState.waiting && _isInitialLoad) {
             return const Center(child: CircularProgressIndicator());
           }
           
-          final hangouts = snapshot.data ?? [];
+          final hangouts = snapshot.data ?? _cachedHangouts;
+          
+          // Update cache and initial load state
+          if (snapshot.hasData) {
+            _cachedHangouts = snapshot.data!;
+            _isInitialLoad = false;
+          }
+          
           _checkAndShowTutorial(hangouts);
           
           if (hangouts.isEmpty) {
@@ -133,6 +144,7 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
     
     if (_showTutorial) {
       return TutorialOverlay(
+        screenName: 'my_hangouts_tab',
         steps: [
           TutorialStep(
             title: 'Accept People',
@@ -430,6 +442,7 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
                     'title': hangout.title,
                     'location': hangout.location,
                     'dateTime': hangout.dateTime.toIso8601String(),
+                    'category': hangout.category,
                   },
                   hangoutId: hangout.id,
                   onMatch: () {},
@@ -632,6 +645,7 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
         hangoutTitle: hangout.title,
         hangoutLocation: hangout.location,
         hangoutDateTime: hangout.dateTime,
+        hangoutCategory: hangout.category,
       );
       
       print('Match created successfully');

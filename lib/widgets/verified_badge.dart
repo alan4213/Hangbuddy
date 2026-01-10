@@ -2,26 +2,20 @@ import 'package:flutter/material.dart';
 
 class VerifiedBadge extends StatelessWidget {
   final double size;
+  final bool isVerified;
   
   const VerifiedBadge({
     super.key,
     this.size = 16,
+    this.isVerified = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: const BoxDecoration(
-        color: Colors.blue,
-        shape: BoxShape.circle,
-      ),
-      child: Icon(
-        Icons.check,
-        color: Colors.white,
-        size: size * 0.7,
-      ),
+    return Icon(
+      Icons.verified,
+      color: isVerified ? Colors.blue : Colors.grey[400],
+      size: size,
     );
   }
 }

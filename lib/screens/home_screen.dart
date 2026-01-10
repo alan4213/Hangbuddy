@@ -62,10 +62,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
   
   void _checkAndShowTutorial() async {
-    // Show tutorial only if hangouts are loaded and not empty
-    if (!_isLoading && _hangouts.isNotEmpty && mounted) {
+    // Only show tutorial if not already completed and conditions are met
+    final isCompleted = await TutorialService.isTutorialCompleted('home_screen');
+    if (!isCompleted && !_isLoading && _hangouts.isNotEmpty && mounted && !_showTutorial) {
       Future.delayed(const Duration(milliseconds: 500), () {
-        if (mounted) {
+        if (mounted && !_showTutorial) {
           setState(() {
             _showTutorial = true;
           });
@@ -174,6 +175,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     
     if (_showTutorial) {
       return TutorialOverlay(
+        screenName: 'home_screen',
         steps: [
           TutorialStep(
             title: 'Welcome to Discover',
@@ -217,7 +219,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           setState(() {
             _showTutorial = false;
           });
-          TutorialService.markTutorialCompleted('home_screen');
         },
         child: homeContent,
       );
@@ -425,35 +426,30 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           Row(
                             children: [
                               Expanded(
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        "$userName${userAge > 0 ? ', $userAge' : ''}",
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: (MediaQuery.of(context).size.width * 0.045).clamp(16.0, 20.0),
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                        overflow: TextOverflow.ellipsis,
-                                        maxLines: 1,
-                                      ),
-                                    ),
-                                    FutureBuilder<bool>(
-                                      future: _isUserVerified(user.uid),
-                                      builder: (context, snapshot) {
-                                        if (snapshot.data == true) {
-                                          return const Padding(
-                                            padding: EdgeInsets.only(left: 4),
-                                            child: VerifiedBadge(size: 18),
-                                          );
-                                        }
-                                        return const SizedBox();
-                                      },
-                                    ),
-                                  ],
+                                child: Text(
+                                  "$userName${userAge > 0 ? ', $userAge' : ''}",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: (MediaQuery.of(context).size.width * 0.045).clamp(16.0, 20.0),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
                                 ),
                               ),
+                              if (userAge > 0)
+                                FutureBuilder<bool>(
+                                  future: _isUserVerified(user.uid),
+                                  builder: (context, snapshot) {
+                                    return Padding(
+                                      padding: EdgeInsets.only(left: 4),
+                                      child: VerifiedBadge(
+                                        size: 16,
+                                        isVerified: snapshot.data == true,
+                                      ),
+                                    );
+                                  },
+                                ),
                               GestureDetector(
                                 onTap: () {
                                   final currentUser = auth.FirebaseAuth.instance.currentUser;
@@ -1198,38 +1194,89 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   IconData _getHangoutIcon(String category) {
-    switch (category.toLowerCase()) {
-      case 'coffee':
-        return Icons.local_cafe;
-      case 'food':
-      case 'dinner':
-      case 'lunch':
+    // Map category names to their exact icons from create screen
+    switch (category) {
+      case 'Food & Drink':
         return Icons.restaurant;
-      case 'movie':
-      case 'cinema':
+      case 'Coffee & Tea':
+        return Icons.local_cafe;
+      case 'Movies & Cinema':
         return Icons.movie;
-      case 'sports':
-      case 'gym':
+      case 'Sports & Fitness':
         return Icons.sports;
-      case 'music':
-      case 'concert':
+      case 'Music & Concerts':
         return Icons.music_note;
-      case 'shopping':
+      case 'Shopping':
         return Icons.shopping_bag;
-      case 'travel':
-      case 'adventure':
+      case 'Travel & Adventure':
         return Icons.explore;
-      case 'party':
-      case 'nightlife':
+      case 'Party & Nightlife':
         return Icons.celebration;
-      case 'study':
-      case 'work':
+      case 'Study & Work':
         return Icons.school;
-      case 'outdoor':
-      case 'nature':
+      case 'Outdoor & Nature':
         return Icons.nature;
+      case 'Gaming':
+        return Icons.sports_esports;
+      case 'Arts & Culture':
+        return Icons.palette;
+      case 'Books & Reading':
+        return Icons.menu_book;
+      case 'Photography':
+        return Icons.camera_alt;
+      case 'Cooking':
+        return Icons.kitchen;
+      case 'Dancing':
+        return Icons.music_video;
+      case 'Volunteering':
+        return Icons.volunteer_activism;
+      case 'Networking':
+        return Icons.people;
+      case 'Other':
+        return Icons.more_horiz;
+      // Fallback for old category names or variations
       default:
-        return Icons.group;
+        // Try to match partial names for backward compatibility
+        final lowerCategory = category.toLowerCase();
+        if (lowerCategory.contains('coffee') || lowerCategory.contains('cafe')) {
+          return Icons.local_cafe;
+        } else if (lowerCategory.contains('food') || lowerCategory.contains('restaurant') || lowerCategory.contains('dinner') || lowerCategory.contains('lunch')) {
+          return Icons.restaurant;
+        } else if (lowerCategory.contains('movie') || lowerCategory.contains('cinema')) {
+          return Icons.movie;
+        } else if (lowerCategory.contains('sports') || lowerCategory.contains('gym') || lowerCategory.contains('fitness')) {
+          return Icons.sports;
+        } else if (lowerCategory.contains('music') || lowerCategory.contains('concert')) {
+          return Icons.music_note;
+        } else if (lowerCategory.contains('shopping')) {
+          return Icons.shopping_bag;
+        } else if (lowerCategory.contains('travel') || lowerCategory.contains('adventure')) {
+          return Icons.explore;
+        } else if (lowerCategory.contains('party') || lowerCategory.contains('nightlife')) {
+          return Icons.celebration;
+        } else if (lowerCategory.contains('study') || lowerCategory.contains('work')) {
+          return Icons.school;
+        } else if (lowerCategory.contains('outdoor') || lowerCategory.contains('nature')) {
+          return Icons.nature;
+        } else if (lowerCategory.contains('gaming') || lowerCategory.contains('game')) {
+          return Icons.sports_esports;
+        } else if (lowerCategory.contains('art') || lowerCategory.contains('culture')) {
+          return Icons.palette;
+        } else if (lowerCategory.contains('book') || lowerCategory.contains('reading')) {
+          return Icons.menu_book;
+        } else if (lowerCategory.contains('photo')) {
+          return Icons.camera_alt;
+        } else if (lowerCategory.contains('cook')) {
+          return Icons.kitchen;
+        } else if (lowerCategory.contains('danc')) {
+          return Icons.music_video;
+        } else if (lowerCategory.contains('volunteer')) {
+          return Icons.volunteer_activism;
+        } else if (lowerCategory.contains('network')) {
+          return Icons.people;
+        } else {
+          return Icons.group;
+        }
     }
   }
 
@@ -1285,27 +1332,26 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                                 children: [
                                   Row(
                                     children: [
-                                      Expanded(
-                                        child: Text(
-                                          '${user.firstName} ${user.lastName}${user.age != null ? ', ${user.age}' : ''}',
-                                          style: const TextStyle(
-                                            fontSize: 24,
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                      Text(
+                                        '${user.firstName} ${user.lastName}${user.age != null ? ', ${user.age}' : ''}',
+                                        style: const TextStyle(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.bold,
                                         ),
                                       ),
-                                      FutureBuilder<bool>(
-                                        future: _isUserVerified(user.uid),
-                                        builder: (context, snapshot) {
-                                          if (snapshot.data == true) {
-                                            return const Padding(
-                                              padding: EdgeInsets.only(left: 4),
-                                              child: VerifiedBadge(size: 20),
+                                      if (user.age != null)
+                                        FutureBuilder<bool>(
+                                          future: _isUserVerified(user.uid),
+                                          builder: (context, snapshot) {
+                                            return Padding(
+                                              padding: EdgeInsets.only(left: 6),
+                                              child: VerifiedBadge(
+                                                size: 20,
+                                                isVerified: snapshot.data == true,
+                                              ),
                                             );
-                                          }
-                                          return const SizedBox();
-                                        },
-                                      ),
+                                          },
+                                        ),
                                     ],
                                   ),
                                   const SizedBox(height: 4),
@@ -1364,69 +1410,141 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         key: _showTutorial && _currentIndex == 0 ? _hangoutDetailsCardKey : null,
                         width: double.infinity,
                         margin: const EdgeInsets.symmetric(horizontal: 4),
-                        padding: const EdgeInsets.all(20),
-                        clipBehavior: Clip.antiAlias,
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(24),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
+                              color: AppTheme.primaryColor.withOpacity(0.15),
+                              blurRadius: 25,
+                              offset: const Offset(0, 12),
+                              spreadRadius: 0,
                             ),
                           ],
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Let\'s hang out at',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.grey[600],
-                                fontWeight: FontWeight.w500,
-                              ),
+                        child: Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(
+                              color: AppTheme.primaryColor.withOpacity(0.08),
+                              width: 1.5,
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              hangout.title.toUpperCase(),
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            Row(
-                              children: [
-                                Icon(Icons.location_on, size: 20, color: Colors.grey[700]),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    _cleanLocation(hangout.location),
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          AppTheme.primaryColor,
+                                          AppTheme.primaryColor.withOpacity(0.8),
+                                        ],
+                                      ),
+                                      borderRadius: BorderRadius.circular(16),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: AppTheme.primaryColor.withOpacity(0.3),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Icon(
+                                      _getHangoutIcon(hangout.category),
+                                      color: Colors.white,
+                                      size: 22,
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Icon(Icons.access_time, size: 20, color: Colors.grey[700]),
-                                const SizedBox(width: 12),
-                                Text(
-                                  '${_formatDate(hangout.dateTime)} at ${_formatTime(hangout.dateTime)}',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Let\'s hang out at',
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            color: Colors.grey[500],
+                                            fontWeight: FontWeight.w500,
+                                            letterSpacing: 0.3,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          hangout.title,
+                                          style: TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.grey[800],
+                                            letterSpacing: 0.2,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ],
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.primaryColor.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Icon(
+                                      Icons.location_on,
+                                      size: 18,
+                                      color: AppTheme.primaryColor,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      _cleanLocation(hangout.location),
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.grey[700],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.primaryColor.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Icon(
+                                      Icons.access_time,
+                                      size: 18,
+                                      color: AppTheme.primaryColor,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    '${_formatDate(hangout.dateTime)} at ${_formatTime(hangout.dateTime)}',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.grey[700],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                           const SizedBox(height: 16),
@@ -1436,19 +1554,19 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               width: double.infinity,
                               height: 400,
                               margin: const EdgeInsets.fromLTRB(4, 0, 4, 16),
-                              clipBehavior: Clip.antiAlias,
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(24),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
+                                    color: AppTheme.primaryColor.withOpacity(0.15),
+                                    blurRadius: 25,
+                                    offset: const Offset(0, 12),
+                                    spreadRadius: 0,
                                   ),
                                 ],
                               ),
                               child: ClipRRect(
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(24),
                                 child: Image.network(
                                   user.photoUrls![1],
                                   fit: BoxFit.cover,
@@ -1463,108 +1581,183 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                           Container(
                             width: double.infinity,
                             margin: const EdgeInsets.symmetric(horizontal: 4),
-                            padding: const EdgeInsets.all(20),
-                            clipBehavior: Clip.antiAlias,
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius: BorderRadius.circular(16),
+                              borderRadius: BorderRadius.circular(24),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 4),
+                                  color: AppTheme.primaryColor.withOpacity(0.15),
+                                  blurRadius: 25,
+                                  offset: const Offset(0, 12),
+                                  spreadRadius: 0,
                                 ),
                               ],
                             ),
-                            child: Column(
-                              children: [
-                                // Basic info row
-                                Row(
-                                  children: [
-                                    if (user.age != null)
-                                      Expanded(
-                                        child: Row(
-                                          children: [
-                                            Icon(Icons.cake, size: 20, color: Colors.grey[700]),
-                                            const SizedBox(width: 8),
-                                            Text('${user.age}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                                          ],
-                                        ),
-                                      ),
-                                    if (user.gender != null)
-                                      Expanded(
-                                        child: Row(
-                                          children: [
-                                            Icon(Icons.person, size: 20, color: Colors.grey[700]),
-                                            const SizedBox(width: 8),
-                                            Text(user.gender!, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
-                                          ],
-                                        ),
-                                      ),
-                                  ],
+                            child: Container(
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(
+                                  color: AppTheme.primaryColor.withOpacity(0.08),
+                                  width: 1.5,
                                 ),
-                                const SizedBox(height: 16),
-                                // Other details
-                                if (user.occupation != null) ...[
+                              ),
+                              child: Column(
+                                children: [
+                                  // Basic info row
                                   Row(
                                     children: [
-                                      Icon(Icons.work, size: 20, color: Colors.grey[700]),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Text(
-                                          user.occupation!,
-                                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                                      if (user.age != null)
+                                        Expanded(
+                                          child: Row(
+                                            children: [
+                                              Container(
+                                                padding: const EdgeInsets.all(8),
+                                                decoration: BoxDecoration(
+                                                  color: AppTheme.primaryColor.withOpacity(0.1),
+                                                  borderRadius: BorderRadius.circular(10),
+                                                ),
+                                                child: Icon(
+                                                  Icons.cake,
+                                                  size: 18,
+                                                  color: AppTheme.primaryColor,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Text('${user.age}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                                            ],
+                                          ),
                                         ),
-                                      ),
+                                      if (user.gender != null)
+                                        Expanded(
+                                          child: Row(
+                                            children: [
+                                              Container(
+                                                padding: const EdgeInsets.all(8),
+                                                decoration: BoxDecoration(
+                                                  color: AppTheme.primaryColor.withOpacity(0.1),
+                                                  borderRadius: BorderRadius.circular(10),
+                                                ),
+                                                child: Icon(
+                                                  Icons.person,
+                                                  size: 18,
+                                                  color: AppTheme.primaryColor,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Text(user.gender!, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                                            ],
+                                          ),
+                                        ),
                                     ],
                                   ),
-                                  const SizedBox(height: 12),
-                                ],
-                                if (user.education != null) ...[
-                                  Row(
-                                    children: [
-                                      Icon(Icons.school, size: 20, color: Colors.grey[700]),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Text(
-                                          user.education!,
-                                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                                  const SizedBox(height: 16),
+                                  // Other details
+                                  if (user.occupation != null) ...[
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: AppTheme.primaryColor.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: Icon(
+                                            Icons.work,
+                                            size: 18,
+                                            color: AppTheme.primaryColor,
+                                          ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 12),
-                                ],
-                                if (user.religion != null) ...[
-                                  Row(
-                                    children: [
-                                      Icon(Icons.church, size: 20, color: Colors.grey[700]),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Text(
-                                          user.religion!,
-                                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            user.occupation!,
+                                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                                          ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 12),
-                                ],
-                                if (user.ethnicity != null || user.race != null) ...[
-                                  Row(
-                                    children: [
-                                      Icon(Icons.public, size: 20, color: Colors.grey[700]),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Text(
-                                          user.ethnicity ?? user.race!,
-                                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                  ],
+                                  if (user.education != null) ...[
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: AppTheme.primaryColor.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: Icon(
+                                            Icons.school,
+                                            size: 18,
+                                            color: AppTheme.primaryColor,
+                                          ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            user.education!,
+                                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                  ],
+                                  if (user.religion != null) ...[
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: AppTheme.primaryColor.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: Icon(
+                                            Icons.church,
+                                            size: 18,
+                                            color: AppTheme.primaryColor,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            user.religion!,
+                                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                  ],
+                                  if (user.ethnicity != null || user.race != null) ...[
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: AppTheme.primaryColor.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: Icon(
+                                            Icons.public,
+                                            size: 18,
+                                            color: AppTheme.primaryColor,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            user.ethnicity ?? user.race!,
+                                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ],
-                              ],
+                              ),
                             ),
                           ),
                           // Additional photo cards
@@ -1572,20 +1765,20 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                             ...user.photoUrls!.skip(2).map((photoUrl) => Container(
                               width: double.infinity,
                               height: 400,
-                              margin: const EdgeInsets.fromLTRB(8, 16, 8, 0),
-                              clipBehavior: Clip.antiAlias,
+                              margin: const EdgeInsets.fromLTRB(4, 16, 4, 0),
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(24),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
+                                    color: AppTheme.primaryColor.withOpacity(0.15),
+                                    blurRadius: 25,
+                                    offset: const Offset(0, 12),
+                                    spreadRadius: 0,
                                   ),
                                 ],
                               ),
                               child: ClipRRect(
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(24),
                                 child: Image.network(
                                   photoUrl,
                                   fit: BoxFit.cover,

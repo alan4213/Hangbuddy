@@ -7,6 +7,7 @@ import '../services/hangout_service.dart';
 import 'chat_window_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../widgets/verified_badge.dart';
 
 class ProfileDetailScreen extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -174,13 +175,30 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Text(
-                                          '${widget.user['firstName'] ?? ''} ${widget.user['lastName'] ?? ''}${widget.user['age'] != null ? ', ${widget.user['age']}' : ''}',
-                                          style: TextStyle(
-                                            fontSize: 24,
-                                            fontWeight: FontWeight.bold,
-                                            color: AppTheme.textPrimary,
-                                          ),
+                                        Row(
+                                          children: [
+                                            Text(
+                                              '${widget.user['firstName'] ?? ''} ${widget.user['lastName'] ?? ''}${widget.user['age'] != null ? ', ${widget.user['age']}' : ''}',
+                                              style: TextStyle(
+                                                fontSize: 24,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppTheme.textPrimary,
+                                              ),
+                                            ),
+                                            if (widget.user['age'] != null)
+                                              FutureBuilder<bool>(
+                                                future: _isUserVerified(widget.user['userId'] ?? widget.user['uid'] ?? ''),
+                                                builder: (context, snapshot) {
+                                                  return Padding(
+                                                    padding: EdgeInsets.only(left: 6),
+                                                    child: VerifiedBadge(
+                                                      size: 20,
+                                                      isVerified: snapshot.data == true,
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                          ],
                                         ),
                                         const SizedBox(height: 4),
                                         if (widget.user['gender'] != null)
@@ -207,6 +225,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                                             hangoutTitle: widget.hangout!['title'],
                                             hangoutLocation: widget.hangout!['location'],
                                             hangoutDateTime: DateTime.parse(widget.hangout!['dateTime']),
+                                            hangoutCategory: widget.hangout!['category'],
                                           );
                                           
                                           await HangoutService.acceptUser(widget.hangoutId!, widget.user['userId'] ?? widget.user['uid'] ?? '');
@@ -286,215 +305,364 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                               if (widget.hangout != null && widget.showChatButton)
                                 Container(
                                   width: double.infinity,
-                                  padding: const EdgeInsets.all(20),
                                   margin: const EdgeInsets.only(bottom: 16),
                                   decoration: BoxDecoration(
                                     color: Colors.white,
-                                    borderRadius: BorderRadius.circular(16),
+                                    borderRadius: BorderRadius.circular(24),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.1),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 4),
+                                        color: AppTheme.primaryColor.withOpacity(0.15),
+                                        blurRadius: 25,
+                                        offset: const Offset(0, 12),
+                                        spreadRadius: 0,
                                       ),
                                     ],
                                   ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Matched Hangout',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          color: AppTheme.textSecondary,
-                                          fontWeight: FontWeight.w500,
-                                        ),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(20),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(24),
+                                      border: Border.all(
+                                        color: AppTheme.primaryColor.withOpacity(0.08),
+                                        width: 1.5,
                                       ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        widget.hangout!['status'] == 'deleted' 
-                                            ? 'Hangout Cancelled'
-                                            : _isHangoutExpired()
-                                            ? 'Hangout Expired'
-                                            : widget.hangout!['title'] ?? 'Hangout',
-                                        style: TextStyle(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppTheme.primaryColor,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 12),
-                                      if (widget.hangout!['status'] == 'deleted')
-                                        Text(
-                                          'This hangout has been cancelled and is no longer available.',
-                                          style: TextStyle(
-                                            color: AppTheme.primaryColor,
-                                            fontSize: 14,
-                                            fontStyle: FontStyle.italic,
-                                          ),
-                                        ),
-                                      if (_isHangoutExpired())
-                                        Text(
-                                          'This hangout has expired and is no longer available.',
-                                          style: TextStyle(
-                                            color: AppTheme.primaryColor,
-                                            fontSize: 14,
-                                            fontStyle: FontStyle.italic,
-                                          ),
-                                        ),
-                                      if (widget.hangout!['status'] != 'deleted' && !_isHangoutExpired())
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
                                         Row(
                                           children: [
-                                            Icon(Icons.location_on, size: 16, color: AppTheme.textSecondary),
-                                            const SizedBox(width: 8),
+                                            Container(
+                                              padding: const EdgeInsets.all(12),
+                                              decoration: BoxDecoration(
+                                                gradient: LinearGradient(
+                                                  colors: [
+                                                    AppTheme.primaryColor,
+                                                    AppTheme.primaryColor.withOpacity(0.8),
+                                                  ],
+                                                ),
+                                                borderRadius: BorderRadius.circular(16),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: AppTheme.primaryColor.withOpacity(0.3),
+                                                    blurRadius: 8,
+                                                    offset: const Offset(0, 4),
+                                                  ),
+                                                ],
+                                              ),
+                                              child: Icon(
+                                                _getHangoutIcon(widget.hangout!['category'] ?? 'Other'),
+                                                color: Colors.white,
+                                                size: 22,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 16),
                                             Expanded(
-                                              child: Text(
-                                                widget.hangout!['location'] ?? 'Location',
-                                                style: TextStyle(
-                                                  color: AppTheme.textSecondary,
-                                                  fontSize: 14,
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    widget.hangout!['status'] == 'deleted' 
+                                                        ? 'Hangout Cancelled'
+                                                        : _isHangoutExpired()
+                                                        ? 'Hangout Expired'
+                                                        : 'Matched Hangout',
+                                                    style: TextStyle(
+                                                      fontSize: 13,
+                                                      color: widget.hangout!['status'] == 'deleted' || _isHangoutExpired()
+                                                          ? Colors.red[400]
+                                                          : Colors.grey[500],
+                                                      fontWeight: FontWeight.w500,
+                                                      letterSpacing: 0.3,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  Text(
+                                                    widget.hangout!['status'] == 'deleted' 
+                                                        ? 'This hangout has been cancelled'
+                                                        : _isHangoutExpired()
+                                                        ? 'This hangout has expired'
+                                                        : widget.hangout!['title'] ?? 'Hangout',
+                                                    style: TextStyle(
+                                                      fontSize: 20,
+                                                      fontWeight: FontWeight.w700,
+                                                      color: widget.hangout!['status'] == 'deleted' || _isHangoutExpired()
+                                                          ? Colors.red[600]
+                                                          : Colors.grey[800],
+                                                      letterSpacing: 0.2,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        if (widget.hangout!['status'] != 'deleted' && !_isHangoutExpired()) ...[
+                                          const SizedBox(height: 20),
+                                          Row(
+                                            children: [
+                                              Container(
+                                                padding: const EdgeInsets.all(8),
+                                                decoration: BoxDecoration(
+                                                  color: AppTheme.primaryColor.withOpacity(0.1),
+                                                  borderRadius: BorderRadius.circular(10),
+                                                ),
+                                                child: Icon(
+                                                  Icons.location_on,
+                                                  size: 18,
+                                                  color: AppTheme.primaryColor,
                                                 ),
                                               ),
-                                            ),
-                                          ],
-                                        ),
-                                      if (widget.hangout!['status'] != 'deleted' && !_isHangoutExpired())
-                                        const SizedBox(height: 8),
-                                      if (widget.hangout!['status'] != 'deleted' && !_isHangoutExpired())
-                                        Row(
-                                          children: [
-                                            Icon(Icons.access_time, size: 16, color: AppTheme.textSecondary),
-                                            const SizedBox(width: 8),
-                                            Text(
-                                              widget.hangout!['dateTime'] != null
-                                                  ? _formatDateTime(DateTime.parse(widget.hangout!['dateTime']))
-                                                  : 'Date & Time',
-                                              style: TextStyle(
-                                                color: AppTheme.textSecondary,
-                                                fontSize: 14,
+                                              const SizedBox(width: 12),
+                                              Expanded(
+                                                child: Text(
+                                                  widget.hangout!['location'] ?? 'Location',
+                                                  style: TextStyle(
+                                                    fontSize: 15,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Colors.grey[700],
+                                                  ),
+                                                ),
                                               ),
-                                            ),
-                                          ],
-                                        ),
-                                    ],
+                                            ],
+                                          ),
+                                          const SizedBox(height: 12),
+                                          Row(
+                                            children: [
+                                              Container(
+                                                padding: const EdgeInsets.all(8),
+                                                decoration: BoxDecoration(
+                                                  color: AppTheme.primaryColor.withOpacity(0.1),
+                                                  borderRadius: BorderRadius.circular(10),
+                                                ),
+                                                child: Icon(
+                                                  Icons.access_time,
+                                                  size: 18,
+                                                  color: AppTheme.primaryColor,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Text(
+                                                widget.hangout!['dateTime'] != null
+                                                    ? _formatDateTime(DateTime.parse(widget.hangout!['dateTime']))
+                                                    : 'Date & Time',
+                                                style: TextStyle(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.grey[700],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ],
+                                    ),
                                   ),
                                 ),
                               Container(
                                 width: double.infinity,
-                                padding: const EdgeInsets.all(20),
+                                margin: const EdgeInsets.only(bottom: 16),
                                 decoration: BoxDecoration(
                                   color: Colors.white,
-                                  borderRadius: BorderRadius.circular(16),
+                                  borderRadius: BorderRadius.circular(24),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: Colors.black.withOpacity(0.1),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 4),
+                                      color: AppTheme.primaryColor.withOpacity(0.15),
+                                      blurRadius: 25,
+                                      offset: const Offset(0, 12),
+                                      spreadRadius: 0,
                                     ),
                                   ],
                                 ),
-                                child: Column(
-                                  children: [
-                                    Row(
-                                      children: [
-                                        if (widget.user['age'] != null)
-                                          Expanded(
-                                            child: Row(
-                                              children: [
-                                                Icon(Icons.cake, size: 20, color: AppTheme.textSecondary),
-                                                const SizedBox(width: 8),
-                                                Text('${widget.user['age']}', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: AppTheme.textPrimary)),
-                                              ],
-                                            ),
-                                          ),
-                                        if (widget.user['gender'] != null)
-                                          Expanded(
-                                            child: Row(
-                                              children: [
-                                                Icon(Icons.person, size: 20, color: AppTheme.textSecondary),
-                                                const SizedBox(width: 8),
-                                                Text(widget.user['gender']!, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: AppTheme.textPrimary)),
-                                              ],
-                                            ),
-                                          ),
-                                      ],
+                                child: Container(
+                                  padding: const EdgeInsets.all(20),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(24),
+                                    border: Border.all(
+                                      color: AppTheme.primaryColor.withOpacity(0.08),
+                                      width: 1.5,
                                     ),
-                                    const SizedBox(height: 16),
-                                    if (widget.user['occupation'] != null) ...[
+                                  ),
+                                  child: Column(
+                                    children: [
                                       Row(
                                         children: [
-                                          Icon(Icons.work, size: 20, color: AppTheme.textSecondary),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Text(
-                                              widget.user['occupation']!,
-                                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: AppTheme.textPrimary),
+                                          if (widget.user['age'] != null)
+                                            Expanded(
+                                              child: Row(
+                                                children: [
+                                                  Container(
+                                                    padding: const EdgeInsets.all(8),
+                                                    decoration: BoxDecoration(
+                                                      color: AppTheme.primaryColor.withOpacity(0.1),
+                                                      borderRadius: BorderRadius.circular(10),
+                                                    ),
+                                                    child: Icon(
+                                                      Icons.cake,
+                                                      size: 18,
+                                                      color: AppTheme.primaryColor,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 12),
+                                                  Text('${widget.user['age']}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                                                ],
+                                              ),
                                             ),
-                                          ),
+                                          if (widget.user['gender'] != null)
+                                            Expanded(
+                                              child: Row(
+                                                children: [
+                                                  Container(
+                                                    padding: const EdgeInsets.all(8),
+                                                    decoration: BoxDecoration(
+                                                      color: AppTheme.primaryColor.withOpacity(0.1),
+                                                      borderRadius: BorderRadius.circular(10),
+                                                    ),
+                                                    child: Icon(
+                                                      Icons.person,
+                                                      size: 18,
+                                                      color: AppTheme.primaryColor,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(width: 12),
+                                                  Text(widget.user['gender']!, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                                                ],
+                                              ),
+                                            ),
                                         ],
                                       ),
-                                      const SizedBox(height: 12),
-                                    ],
-                                    if (widget.user['education'] != null) ...[
-                                      Row(
-                                        children: [
-                                          Icon(Icons.school, size: 20, color: AppTheme.textSecondary),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Text(
-                                              widget.user['education']!,
-                                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: AppTheme.textPrimary),
+                                      const SizedBox(height: 16),
+                                      if (widget.user['occupation'] != null) ...[
+                                        Row(
+                                          children: [
+                                            Container(
+                                              padding: const EdgeInsets.all(8),
+                                              decoration: BoxDecoration(
+                                                color: AppTheme.primaryColor.withOpacity(0.1),
+                                                borderRadius: BorderRadius.circular(10),
+                                              ),
+                                              child: Icon(
+                                                Icons.work,
+                                                size: 18,
+                                                color: AppTheme.primaryColor,
+                                              ),
                                             ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 12),
-                                    ],
-                                    if (widget.user['religion'] != null) ...[
-                                      Row(
-                                        children: [
-                                          Icon(Icons.church, size: 20, color: AppTheme.textSecondary),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Text(
-                                              widget.user['religion']!,
-                                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: AppTheme.textPrimary),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Text(
+                                                widget.user['occupation']!,
+                                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                                              ),
                                             ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 12),
-                                    ],
-                                    if (widget.user['ethnicity'] != null) ...[
-                                      Row(
-                                        children: [
-                                          Icon(Icons.public, size: 20, color: AppTheme.textSecondary),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Text(
-                                              widget.user['ethnicity']!,
-                                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: AppTheme.textPrimary),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 12),
+                                      ],
+                                      if (widget.user['education'] != null) ...[
+                                        Row(
+                                          children: [
+                                            Container(
+                                              padding: const EdgeInsets.all(8),
+                                              decoration: BoxDecoration(
+                                                color: AppTheme.primaryColor.withOpacity(0.1),
+                                                borderRadius: BorderRadius.circular(10),
+                                              ),
+                                              child: Icon(
+                                                Icons.school,
+                                                size: 18,
+                                                color: AppTheme.primaryColor,
+                                              ),
                                             ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 12),
-                                    ],
-                                    if (widget.user['height'] != null) ...[
-                                      Row(
-                                        children: [
-                                          Icon(Icons.height, size: 20, color: AppTheme.textSecondary),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Text(
-                                              widget.user['height']!,
-                                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: AppTheme.textPrimary),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Text(
+                                                widget.user['education']!,
+                                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                                              ),
                                             ),
-                                          ),
-                                        ],
-                                      ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 12),
+                                      ],
+                                      if (widget.user['religion'] != null) ...[
+                                        Row(
+                                          children: [
+                                            Container(
+                                              padding: const EdgeInsets.all(8),
+                                              decoration: BoxDecoration(
+                                                color: AppTheme.primaryColor.withOpacity(0.1),
+                                                borderRadius: BorderRadius.circular(10),
+                                              ),
+                                              child: Icon(
+                                                Icons.church,
+                                                size: 18,
+                                                color: AppTheme.primaryColor,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Text(
+                                                widget.user['religion']!,
+                                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 12),
+                                      ],
+                                      if (widget.user['ethnicity'] != null) ...[
+                                        Row(
+                                          children: [
+                                            Container(
+                                              padding: const EdgeInsets.all(8),
+                                              decoration: BoxDecoration(
+                                                color: AppTheme.primaryColor.withOpacity(0.1),
+                                                borderRadius: BorderRadius.circular(10),
+                                              ),
+                                              child: Icon(
+                                                Icons.public,
+                                                size: 18,
+                                                color: AppTheme.primaryColor,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Text(
+                                                widget.user['ethnicity']!,
+                                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 12),
+                                      ],
+                                      if (widget.user['height'] != null) ...[
+                                        Row(
+                                          children: [
+                                            Container(
+                                              padding: const EdgeInsets.all(8),
+                                              decoration: BoxDecoration(
+                                                color: AppTheme.primaryColor.withOpacity(0.1),
+                                                borderRadius: BorderRadius.circular(10),
+                                              ),
+                                              child: Icon(
+                                                Icons.height,
+                                                size: 18,
+                                                color: AppTheme.primaryColor,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Expanded(
+                                              child: Text(
+                                                widget.user['height']!,
+                                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ],
-                                  ],
+                                  ),
                                 ),
                               ),
                               if (images.length > 1)
@@ -527,56 +695,82 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                               if (currentUser['interests'] != null && (currentUser['interests'] as List).isNotEmpty)
                                 Container(
                                   width: double.infinity,
-                                  padding: const EdgeInsets.all(20),
                                   margin: const EdgeInsets.only(top: 16),
                                   decoration: BoxDecoration(
                                     color: Colors.white,
-                                    borderRadius: BorderRadius.circular(16),
+                                    borderRadius: BorderRadius.circular(24),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: Colors.black.withOpacity(0.1),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 4),
+                                        color: AppTheme.primaryColor.withOpacity(0.15),
+                                        blurRadius: 25,
+                                        offset: const Offset(0, 12),
+                                        spreadRadius: 0,
                                       ),
                                     ],
                                   ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Icon(Icons.favorite, size: 20, color: AppTheme.textSecondary),
-                                          const SizedBox(width: 12),
-                                          Text(
-                                            'Interests',
-                                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.textPrimary),
-                                          ),
-                                        ],
+                                  child: Container(
+                                    padding: const EdgeInsets.all(20),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(24),
+                                      border: Border.all(
+                                        color: AppTheme.primaryColor.withOpacity(0.08),
+                                        width: 1.5,
                                       ),
-                                      const SizedBox(height: 12),
-                                      Wrap(
-                                        spacing: 8,
-                                        runSpacing: 8,
-                                        children: (currentUser['interests'] as List).map<Widget>((interest) {
-                                          return Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                            decoration: BoxDecoration(
-                                              color: Colors.grey[100],
-                                              borderRadius: BorderRadius.circular(20),
-                                              border: Border.all(color: Colors.grey[300]!),
-                                            ),
-                                            child: Text(
-                                              interest.toString(),
-                                              style: TextStyle(
-                                                color: AppTheme.textSecondary,
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.w500,
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Container(
+                                              padding: const EdgeInsets.all(8),
+                                              decoration: BoxDecoration(
+                                                color: AppTheme.primaryColor.withOpacity(0.1),
+                                                borderRadius: BorderRadius.circular(10),
+                                              ),
+                                              child: Icon(
+                                                Icons.favorite,
+                                                size: 18,
+                                                color: AppTheme.primaryColor,
                                               ),
                                             ),
-                                          );
-                                        }).toList(),
-                                      ),
-                                    ],
+                                            const SizedBox(width: 12),
+                                            Text(
+                                              'Interests',
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w700,
+                                                color: Colors.grey[800],
+                                                letterSpacing: 0.2,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 16),
+                                        Wrap(
+                                          spacing: 8,
+                                          runSpacing: 8,
+                                          children: (currentUser['interests'] as List).map<Widget>((interest) {
+                                            return Container(
+                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                              decoration: BoxDecoration(
+                                                color: AppTheme.primaryColor.withOpacity(0.1),
+                                                borderRadius: BorderRadius.circular(20),
+                                                border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+                                              ),
+                                              child: Text(
+                                                interest.toString(),
+                                                style: TextStyle(
+                                                  color: AppTheme.primaryColor,
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            );
+                                          }).toList(),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               if (images.length > 2)
@@ -619,6 +813,51 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
     );
   }
   
+  IconData _getHangoutIcon(String category) {
+    switch (category) {
+      case 'Food & Drink':
+        return Icons.restaurant;
+      case 'Coffee & Tea':
+        return Icons.local_cafe;
+      case 'Movies & Cinema':
+        return Icons.movie;
+      case 'Sports & Fitness':
+        return Icons.sports;
+      case 'Music & Concerts':
+        return Icons.music_note;
+      case 'Shopping':
+        return Icons.shopping_bag;
+      case 'Travel & Adventure':
+        return Icons.explore;
+      case 'Party & Nightlife':
+        return Icons.celebration;
+      case 'Study & Work':
+        return Icons.school;
+      case 'Outdoor & Nature':
+        return Icons.nature;
+      case 'Gaming':
+        return Icons.sports_esports;
+      case 'Arts & Culture':
+        return Icons.palette;
+      case 'Books & Reading':
+        return Icons.menu_book;
+      case 'Photography':
+        return Icons.camera_alt;
+      case 'Cooking':
+        return Icons.kitchen;
+      case 'Dancing':
+        return Icons.music_video;
+      case 'Volunteering':
+        return Icons.volunteer_activism;
+      case 'Networking':
+        return Icons.people;
+      case 'Other':
+        return Icons.more_horiz;
+      default:
+        return Icons.group;
+    }
+  }
+
   bool _isHangoutExpired() {
     if (widget.hangout?['dateTime'] == null) return false;
     return DateTime.now().isAfter(DateTime.parse(widget.hangout!['dateTime']));
@@ -634,6 +873,23 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
       return 'Tomorrow ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
     } else {
       return '${dateTime.day}/${dateTime.month} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+    }
+  }
+
+  Future<bool> _isUserVerified(String userId) async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+      
+      if (doc.exists) {
+        final verificationStatus = doc.data()?['verificationStatus'];
+        return verificationStatus == 'verified';
+      }
+      return false;
+    } catch (e) {
+      return false;
     }
   }
 }

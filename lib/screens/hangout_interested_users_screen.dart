@@ -156,6 +156,7 @@ class _HangoutInterestedUsersScreenState extends State<HangoutInterestedUsersScr
                                             'title': currentHangout.title,
                                             'location': currentHangout.location,
                                             'dateTime': currentHangout.dateTime.toIso8601String(),
+                                            'category': currentHangout.category,
                                           },
                                           hangoutId: currentHangout.id,
                                         ),
@@ -253,6 +254,7 @@ class _HangoutInterestedUsersScreenState extends State<HangoutInterestedUsersScr
         hangoutTitle: currentHangout.title,
         hangoutLocation: currentHangout.location,
         hangoutDateTime: currentHangout.dateTime,
+        hangoutCategory: currentHangout.category,
       );
       
       print('Match created successfully');

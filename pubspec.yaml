@@ -52,6 +52,7 @@ dependencies:
   google_sign_in: ^6.1.5
   firebase_dynamic_links: ^5.4.17
   video_player: ^2.8.2
+  shared_preferences: ^2.2.2
 
 dev_dependencies:
   flutter_test:

@@ -5,6 +5,7 @@ import '../models/signup_data.dart';
 import 'occupation_screen.dart';
 import '../widgets/progress_bar.dart';
 
+
 class EducationScreen extends StatefulWidget {
   final SignupData signupData;
   const EducationScreen({super.key, required this.signupData});
@@ -110,7 +111,7 @@ class _EducationScreenState extends State<EducationScreen> {
                   
                   setState(() => _isLoading = true);
                   
-                  widget.signupData.education = _selectedEducation;
+                  widget.signupData.education = _selectedEducation!;
                   
                   await Future.delayed(const Duration(milliseconds: 300));
                   if (mounted) {

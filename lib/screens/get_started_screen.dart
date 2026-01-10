@@ -20,8 +20,19 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
   @override
   void initState() {
     super.initState();
-    // Start playing preloaded video
+    // Start playing preloaded video with reduced frame rate
     VideoService.play();
+    // Reduce video processing load
+    if (VideoService.controller != null) {
+      VideoService.controller!.setPlaybackSpeed(0.8); // Slightly slower
+    }
+  }
+
+  @override
+  void dispose() {
+    // Pause video to free up buffers
+    VideoService.pause();
+    super.dispose();
   }
 
   @override
@@ -180,38 +191,54 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                     // I have an account button
                     Container(
                       width: double.infinity,
-                      height: (MediaQuery.of(context).size.height * 0.06).clamp(44.0, 56.0),
-                      child: OutlinedButton(
-                        onPressed: () async {
-                          setState(() => _isLoading = true);
-                          try {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => PhoneNumberScreen(showGoogleSignIn: true),
-                              ),
-                            );
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Sign in failed: $e')),
-                            );
-                          }
-                          if (mounted) setState(() => _isLoading = false);
-                        },
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: AppTheme.primaryColor),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular((MediaQuery.of(context).size.width * 0.06).clamp(20.0, 28.0)),
-                          ),
+                      height: 56,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(28),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.3),
+                          width: 1.5,
                         ),
-                        child: Text(
-                          'I have an account',
-                          style: TextStyle(
-                            fontSize: (MediaQuery.of(context).size.width * 0.04).clamp(14.0, 18.0),
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.primaryColor,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
                           ),
-                          overflow: TextOverflow.ellipsis,
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(28),
+                        child: InkWell(
+                          onTap: () async {
+                            setState(() => _isLoading = true);
+                            try {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => PhoneNumberScreen(showGoogleSignIn: true),
+                                ),
+                              );
+                            } catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Sign in failed: $e')),
+                              );
+                            }
+                            if (mounted) setState(() => _isLoading = false);
+                          },
+                          borderRadius: BorderRadius.circular(28),
+                          child: Container(
+                            alignment: Alignment.center,
+                            child: Text(
+                              'I have an account',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ),

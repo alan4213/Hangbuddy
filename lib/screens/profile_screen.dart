@@ -381,27 +381,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding: EdgeInsets.all((MediaQuery.of(context).size.width * 0.05).clamp(12.0, 20.0)),
+        padding: EdgeInsets.all((MediaQuery.of(context).size.width * 0.05).clamp(16.0, 20.0)),
         decoration: BoxDecoration(
-          color: Colors.grey[100],
-          borderRadius: BorderRadius.circular((MediaQuery.of(context).size.width * 0.04).clamp(12.0, 16.0)),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular((MediaQuery.of(context).size.width * 0.04).clamp(16.0, 20.0)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+          border: Border.all(
+            color: Colors.grey.withOpacity(0.2),
+            width: 1,
+          ),
         ),
         child: Row(
           children: [
             Container(
-              width: (MediaQuery.of(context).size.width * 0.1).clamp(32.0, 40.0),
-              height: (MediaQuery.of(context).size.width * 0.1).clamp(32.0, 40.0),
+              width: (MediaQuery.of(context).size.width * 0.12).clamp(40.0, 48.0),
+              height: (MediaQuery.of(context).size.width * 0.12).clamp(40.0, 48.0),
               decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular((MediaQuery.of(context).size.width * 0.02).clamp(6.0, 8.0)),
+                color: AppTheme.primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular((MediaQuery.of(context).size.width * 0.03).clamp(10.0, 12.0)),
               ),
               child: Icon(
                 icon,
-                size: (MediaQuery.of(context).size.width * 0.05).clamp(18.0, 22.0),
-                color: Colors.grey[600],
+                size: (MediaQuery.of(context).size.width * 0.06).clamp(20.0, 24.0),
+                color: AppTheme.primaryColor,
               ),
             ),
-            SizedBox(width: (MediaQuery.of(context).size.width * 0.04).clamp(12.0, 16.0)),
+            SizedBox(width: (MediaQuery.of(context).size.width * 0.04).clamp(16.0, 20.0)),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -409,24 +420,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Text(
                     title,
                     style: TextStyle(
-                      fontSize: (MediaQuery.of(context).size.width * 0.04).clamp(14.0, 18.0),
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
+                      fontSize: (MediaQuery.of(context).size.width * 0.045).clamp(16.0, 18.0),
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF1F2937),
+                      letterSpacing: -0.2,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
-                  SizedBox(height: (MediaQuery.of(context).size.height * 0.005).clamp(2.0, 4.0)),
+                  SizedBox(height: (MediaQuery.of(context).size.height * 0.008).clamp(3.0, 5.0)),
                   Text(
                     subtitle,
                     style: TextStyle(
-                      fontSize: (MediaQuery.of(context).size.width * 0.035).clamp(12.0, 16.0),
-                      color: Colors.grey[600],
+                      fontSize: (MediaQuery.of(context).size.width * 0.035).clamp(13.0, 15.0),
+                      color: const Color(0xFF6B7280),
+                      fontWeight: FontWeight.w500,
+                      height: 1.3,
                     ),
                     overflow: TextOverflow.ellipsis,
                     maxLines: 2,
                   ),
                 ],
               ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: (MediaQuery.of(context).size.width * 0.04).clamp(14.0, 16.0),
+              color: AppTheme.primaryColor.withOpacity(0.6),
             ),
           ],
         ),

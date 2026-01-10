@@ -12,7 +12,26 @@ class MatchService {
     required String hangoutTitle,
     required String hangoutLocation,
     required DateTime hangoutDateTime,
+    String? hangoutCategory,
   }) async {
+    // If category is not provided, try to fetch it from the original hangout
+    if (hangoutCategory == null) {
+      try {
+        final hangoutQuery = await _firestore
+            .collection('hangout_requests')
+            .where('title', isEqualTo: hangoutTitle)
+            .where('status', isEqualTo: 'active')
+            .limit(1)
+            .get();
+        
+        if (hangoutQuery.docs.isNotEmpty) {
+          hangoutCategory = hangoutQuery.docs.first.data()['category'] ?? 'Other';
+        }
+      } catch (e) {
+        print('Error fetching hangout category: $e');
+        hangoutCategory = 'Other';
+      }
+    }
     // Check if match already exists for this specific hangout
     final existingMatches = await _firestore
         .collection('matches')
@@ -37,6 +56,7 @@ class MatchService {
       'hangoutTitle': hangoutTitle,
       'hangoutLocation': hangoutLocation,
       'hangoutDateTime': Timestamp.fromDate(hangoutDateTime),
+      'hangoutCategory': hangoutCategory ?? 'Other',
       'createdAt': Timestamp.fromDate(DateTime.now()),
       'status': 'active',
       'hangoutStatus': 'active',

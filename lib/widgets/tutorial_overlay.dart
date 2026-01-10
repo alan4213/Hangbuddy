@@ -1,16 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_theme.dart';
 
 class TutorialOverlay extends StatefulWidget {
   final List<TutorialStep> steps;
   final VoidCallback onComplete;
   final Widget child;
+  final String screenName;
 
   const TutorialOverlay({
     super.key,
     required this.steps,
     required this.onComplete,
     required this.child,
+    required this.screenName,
   });
 
   @override
@@ -20,6 +24,25 @@ class TutorialOverlay extends StatefulWidget {
 class _TutorialOverlayState extends State<TutorialOverlay> {
   int _currentStep = 0;
   bool _showTutorial = true;
+  bool _tutorialChecked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkTutorialStatus();
+  }
+
+  void _checkTutorialStatus() async {
+    if (_tutorialChecked) return;
+    _tutorialChecked = true;
+    
+    final isCompleted = await TutorialService.isTutorialCompleted(widget.screenName);
+    if (isCompleted && mounted) {
+      setState(() {
+        _showTutorial = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -214,6 +237,7 @@ class _TutorialOverlayState extends State<TutorialOverlay> {
       setState(() {
         _showTutorial = false;
       });
+      TutorialService.markTutorialCompleted(widget.screenName);
       widget.onComplete();
     }
   }
@@ -305,16 +329,39 @@ class HighlightPainter extends CustomPainter {
 
 // Tutorial service to manage tutorial state
 class TutorialService {
-  static const String _tutorialKey = 'tutorial_completed_';
-
   static Future<bool> isTutorialCompleted(String screenName) async {
-    // In a real app, you'd use SharedPreferences
-    // For now, return false to always show tutorial
-    return false;
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return false;
+      
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      
+      if (doc.exists) {
+        final completedTutorials = doc.data()?['completedTutorials'] as List<dynamic>? ?? [];
+        return completedTutorials.contains(screenName);
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
   }
 
   static Future<void> markTutorialCompleted(String screenName) async {
-    // In a real app, you'd save to SharedPreferences
-    print('Tutorial completed for $screenName');
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+      
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .update({
+        'completedTutorials': FieldValue.arrayUnion([screenName])
+      });
+    } catch (e) {
+      print('Error saving tutorial completion: $e');
+    }
   }
 }
