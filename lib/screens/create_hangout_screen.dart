@@ -475,6 +475,36 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
     final time = await showTimePicker(
       context: context,
       initialTime: _selectedTime,
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            alwaysUse24HourFormat: false,
+          ),
+          child: Theme(
+            data: Theme.of(context).copyWith(
+              timePickerTheme: TimePickerThemeData(
+                backgroundColor: Colors.white,
+                hourMinuteShape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                dayPeriodBorderSide: BorderSide(
+                  color: AppTheme.primaryColor,
+                  width: 2,
+                ),
+                dayPeriodColor: AppTheme.primaryColor.withOpacity(0.1),
+                dayPeriodTextColor: AppTheme.primaryColor,
+                hourMinuteColor: AppTheme.primaryColor.withOpacity(0.1),
+                hourMinuteTextColor: AppTheme.primaryColor,
+                dialHandColor: AppTheme.primaryColor,
+                dialBackgroundColor: Colors.grey[100],
+                dialTextColor: Colors.black87,
+                entryModeIconColor: AppTheme.primaryColor,
+              ),
+            ),
+            child: child!,
+          ),
+        );
+      },
     );
     if (time != null) {
       setState(() => _selectedTime = time);

@@ -110,6 +110,7 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: AppTheme.primaryColor,
         elevation: 0,
@@ -384,98 +385,97 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
           child: Column(
             crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                constraints: BoxConstraints(maxWidth: (MediaQuery.of(context).size.width * 0.7).clamp(200.0, 280.0)),
-                decoration: BoxDecoration(
-                  color: isMe ? AppTheme.primaryColor : Colors.white,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(20),
-                    topRight: Radius.circular(20),
-                    bottomLeft: Radius.circular(isMe ? 20 : 5),
-                    bottomRight: Radius.circular(isMe ? 5 : 20),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 4,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Reply preview
-                    if (message.replyToMessage != null)
-                      Padding(
-                        padding: EdgeInsets.only(bottom: 6),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 2,
-                              height: 12,
-                              color: isMe ? Colors.white.withOpacity(0.5) : AppTheme.primaryColor,
-                            ),
-                            SizedBox(width: 4),
-                            Flexible(
-                              child: Text(
-                                message.replyToMessage!,
-                                style: TextStyle(
-                                  color: isMe ? Colors.white.withOpacity(0.6) : Colors.grey[600],
-                                  fontSize: 14,
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
+              message.messageType == 'photo' 
+                  ? _buildPhotoMessage(message, isMe)
+                  : message.messageType == 'location'
+                  ? _buildLocationMessage(message, isMe)
+                  : Container(
+                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: isMe ? AppTheme.primaryColor : Colors.white,
+                        borderRadius: BorderRadius.only(
+                          topLeft: Radius.circular(20),
+                          topRight: Radius.circular(20),
+                          bottomLeft: Radius.circular(isMe ? 20 : 5),
+                          bottomRight: Radius.circular(isMe ? 5 : 20),
                         ),
-                      ),
-                    message.messageType == 'location' 
-                        ? _buildLocationMessage(message, isMe)
-                        : message.messageType == 'gif'
-                        ? _buildGifMessage(message, isMe)
-                        : message.messageType == 'photo'
-                        ? _buildPhotoMessage(message, isMe)
-                        : Text(
-                            message.message,
-                            style: TextStyle(
-                              color: isMe ? Colors.white : Colors.black87,
-                              fontSize: 17,
-                              fontWeight: FontWeight.w400,
-                              fontStyle: FontStyle.normal,
-                            ),
-                          ),
-                    SizedBox(height: 4),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          _formatTime(message.timestamp),
-                          style: TextStyle(
-                            color: isMe ? Colors.white70 : Colors.grey[600],
-                            fontSize: 12,
-                          ),
-                        ),
-                        if (isMe) ...[
-                          SizedBox(width: 4),
-                          Icon(
-                            message.photoUrl == 'uploading' ? Icons.access_time :
-                            message.status == 'read' ? Icons.done_all : 
-                            message.status == 'delivered' ? Icons.done_all : Icons.done,
-                            size: 16,
-                            color: message.photoUrl == 'uploading' ? Colors.white70 :
-                                   message.status == 'read' ? Colors.blue : Colors.white70,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
                           ),
                         ],
-                      ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Reply preview
+                          if (message.replyToMessage != null)
+                            Padding(
+                              padding: EdgeInsets.only(bottom: 6),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: 2,
+                                    height: 12,
+                                    color: isMe ? Colors.white.withOpacity(0.5) : AppTheme.primaryColor,
+                                  ),
+                                  SizedBox(width: 4),
+                                  Flexible(
+                                    child: Text(
+                                      message.replyToMessage!,
+                                      style: TextStyle(
+                                        color: isMe ? Colors.white.withOpacity(0.6) : Colors.grey[600],
+                                        fontSize: 14,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          message.messageType == 'gif'
+                              ? _buildGifMessage(message, isMe)
+                              : Text(
+                                  message.message,
+                                  style: TextStyle(
+                                    color: isMe ? Colors.white : Colors.black87,
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w400,
+                                    fontStyle: FontStyle.normal,
+                                  ),
+                                ),
+                          SizedBox(height: 4),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                _formatTime(message.timestamp),
+                                style: TextStyle(
+                                  color: isMe ? Colors.white70 : Colors.grey[600],
+                                  fontSize: 12,
+                                ),
+                              ),
+                              if (isMe) ...[
+                                SizedBox(width: 4),
+                                Icon(
+                                  message.photoUrl == 'uploading' ? Icons.access_time :
+                                  message.status == 'read' ? Icons.done_all : 
+                                  message.status == 'delivered' ? Icons.done_all : Icons.done,
+                                  size: 16,
+                                  color: message.photoUrl == 'uploading' ? Colors.white70 :
+                                         message.status == 'read' ? Colors.blue : Colors.white70,
+                                ),
+                              ],
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
-                ),
-              ),
               // Reactions
               if (message.reactions.isNotEmpty)
                 Container(
@@ -585,19 +585,20 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
   }
 
   Widget _buildMessageInput() {
-    return Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: Offset(0, -2),
-          ),
-        ],
-      ),
-      child: Row(
+    return SafeArea(
+      child: Container(
+        padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.of(context).viewInsets.bottom > 0 ? 16 : 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 4,
+              offset: Offset(0, -2),
+            ),
+          ],
+        ),
+        child: Row(
         children: [
           GestureDetector(
             onTap: _shareLocation,
@@ -686,6 +687,7 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
             ),
           ),
         ],
+        ),
       ),
     );
   }
@@ -1231,37 +1233,122 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
     return GestureDetector(
       onTap: () => _openLocation(message.latitude!, message.longitude!),
       child: Container(
-        padding: EdgeInsets.all(8),
+        width: 250,
+        height: 200,
         decoration: BoxDecoration(
-          color: isMe ? Colors.white.withOpacity(0.1) : Colors.grey[100],
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isMe ? AppTheme.primaryColor : Colors.grey[300]!,
+            width: 2,
+          ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Stack(
           children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.location_on,
-                  color: isMe ? Colors.white : AppTheme.primaryColor,
-                  size: 20,
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                width: 250,
+                height: 200,
+                color: Color(0xFF2C2C2C),
+                child: Stack(
+                  children: [
+                    // Simulated dark map background
+                    Container(
+                      width: 250,
+                      height: 200,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Color(0xFF1A1A1A),
+                            Color(0xFF2C2C2C),
+                            Color(0xFF1F1F1F),
+                          ],
+                        ),
+                      ),
+                    ),
+                    // Road-like patterns
+                    Positioned(
+                      top: 60,
+                      left: 0,
+                      right: 0,
+                      child: Container(
+                        height: 2,
+                        color: Color(0xFF404040),
+                      ),
+                    ),
+                    Positioned(
+                      top: 120,
+                      left: 80,
+                      right: 0,
+                      child: Container(
+                        height: 3,
+                        color: Color(0xFF505050),
+                      ),
+                    ),
+                    // Location marker
+                    Positioned(
+                      top: 85,
+                      left: 115,
+                      child: Container(
+                        width: 20,
+                        height: 20,
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.location_on,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                      ),
+                    ),
+                    // Google logo
+                    Positioned(
+                      bottom: 8,
+                      left: 8,
+                      child: Text(
+                        'Google',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                SizedBox(width: 8),
-                Text(
-                  message.locationName ?? 'Location',
-                  style: TextStyle(
-                    color: isMe ? Colors.white : Colors.black87,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
+              ),
             ),
-            SizedBox(height: 4),
-            Text(
-              'Tap to open in maps',
-              style: TextStyle(
-                color: isMe ? Colors.white70 : Colors.grey[600],
-                fontSize: 12,
+            Positioned(
+              bottom: 8,
+              right: 8,
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.6),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _formatTime(message.timestamp),
+                      style: TextStyle(color: Colors.white, fontSize: 11),
+                    ),
+                    if (isMe) ...[
+                      SizedBox(width: 4),
+                      Icon(
+                        message.status == 'read' ? Icons.done_all : 
+                        message.status == 'delivered' ? Icons.done_all : Icons.done,
+                        size: 12,
+                        color: message.status == 'read' ? Colors.blue : Colors.white70,
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
           ],
@@ -1483,65 +1570,155 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
   Widget _buildPhotoMessage(ChatMessage message, bool isMe) {
     // Always show local photo if available
     if (message.localPhotoPath != null) {
-      return Container(
-        constraints: BoxConstraints(maxWidth: 200, maxHeight: 200),
-        child: Stack(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.file(
-                File(message.localPhotoPath!),
-                width: 200,
-                height: 200,
-                fit: BoxFit.cover,
-              ),
+      return GestureDetector(
+        onTap: () => _showImageViewer(message.localPhotoPath!, isLocal: true),
+        child: Container(
+          constraints: BoxConstraints(maxWidth: 250, maxHeight: 250),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isMe ? AppTheme.primaryColor : Colors.grey[300]!,
+              width: 2,
             ),
-            // Show spinner only during upload
-            if (message.photoUrl == 'uploading')
+          ),
+          child: Stack(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.file(
+                  File(message.localPhotoPath!),
+                  width: 250,
+                  height: 250,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              // Time overlay
               Positioned(
-                top: 8,
+                bottom: 8,
                 right: 8,
                 child: Container(
-                  padding: EdgeInsets.all(4),
+                  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.5),
-                    shape: BoxShape.circle,
+                    color: Colors.black.withOpacity(0.6),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  child: SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _formatTime(message.timestamp),
+                        style: TextStyle(color: Colors.white, fontSize: 11),
+                      ),
+                      if (isMe) ...[
+                        SizedBox(width: 4),
+                        Icon(
+                          message.photoUrl == 'uploading' ? Icons.access_time :
+                          message.status == 'read' ? Icons.done_all : 
+                          message.status == 'delivered' ? Icons.done_all : Icons.done,
+                          size: 12,
+                          color: message.photoUrl == 'uploading' ? Colors.white70 :
+                                 message.status == 'read' ? Colors.blue : Colors.white70,
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ),
-          ],
+              // Show spinner only during upload
+              if (message.photoUrl == 'uploading')
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    padding: EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.5),
+                      shape: BoxShape.circle,
+                    ),
+                    child: SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       );
     }
     
     // Fallback to network image
-    return Container(
-      constraints: BoxConstraints(maxWidth: 200, maxHeight: 200),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Image.network(
-          message.photoUrl!,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => Container(
-            width: 200,
-            height: 100,
-            color: Colors.grey[200],
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.error, color: Colors.grey),
-                Text('Photo not available', style: TextStyle(color: Colors.grey)),
-              ],
-            ),
+    return GestureDetector(
+      onTap: () => _showImageViewer(message.photoUrl!),
+      child: Container(
+        constraints: BoxConstraints(maxWidth: 250, maxHeight: 250),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isMe ? AppTheme.primaryColor : Colors.grey[300]!,
+            width: 2,
           ),
+        ),
+        child: Stack(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.network(
+                message.photoUrl!,
+                width: 250,
+                height: 250,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  width: 250,
+                  height: 250,
+                  color: Colors.grey[200],
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.error, color: Colors.grey),
+                      Text('Photo not available', style: TextStyle(color: Colors.grey)),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            // Time overlay
+            Positioned(
+              bottom: 8,
+              right: 8,
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.6),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _formatTime(message.timestamp),
+                      style: TextStyle(color: Colors.white, fontSize: 11),
+                    ),
+                    if (isMe) ...[
+                      SizedBox(width: 4),
+                      Icon(
+                        message.photoUrl == 'uploading' ? Icons.access_time :
+                        message.status == 'read' ? Icons.done_all : 
+                        message.status == 'delivered' ? Icons.done_all : Icons.done,
+                        size: 12,
+                        color: message.photoUrl == 'uploading' ? Colors.white70 :
+                               message.status == 'read' ? Colors.blue : Colors.white70,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -1560,6 +1737,114 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
     } else {
       return '${difference.inDays}d';
     }
+  }
+  
+  void _showImageViewer(String imagePath, {bool isLocal = false}) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ImageViewerScreen(
+          imagePath: imagePath,
+          isLocal: isLocal,
+        ),
+      ),
+    );
+  }
+}
+
+class ImageViewerScreen extends StatelessWidget {
+  final String imagePath;
+  final bool isLocal;
+  
+  const ImageViewerScreen({
+    super.key,
+    required this.imagePath,
+    this.isLocal = false,
+  });
+  
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        iconTheme: IconThemeData(color: Colors.white),
+        elevation: 0,
+      ),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        child: InteractiveViewer(
+          minScale: 0.5,
+          maxScale: 4.0,
+          child: Center(
+            child: isLocal
+                ? Image.file(
+                    File(imagePath),
+                    width: double.infinity,
+                    height: double.infinity,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      width: double.infinity,
+                      height: double.infinity,
+                      color: Colors.grey[800],
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.error, color: Colors.white, size: 64),
+                          SizedBox(height: 16),
+                          Text(
+                            'Image not available',
+                            style: TextStyle(color: Colors.white, fontSize: 18),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : Image.network(
+                    imagePath,
+                    width: double.infinity,
+                    height: double.infinity,
+                    fit: BoxFit.contain,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        width: double.infinity,
+                        height: double.infinity,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                : null,
+                            color: Colors.white,
+                            strokeWidth: 3,
+                          ),
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      width: double.infinity,
+                      height: double.infinity,
+                      color: Colors.grey[800],
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.error, color: Colors.white, size: 64),
+                          SizedBox(height: 16),
+                          Text(
+                            'Image not available',
+                            style: TextStyle(color: Colors.white, fontSize: 18),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
