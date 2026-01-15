@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'services/notification_service.dart';
 import 'services/user_status_service.dart';
+import 'services/user_service.dart';
 import 'screens/home_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/profile_details_screen.dart';
@@ -46,6 +48,13 @@ void main() async {
   );
   
   await Firebase.initializeApp();
+  
+  // Configure Firebase Auth to disable reCAPTCHA globally
+  await FirebaseAuth.instance.setSettings(
+    appVerificationDisabledForTesting: true,
+    forceRecaptchaFlow: false,
+  );
+  
   await NotificationService.initialize();
   AuthService.initializeDynamicLinks();
   runApp(const MyApp());
@@ -60,7 +69,36 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       navigatorKey: NotificationService.navigatorKey,
       theme: AppTheme.theme,
-      home: SplashScreen(),
+      home: StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return SplashScreen();
+          }
+          
+          if (snapshot.hasData) {
+            // User is signed in
+            return FutureBuilder(
+              future: UserService.getUserProfile(),
+              builder: (context, profileSnapshot) {
+                if (profileSnapshot.connectionState == ConnectionState.waiting) {
+                  return SplashScreen();
+                }
+                
+                final userProfile = profileSnapshot.data;
+                if (userProfile != null && userProfile.firstName.isNotEmpty) {
+                  return const MainNavigation();
+                } else {
+                  return SplashScreen();
+                }
+              },
+            );
+          } else {
+            // No user signed in
+            return SplashScreen();
+          }
+        },
+      ),
       routes: {
         '/home': (context) => const MainNavigation(),
         '/create': (context) => const CreateHangoutScreen(),

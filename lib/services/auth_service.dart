@@ -13,6 +13,13 @@ class AuthService {
   
   static Future<void> sendOTP(String phone) async {
     _phoneNumber = phone;
+    
+    // Configure Firebase Auth to disable reCAPTCHA
+    await FirebaseAuth.instance.setSettings(
+      appVerificationDisabledForTesting: true,
+      forceRecaptchaFlow: false,
+    );
+    
     await FirebaseAuth.instance.verifyPhoneNumber(
       phoneNumber: phone,
       verificationCompleted: (credential) {
