@@ -220,4 +220,51 @@ class HangoutService {
       print('Test notification error: $e');
     }
   }
+  
+  // Debug method to check hangout visibility for a specific user
+  static Future<void> debugHangoutVisibility(String friendUserId) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      print('DEBUG: No authenticated user');
+      return;
+    }
+    
+    try {
+      print('DEBUG: Checking hangout visibility between ${user.uid} and $friendUserId');
+      
+      // Get your hangouts
+      final yourHangouts = await _firestore
+          .collection('hangout_requests')
+          .where('creatorId', isEqualTo: user.uid)
+          .where('status', isEqualTo: 'active')
+          .get();
+      
+      print('DEBUG: You have ${yourHangouts.docs.length} active hangouts');
+      
+      // Get friend's location (you'll need to implement this)
+      final friendDoc = await _firestore.collection('users').doc(friendUserId).get();
+      if (!friendDoc.exists) {
+        print('DEBUG: Friend user not found');
+        return;
+      }
+      
+      // For each of your hangouts, check if friend should see it
+      for (final doc in yourHangouts.docs) {
+        final hangout = HangoutRequest.fromMap(doc.data(), doc.id);
+        print('DEBUG: Checking hangout: ${hangout.title}');
+        print('  - Location: ${hangout.location}');
+        print('  - Coordinates: ${hangout.latitude}, ${hangout.longitude}');
+        print('  - Max distance: ${hangout.maxDistance} km');
+        print('  - Viewed by users: ${hangout.viewedByUsers}');
+        print('  - Friend already viewed: ${hangout.viewedByUsers.contains(friendUserId)}');
+        
+        if (hangout.latitude == null || hangout.longitude == null) {
+          print('  - ISSUE: Missing coordinates!');
+        }
+      }
+      
+    } catch (e) {
+      print('DEBUG: Error checking visibility: $e');
+    }
+  }
 }
