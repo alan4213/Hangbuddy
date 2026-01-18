@@ -425,6 +425,28 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         children: [
                           Row(
                             children: [
+                          Row(
+                            children: [
+                              // Small circular profile photo
+                              Container(
+                                width: 24,
+                                height: 24,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white, width: 1.5),
+                                  image: user.profileImageUrl != null
+                                      ? DecorationImage(
+                                          image: NetworkImage(user.profileImageUrl!),
+                                          fit: BoxFit.cover,
+                                        )
+                                      : null,
+                                  color: user.profileImageUrl == null ? Colors.grey[400] : null,
+                                ),
+                                child: user.profileImageUrl == null
+                                    ? Icon(Icons.person, size: 12, color: Colors.white)
+                                    : null,
+                              ),
+                              const SizedBox(width: 6),
                               Expanded(
                                 child: Text(
                                   "$userName${userAge > 0 ? ', $userAge' : ''}",

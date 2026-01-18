@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../theme/app_theme.dart';
 import '../widgets/loading_widget.dart';
 import '../models/signup_data.dart';
@@ -16,11 +17,37 @@ class DobScreen extends StatefulWidget {
 class _DobScreenState extends State<DobScreen> {
   DateTime? _selectedDate;
   bool _isLoading = false;
+  bool _useTextInput = false;
+  final TextEditingController _dayController = TextEditingController();
+  final TextEditingController _monthController = TextEditingController();
+  final TextEditingController _yearController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _selectedDate = widget.signupData.birthday;
+    if (_selectedDate != null) {
+      _dayController.text = _selectedDate!.day.toString();
+      _monthController.text = _selectedDate!.month.toString();
+      _yearController.text = _selectedDate!.year.toString();
+    }
+  }
+
+  void _updateDateFromText() {
+    final day = int.tryParse(_dayController.text);
+    final month = int.tryParse(_monthController.text);
+    final year = int.tryParse(_yearController.text);
+    
+    if (day != null && month != null && year != null) {
+      try {
+        final date = DateTime(year, month, day);
+        setState(() => _selectedDate = date);
+      } catch (e) {
+        setState(() => _selectedDate = null);
+      }
+    } else {
+      setState(() => _selectedDate = null);
+    }
   }
 
   @override
@@ -72,7 +99,58 @@ class _DobScreenState extends State<DobScreen> {
                   
                   SizedBox(height: MediaQuery.of(context).size.height * 0.06),
                   
-                  // Date of birth
+                  // Toggle between picker and text input
+                  Row(
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() => _useTextInput = false),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            decoration: BoxDecoration(
+                              color: !_useTextInput ? AppTheme.primaryColor : Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              'Date Picker',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: !_useTextInput ? Colors.white : Colors.grey.shade600,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => setState(() => _useTextInput = true),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            decoration: BoxDecoration(
+                              color: _useTextInput ? AppTheme.primaryColor : Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              'Type Date',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: _useTextInput ? Colors.white : Colors.grey.shade600,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Date input
+                  if (!_useTextInput) ...[
+                  // Date picker
                   GestureDetector(
                     onTap: () async {
                       final date = await showDatePicker(
@@ -82,7 +160,12 @@ class _DobScreenState extends State<DobScreen> {
                         lastDate: DateTime.now().subtract(const Duration(days: 6570)),
                       );
                       if (date != null) {
-                        setState(() => _selectedDate = date);
+                        setState(() {
+                          _selectedDate = date;
+                          _dayController.text = date.day.toString();
+                          _monthController.text = date.month.toString();
+                          _yearController.text = date.year.toString();
+                        });
                       }
                     },
                     child: Container(
@@ -108,6 +191,55 @@ class _DobScreenState extends State<DobScreen> {
                       ),
                     ),
                   ),
+                  ] else ..[
+                    // Text input fields
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _dayController,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(2)],
+                            onChanged: (_) => _updateDateFromText(),
+                            decoration: InputDecoration(
+                              labelText: 'Day',
+                              hintText: 'DD',
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextField(
+                            controller: _monthController,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(2)],
+                            onChanged: (_) => _updateDateFromText(),
+                            decoration: InputDecoration(
+                              labelText: 'Month',
+                              hintText: 'MM',
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 2,
+                          child: TextField(
+                            controller: _yearController,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(4)],
+                            onChanged: (_) => _updateDateFromText(),
+                            decoration: InputDecoration(
+                              labelText: 'Year',
+                              hintText: 'YYYY',
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                   
                   if (_selectedDate != null) ...[
                     SizedBox(height: MediaQuery.of(context).size.height * 0.025),
