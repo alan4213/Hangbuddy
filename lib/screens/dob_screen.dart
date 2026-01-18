@@ -191,7 +191,7 @@ class _DobScreenState extends State<DobScreen> {
                       ),
                     ),
                   ),
-                  ] else ..[
+                  ] else ...[
                     // Text input fields
                     Row(
                       children: [

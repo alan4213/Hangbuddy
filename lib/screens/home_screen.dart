@@ -425,8 +425,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                         children: [
                           Row(
                             children: [
-                          Row(
-                            children: [
                               // Small circular profile photo
                               Container(
                                 width: 24,
