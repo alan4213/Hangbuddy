@@ -97,8 +97,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       ).listen((hangouts) async {
         if (mounted) {
           final filtered = await _applyFilters(hangouts);
+          final sorted = await _sortHangoutsByRelevance(filtered);
           setState(() {
-            _hangouts = filtered;
+            _hangouts = sorted;
             _isLoading = false;
           });
         }
@@ -1166,5 +1167,61 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
     
     return result;
+  }
+
+  Future<List<HangoutRequest>> _sortHangoutsByRelevance(List<HangoutRequest> hangouts) async {
+    final currentUser = auth.FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return hangouts;
+
+    // Get current user's interests
+    final userDoc = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(currentUser.uid)
+        .get();
+    
+    final userInterests = userDoc.exists 
+        ? List<String>.from(userDoc.data()?['interests'] ?? [])
+        : <String>[];
+
+    // Calculate relevance score for each hangout
+    final scoredHangouts = <MapEntry<HangoutRequest, double>>[];
+    
+    for (final hangout in hangouts) {
+      double score = 0.0;
+      
+      // Distance score (closer = higher score, max 40 points)
+      final distance = _calculateDistance(hangout.latitude, hangout.longitude);
+      final distanceScore = math.max(0, 40 - distance);
+      score += distanceScore;
+      
+      // Interest match score (max 60 points)
+      final creator = await _getUserData(hangout.creatorId);
+      if (creator?.interests != null) {
+        final creatorInterests = List<String>.from(creator!.interests!);
+        final commonInterests = userInterests.where((interest) => 
+            creatorInterests.contains(interest)).length;
+        final interestScore = (commonInterests / math.max(1, userInterests.length)) * 60;
+        score += interestScore;
+      }
+      
+      // Category match bonus (20 points if user has related interest)
+      if (userInterests.any((interest) => 
+          interest.toLowerCase().contains(hangout.category.toLowerCase()) ||
+          hangout.category.toLowerCase().contains(interest.toLowerCase()))) {
+        score += 20;
+      }
+      
+      // Time relevance (prefer hangouts happening soon, max 10 points)
+      final hoursUntil = hangout.dateTime.difference(DateTime.now()).inHours;
+      final timeScore = hoursUntil <= 24 ? 10 : math.max(0, 10 - (hoursUntil / 24));
+      score += timeScore;
+      
+      scoredHangouts.add(MapEntry(hangout, score));
+    }
+    
+    // Sort by score (highest first)
+    scoredHangouts.sort((a, b) => b.value.compareTo(a.value));
+    
+    return scoredHangouts.map((entry) => entry.key).toList();
   }
 }
