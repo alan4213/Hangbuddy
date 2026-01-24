@@ -31,10 +31,10 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, WidgetsBindingObserver, RouteAware {
-  final Map<String, UserModel> _userCache = {};
+  static final Map<String, UserModel> _userCache = {};
   double _distanceFilter = 40.0;
-  double? _userLatitude;
-  double? _userLongitude;
+  static double? _userLatitude;
+  static double? _userLongitude;
   bool _isGettingLocation = false;
   
   // Filter variables
@@ -42,9 +42,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   String? _genderFilter;
   RangeValues _timeRange = const RangeValues(0, 24);
   
-  // Hangout variables
-  List<HangoutRequest> _hangouts = [];
-  bool _isLoading = true;
+  // Hangout variables - make static to persist across screen recreations
+  static List<HangoutRequest> _hangouts = [];
+  bool _isLoading = false;
   Set<String> _likedHangouts = {};
   
   // Tutorial keys
@@ -61,7 +61,20 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _getCurrentLocation();
+    print('DEBUG: initState - _hangouts.length: ${_hangouts.length}');
+    // Only get location if we don't have it yet
+    if (_userLatitude == null || _userLongitude == null) {
+      print('DEBUG: Getting location for first time');
+      _getCurrentLocation();
+    } else if (_hangouts.isEmpty) {
+      // If we have location but no hangouts, load them
+      print('DEBUG: Have location, loading hangouts');
+      _loadHangouts();
+    } else {
+      // If we have hangouts, load new ones in background
+      print('DEBUG: Have hangouts, loading in background');
+      _loadHangoutsInBackground();
+    }
     _startIdleTimer();
   }
   
@@ -81,8 +94,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   
   @override
   void didPopNext() {
+    print('DEBUG: didPopNext called - _hangouts.length: ${_hangouts.length}, _isLoading: $_isLoading');
     // Refresh silently when returning from other screens
-    _loadHangoutsQuietly();
+    _loadHangoutsInBackground();
     _startIdleTimer();
   }
   
@@ -90,7 +104,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       // Silent refresh when user returns to app
-      _loadHangoutsQuietly();
+      _loadHangoutsInBackground();
       _startIdleTimer();
     } else if (state == AppLifecycleState.paused) {
       _idleTimer?.cancel();
@@ -104,7 +118,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     // Condition 2: Refresh every 3 minutes of idle time
     _idleTimer = Timer.periodic(const Duration(minutes: 3), (timer) {
       if (mounted) {
-        _loadHangoutsQuietly();
+        _loadHangoutsInBackground();
       }
     });
   }
@@ -141,6 +155,40 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     }
   }
 
+  void _loadHangoutsInBackground() async {
+    print('DEBUG: _loadHangoutsInBackground started');
+    final currentUser = auth.FirebaseAuth.instance.currentUser;
+    
+    if (_userLatitude == null || _userLongitude == null) {
+      print('DEBUG: No location data, skipping background load');
+      return;
+    }
+    
+    try {
+      print('DEBUG: Fetching hangouts from service...');
+      final hangouts = await HangoutService.getActiveHangoutRequests(
+        userLatitude: _userLatitude,
+        userLongitude: _userLongitude,
+        maxDistanceFilter: _distanceFilter,
+      ).first;
+      
+      print('DEBUG: Got ${hangouts.length} hangouts from service');
+      
+      if (mounted) {
+        final filtered = await _applyFilters(hangouts);
+        final sorted = await _sortHangoutsByRelevance(filtered);
+        print('DEBUG: Background load complete, updating UI with ${sorted.length} hangouts');
+        // Always update with new hangouts
+        setState(() {
+          _hangouts = sorted;
+        });
+      }
+      
+    } catch (e) {
+      print('ERROR loading hangouts in background: $e');
+    }
+  }
+
   void _loadHangouts() async {
     final currentUser = auth.FirebaseAuth.instance.currentUser;
     
@@ -149,7 +197,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
       return;
     }
     
-    setState(() => _isLoading = true);
+    // Only show loading if we don't have hangouts already
+    if (_hangouts.isEmpty) {
+      setState(() => _isLoading = true);
+    }
+    
     try {
       final hangouts = await HangoutService.getActiveHangoutRequests(
         userLatitude: _userLatitude,
@@ -320,7 +372,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   }
 
   Widget _buildHangoutsList() {
-    if (_isLoading) {
+    print('DEBUG: _buildHangoutsList - _isLoading: $_isLoading, _hangouts.length: ${_hangouts.length}');
+    // Only show loading if we're actually loading AND don't have hangouts yet
+    if (_isLoading && _hangouts.isEmpty) {
+      print('DEBUG: Showing loading widget');
       return const Center(
         child: LoadingWidget(
           message: 'Loading hangouts...',
@@ -424,13 +479,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
       builder: (context, userSnapshot) {
         final user = userSnapshot.data;
         if (user == null) {
+          // Show a minimal placeholder instead of loading widget
           return Container(
             height: 200,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              color: Colors.grey[100],
+              color: Colors.grey[50],
             ),
-            child: const LoadingWidget(message: 'Loading...'),
           );
         }
         
@@ -854,7 +909,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   }
 
   void _getCurrentLocation() async {
-    setState(() => _isGettingLocation = true);
+    setState(() {
+      _isGettingLocation = true;
+      _isLoading = true;
+    });
     
     try {
       final position = await LocationService.getCurrentPosition();
@@ -867,9 +925,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
         _loadHangouts();
       } else {
         print('DEBUG: Failed to get user location');
+        setState(() => _isLoading = false);
       }
     } catch (e) {
       print('ERROR getting location: $e');
+      setState(() => _isLoading = false);
     } finally {
       setState(() => _isGettingLocation = false);
     }
