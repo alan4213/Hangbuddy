@@ -7,8 +7,16 @@ import 'height_screen.dart';
 import '../widgets/progress_bar.dart';
 
 class GenderScreen extends StatefulWidget {
-  final SignupData signupData;
-  const GenderScreen({super.key, required this.signupData});
+  final SignupData? signupData;
+  final String? initialGender;
+  final bool isEditMode;
+  
+  const GenderScreen({
+    super.key, 
+    this.signupData,
+    this.initialGender,
+    this.isEditMode = false,
+  });
 
   @override
   State<GenderScreen> createState() => _GenderScreenState();
@@ -22,7 +30,9 @@ class _GenderScreenState extends State<GenderScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedGender = widget.signupData.gender;
+    _selectedGender = widget.isEditMode 
+        ? widget.initialGender 
+        : widget.signupData?.gender;
   }
 
   @override
@@ -40,7 +50,7 @@ class _GenderScreenState extends State<GenderScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            const ProgressBar(currentStep: 3, totalSteps: 8),
+            if (!widget.isEditMode) const ProgressBar(currentStep: 3, totalSteps: 8),
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.all(Responsive.padding(context, Responsive.largePadding)),
@@ -98,7 +108,7 @@ class _GenderScreenState extends State<GenderScreen> {
               
               LoadingButton(
                 isLoading: _isLoading,
-                text: 'Continue',
+                text: widget.isEditMode ? 'Save' : 'Continue',
                 onPressed: () async {
                   if (_selectedGender == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -107,19 +117,21 @@ class _GenderScreenState extends State<GenderScreen> {
                     return;
                   }
                   
-                  setState(() => _isLoading = true);
-                  
-                  widget.signupData.gender = _selectedGender;
-                  
-                  await Future.delayed(const Duration(milliseconds: 300));
-                  if (mounted) {
-                    setState(() => _isLoading = false);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => HeightScreen(signupData: widget.signupData),
-                      ),
-                    );
+                  if (widget.isEditMode) {
+                    Navigator.pop(context, _selectedGender);
+                  } else {
+                    setState(() => _isLoading = true);
+                    widget.signupData!.gender = _selectedGender;
+                    await Future.delayed(const Duration(milliseconds: 300));
+                    if (mounted) {
+                      setState(() => _isLoading = false);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => HeightScreen(signupData: widget.signupData!),
+                        ),
+                      );
+                    }
                   }
                 },
               ),

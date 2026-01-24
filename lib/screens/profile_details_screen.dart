@@ -7,6 +7,13 @@ import '../services/photo_service.dart';
 import '../models/user_model.dart';
 import '../theme/app_theme.dart';
 import 'edit_photos_screen.dart';
+import 'religion_screen.dart';
+import 'occupation_screen.dart';
+import 'education_screen.dart';
+import 'gender_screen.dart';
+import 'interests_screen.dart';
+import 'height_screen.dart';
+import 'dob_screen.dart';
 
 class ProfileDetailsScreen extends StatefulWidget {
   const ProfileDetailsScreen({super.key});
@@ -40,11 +47,15 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
   final List<String> _occupationOptions = [
     'Student', 'Teacher', 'Engineer', 'Doctor', 'Nurse', 'Lawyer', 
     'Business Owner', 'Marketing', 'Sales', 'Finance', 'IT/Tech', 
-    'Artist', 'Writer', 'Consultant', 'Manager', 'Financial Analyst', 'Other'
+    'Artist', 'Writer', 'Consultant', 'Manager', 'Project Manager', 
+    'Financial Analyst', 'Software Developer', 'Data Analyst', 'Designer',
+    'Accountant', 'Architect', 'Chef', 'Photographer', 'Freelancer',
+    'Entrepreneur', 'Researcher', 'Therapist', 'Real Estate', 'Other'
   ];
   final List<String> _educationOptions = [
     'High School', 'Some College', 'Bachelor\'s Degree', 'Master\'s Degree', 
-    'PhD', 'Trade School', 'Professional Certification', 'Other'
+    'PhD', 'Trade School', 'Professional Certification', 'Associate Degree',
+    'Diploma', 'Other'
   ];
   final List<String> _heightOptions = [
     '4\'0"', '4\'1"', '4\'2"', '4\'3"', '4\'4"', '4\'5"', '4\'6"', '4\'7"', '4\'8"', '4\'9"', '4\'10"', '4\'11"',
@@ -68,12 +79,20 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
           _firstNameController.text = userProfile.firstName;
           _lastNameController.text = userProfile.lastName;
           _selectedDate = userProfile.birthday;
-          _selectedGender = userProfile.gender;
+          
+          // Safely set dropdown values - only if they exist in options
+          _selectedGender = _genderOptions.contains(userProfile.gender) 
+              ? userProfile.gender : null;
+          _selectedReligion = _religionOptions.contains(userProfile.religion) 
+              ? userProfile.religion : null;
+          _selectedOccupation = _occupationOptions.contains(userProfile.occupation) 
+              ? userProfile.occupation : null;
+          _selectedEducation = _educationOptions.contains(userProfile.education) 
+              ? userProfile.education : null;
+          _selectedHeight = _heightOptions.contains(userProfile.height) 
+              ? userProfile.height : null;
+              
           _selectedInterests = userProfile.interests ?? [];
-          _selectedReligion = userProfile.religion;
-          _selectedOccupation = userProfile.occupation;
-          _selectedEducation = userProfile.education;
-          _selectedHeight = userProfile.height;
         });
         // Load current photos after userProfile is set
         _loadCurrentPhotos();
@@ -109,6 +128,221 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
   }
 
   int get _photoCount => _photos.where((photo) => photo != null).length;
+  
+  List<String> get _missingFields {
+    List<String> missing = [];
+    
+    if (_firstNameController.text.isEmpty) missing.add('First Name');
+    if (_lastNameController.text.isEmpty) missing.add('Last Name');
+    if (_selectedGender == null) missing.add('Gender');
+    if (_selectedInterests.length < 3) missing.add('Interests (minimum 3)');
+    if (_selectedDate == null) missing.add('Birthday');
+    if (_selectedReligion == null) missing.add('Religion');
+    if (_selectedOccupation == null) missing.add('Occupation');
+    if (_selectedEducation == null) missing.add('Education');
+    if (_photoCount < 2) missing.add('Photos (minimum 2)');
+    
+    return missing;
+  }
+  
+  int get _profileCompletionPercentage {
+    int completedFields = 0;
+    int totalFields = 9;
+    
+    if (_firstNameController.text.isNotEmpty) completedFields++;
+    if (_lastNameController.text.isNotEmpty) completedFields++;
+    if (_selectedGender != null) completedFields++;
+    if (_selectedInterests.length >= 3) completedFields++;
+    if (_selectedDate != null) completedFields++;
+    if (_selectedReligion != null) completedFields++;
+    if (_selectedOccupation != null) completedFields++;
+    if (_selectedEducation != null) completedFields++;
+    if (_photoCount >= 2) completedFields++;
+    
+    return ((completedFields / totalFields) * 100).round();
+  }
+  
+  String get _completionMessage {
+    final percentage = _profileCompletionPercentage;
+    if (percentage == 100) return "🎉 Your profile is complete!";
+    if (percentage >= 80) return "Almost there! Just a few more details";
+    if (percentage >= 60) return "Looking good! Keep going";
+    if (percentage >= 40) return "Great start! Let's add more info";
+    return "Let's build your amazing profile";
+  }
+  
+  void _showMissingFields() {
+    final missing = _missingFields;
+    if (missing.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('🎉 Your profile is 100% complete!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      return;
+    }
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Complete Your Profile'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Missing fields:'),
+            const SizedBox(height: 12),
+            ...missing.map((field) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  Icon(Icons.circle, size: 6, color: Colors.red),
+                  const SizedBox(width: 8),
+                  Expanded(child: Text(field)),
+                ],
+              ),
+            )),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  IconData _getInterestIcon(String interest) {
+    switch (interest.toLowerCase()) {
+      case 'travel':
+        return Icons.flight;
+      case 'photography':
+        return Icons.camera_alt;
+      case 'cooking':
+        return Icons.restaurant;
+      case 'wine':
+        return Icons.wine_bar;
+      case 'coffee':
+        return Icons.local_cafe;
+      case 'tea':
+        return Icons.emoji_food_beverage;
+      case 'hiking':
+        return Icons.hiking;
+      case 'running':
+        return Icons.directions_run;
+      case 'yoga':
+        return Icons.self_improvement;
+      case 'gym':
+        return Icons.fitness_center;
+      case 'crossfit':
+        return Icons.sports_gymnastics;
+      case 'cycling':
+        return Icons.directions_bike;
+      case 'swimming':
+        return Icons.pool;
+      case 'rock climbing':
+        return Icons.terrain;
+      case 'skiing':
+        return Icons.downhill_skiing;
+      case 'surfing':
+        return Icons.surfing;
+      case 'dancing':
+        return Icons.music_note;
+      case 'music':
+        return Icons.music_note;
+      case 'concerts':
+        return Icons.library_music;
+      case 'festivals':
+        return Icons.celebration;
+      case 'art':
+        return Icons.palette;
+      case 'museums':
+        return Icons.museum;
+      case 'theater':
+        return Icons.theater_comedy;
+      case 'movies':
+        return Icons.movie;
+      case 'netflix':
+        return Icons.tv;
+      case 'reading':
+        return Icons.menu_book;
+      case 'writing':
+        return Icons.edit;
+      case 'podcasts':
+        return Icons.podcasts;
+      case 'gaming':
+        return Icons.sports_esports;
+      case 'board games':
+        return Icons.casino;
+      case 'trivia':
+        return Icons.quiz;
+      case 'karaoke':
+        return Icons.mic;
+      case 'comedy shows':
+        return Icons.sentiment_very_satisfied;
+      case 'food tours':
+        return Icons.tour;
+      case 'brunch':
+        return Icons.brunch_dining;
+      case 'fine dining':
+        return Icons.restaurant_menu;
+      case 'street food':
+        return Icons.local_dining;
+      case 'baking':
+        return Icons.cake;
+      case 'gardening':
+        return Icons.local_florist;
+      case 'diy projects':
+        return Icons.build;
+      case 'volunteering':
+        return Icons.volunteer_activism;
+      case 'meditation':
+        return Icons.spa;
+      case 'fashion':
+        return Icons.checkroom;
+      case 'shopping':
+        return Icons.shopping_bag;
+      case 'thrifting':
+        return Icons.store;
+      case 'vintage':
+        return Icons.history;
+      case 'sustainability':
+        return Icons.eco;
+      case 'technology':
+        return Icons.computer;
+      case 'startups':
+        return Icons.rocket_launch;
+      case 'investing':
+        return Icons.trending_up;
+      case 'real estate':
+        return Icons.home;
+      case 'dogs':
+        return Icons.pets;
+      case 'cats':
+        return Icons.pets;
+      case 'animals':
+        return Icons.pets;
+      case 'nature':
+        return Icons.nature;
+      case 'beach':
+        return Icons.beach_access;
+      case 'mountains':
+        return Icons.landscape;
+      case 'road trips':
+        return Icons.directions_car;
+      case 'backpacking':
+        return Icons.backpack;
+      case 'camping':
+        return Icons.cabin;
+      case 'adventure sports':
+        return Icons.sports;
+      default:
+        return Icons.favorite;
+    }
+  }
   
   void _showAddInterestDialog() {
     final TextEditingController controller = TextEditingController();
@@ -154,107 +388,221 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Stack(
-        children: [
-          SafeArea(
-            child: Column(
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: AppTheme.primaryColor),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: const Text(
+          'Profile Details',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: ElevatedButton(
+              onPressed: _isLoading ? null : _saveProfile,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              ),
+              child: _isLoading
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : const Text(
+                    'Save',
+                    style: TextStyle(color: Colors.white),
+                  ),
+            ),
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
+            // Profile Completion Status
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24),
+              margin: const EdgeInsets.only(bottom: 24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: AppTheme.primaryColor.withOpacity(0.2),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 15,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: Column(
                 children: [
-                  IconButton(
-                    icon: Icon(Icons.arrow_back, color: AppTheme.primaryColor),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  const Text(
-                    'Profile Details',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const Spacer(),
-                  ElevatedButton(
-                    onPressed: _isLoading ? null : _saveProfile,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryColor,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    ),
-                    child: _isLoading
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
+                  Row(
+                    children: [
+                      Container(
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: AppTheme.primaryColor,
+                            width: 2,
                           ),
-                        )
-                      : const Text(
-                          'Save',
-                          style: TextStyle(color: Colors.white),
                         ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(25),
+                          child: _userProfile?.profileImageUrl != null
+                              ? Image.network(
+                                  _userProfile!.profileImageUrl!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      color: Colors.grey[200],
+                                      child: Icon(
+                                        Icons.person,
+                                        color: Colors.grey[600],
+                                        size: 24,
+                                      ),
+                                    );
+                                  },
+                                )
+                              : Container(
+                                  color: Colors.grey[200],
+                                  child: Icon(
+                                    Icons.person,
+                                    color: Colors.grey[600],
+                                    size: 24,
+                                  ),
+                                ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              _completionMessage,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.textPrimary,
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            if (_profileCompletionPercentage < 100)
+                              Text(
+                                'Complete missing fields below',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: AppTheme.textSecondary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppTheme.primaryColor.withOpacity(0.3),
+                          ),
+                        ),
+                        child: Text(
+                          '${_profileCompletionPercentage}%',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: AppTheme.primaryColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Stack(
+                    children: [
+                      Container(
+                        height: 12,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[200],
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                      ),
+                      Container(
+                        height: 12,
+                        width: MediaQuery.of(context).size.width * 0.8 * (_profileCompletionPercentage / 100),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AppTheme.primaryColor,
+                              AppTheme.primaryColor.withOpacity(0.8),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(6),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.primaryColor.withOpacity(0.3),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-            // Profile Image Section
-            Center(
-              child: Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  border: Border.all(color: AppTheme.primaryColor, width: 3),
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.primaryColor.withOpacity(0.1),
-                      blurRadius: 15,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(60),
-                  child: _userProfile?.profileImageUrl != null
-                      ? Image.network(
-                          _userProfile!.profileImageUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              color: Colors.grey[200],
-                              child: const Icon(
-                                Icons.person,
-                                size: 60,
-                                color: Colors.grey,
-                              ),
-                            );
-                          },
-                        )
-                      : Container(
-                          color: Colors.grey[200],
-                          child: const Icon(
-                            Icons.person,
-                            size: 60,
-                            color: Colors.grey,
-                          ),
-                        ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 40),
 
             // Photos Section
+            Row(
+              children: [
+                Text(
+                  'Photos',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: AppTheme.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (_photoCount < 2)
+                  const SizedBox(width: 8),
+                if (_photoCount < 2)
+                  Icon(
+                    Icons.error,
+                    color: Colors.red,
+                    size: 18,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -390,173 +738,385 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
               label: 'Last Name',
               controller: _lastNameController,
               icon: Icons.person_outline,
+              isIncomplete: _lastNameController.text.isEmpty,
             ),
 
             const SizedBox(height: 24),
 
             // Gender Field
-            _buildSectionTitle('I am a'),
-            _buildDropdownField(
-              value: _selectedGender,
-              hint: 'Select gender',
-              items: _genderOptions,
-              onChanged: (value) => setState(() => _selectedGender = value),
-              icon: Icons.people_outline,
+            _buildSectionTitle('I am a', isIncomplete: _selectedGender == null),
+            GestureDetector(
+              onTap: () async {
+                final result = await Navigator.push<String>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => GenderScreen(
+                      initialGender: _selectedGender,
+                      isEditMode: true,
+                    ),
+                  ),
+                );
+                if (result != null) {
+                  setState(() => _selectedGender = result);
+                }
+              },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.people_outline, color: AppTheme.primaryColor),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        _selectedGender ?? 'Select gender',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: _selectedGender != null ? AppTheme.textPrimary : Colors.grey[600],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    Icon(Icons.arrow_forward_ios, color: Colors.grey[400], size: 16),
+                  ],
+                ),
+              ),
             ),
 
             const SizedBox(height: 24),
 
             // Interests Field
-            _buildSectionTitle('Interests'),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
+            _buildSectionTitle('Interests', isIncomplete: _selectedInterests.length < 3),
+            GestureDetector(
+              onTap: () async {
+                final result = await Navigator.push<List<String>>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => InterestsScreen(
+                      initialInterests: _selectedInterests,
+                      isEditMode: true,
+                    ),
                   ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Display selected interests
-                  if (_selectedInterests.isNotEmpty) ...[
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: _selectedInterests.map((interest) {
-                        return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primaryColor,
-                            borderRadius: BorderRadius.circular(20),
+                );
+                if (result != null) {
+                  setState(() => _selectedInterests = result);
+                }
+              },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.favorite, color: AppTheme.primaryColor),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Tap to edit interests',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: AppTheme.textPrimary,
+                            fontWeight: FontWeight.w500,
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                interest,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              GestureDetector(
-                                onTap: () {
-                                  setState(() {
-                                    _selectedInterests.remove(interest);
-                                  });
-                                },
-                                child: const Icon(
-                                  Icons.close,
+                        ),
+                        const Spacer(),
+                        Icon(Icons.arrow_forward_ios, color: Colors.grey[400], size: 16),
+                      ],
+                    ),
+                    if (_selectedInterests.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: _selectedInterests.map((interest) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryColor,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  _getInterestIcon(interest),
                                   color: Colors.white,
                                   size: 16,
                                 ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                  
-                  // Add interest button
-                  GestureDetector(
-                    onTap: _showAddInterestDialog,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.grey[300]!),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.add,
-                            color: AppTheme.primaryColor,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Add Interest',
-                            style: TextStyle(
-                              color: AppTheme.primaryColor,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
+                                const SizedBox(width: 6),
+                                Text(
+                                  interest,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
+                          );
+                        }).toList(),
                       ),
-                    ),
-                  ),
-                ],
+                    ],
+                  ],
+                ),
               ),
             ),
 
             const SizedBox(height: 24),
 
             // Religion Field
-            _buildSectionTitle('Religion'),
-            _buildDropdownField(
-              value: _selectedReligion,
-              hint: 'Select religion',
-              items: _religionOptions,
-              onChanged: (value) => setState(() => _selectedReligion = value),
-              icon: Icons.church_outlined,
+            _buildSectionTitle('Religion', isIncomplete: _selectedReligion == null),
+            GestureDetector(
+              onTap: () async {
+                final result = await Navigator.push<String>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ReligionScreen(
+                      initialReligion: _selectedReligion,
+                      isEditMode: true,
+                    ),
+                  ),
+                );
+                if (result != null) {
+                  setState(() => _selectedReligion = result);
+                }
+              },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.church_outlined, color: AppTheme.primaryColor),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        _selectedReligion ?? 'Select religion',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: _selectedReligion != null ? AppTheme.textPrimary : Colors.grey[600],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    Icon(Icons.arrow_forward_ios, color: Colors.grey[400], size: 16),
+                  ],
+                ),
+              ),
             ),
 
             const SizedBox(height: 24),
 
             // Occupation Field
-            _buildSectionTitle('Occupation'),
-            _buildDropdownField(
-              value: _selectedOccupation,
-              hint: 'Select occupation',
-              items: _occupationOptions,
-              onChanged: (value) => setState(() => _selectedOccupation = value),
-              icon: Icons.work_outline,
+            _buildSectionTitle('Occupation', isIncomplete: _selectedOccupation == null),
+            GestureDetector(
+              onTap: () async {
+                final result = await Navigator.push<String>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => OccupationScreen(
+                      initialOccupation: _selectedOccupation,
+                      isEditMode: true,
+                    ),
+                  ),
+                );
+                if (result != null) {
+                  setState(() => _selectedOccupation = result);
+                }
+              },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.work_outline, color: AppTheme.primaryColor),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        _selectedOccupation ?? 'Select occupation',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: _selectedOccupation != null ? AppTheme.textPrimary : Colors.grey[600],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    Icon(Icons.arrow_forward_ios, color: Colors.grey[400], size: 16),
+                  ],
+                ),
+              ),
             ),
 
             const SizedBox(height: 24),
 
             // Education Field
-            _buildSectionTitle('Education'),
-            _buildDropdownField(
-              value: _selectedEducation,
-              hint: 'Select education',
-              items: _educationOptions,
-              onChanged: (value) => setState(() => _selectedEducation = value),
-              icon: Icons.school_outlined,
+            _buildSectionTitle('Education', isIncomplete: _selectedEducation == null),
+            GestureDetector(
+              onTap: () async {
+                final result = await Navigator.push<String>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EducationScreen(
+                      initialEducation: _selectedEducation,
+                      isEditMode: true,
+                    ),
+                  ),
+                );
+                if (result != null) {
+                  setState(() => _selectedEducation = result);
+                }
+              },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.school_outlined, color: AppTheme.primaryColor),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        _selectedEducation ?? 'Select education',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: _selectedEducation != null ? AppTheme.textPrimary : Colors.grey[600],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    Icon(Icons.arrow_forward_ios, color: Colors.grey[400], size: 16),
+                  ],
+                ),
+              ),
             ),
 
             const SizedBox(height: 24),
 
             // Height Field
-            _buildSectionTitle('Height'),
-            _buildDropdownField(
-              value: _selectedHeight,
-              hint: _selectedHeight ?? 'Select height',
-              items: _heightOptions,
-              onChanged: (value) => setState(() => _selectedHeight = value),
-              icon: Icons.height,
+            _buildSectionTitle('Height', isIncomplete: _selectedHeight == null),
+            GestureDetector(
+              onTap: () async {
+                final result = await Navigator.push<String>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => HeightScreen(
+                      initialHeight: _selectedHeight,
+                      isEditMode: true,
+                    ),
+                  ),
+                );
+                if (result != null) {
+                  setState(() => _selectedHeight = result);
+                }
+              },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.height, color: AppTheme.primaryColor),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        _selectedHeight ?? 'Select height',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: _selectedHeight != null ? AppTheme.textPrimary : Colors.grey[600],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    Icon(Icons.arrow_forward_ios, color: Colors.grey[400], size: 16),
+                  ],
+                ),
+              ),
             ),
 
             const SizedBox(height: 24),
 
             // Birthday Field
+            _buildSectionTitle('Birthday', isIncomplete: _selectedDate == null),
             GestureDetector(
-              onTap: _selectBirthday,
+              onTap: () async {
+                final result = await Navigator.push<DateTime>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => DobScreen(
+                      initialDate: _selectedDate,
+                      isEditMode: true,
+                    ),
+                  ),
+                );
+                if (result != null) {
+                  setState(() => _selectedDate = result);
+                }
+              },
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                 decoration: BoxDecoration(
@@ -578,15 +1138,18 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                       size: 20,
                     ),
                     const SizedBox(width: 12),
-                    Text(
-                      _selectedDate != null 
-                          ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'
-                          : 'Choose birthday date',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: _selectedDate != null ? Colors.black : Colors.grey,
+                    Expanded(
+                      child: Text(
+                        _selectedDate != null 
+                            ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'
+                            : 'Choose birthday date',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: _selectedDate != null ? Colors.black : Colors.grey,
+                        ),
                       ),
                     ),
+                    Icon(Icons.arrow_forward_ios, color: Colors.grey[400], size: 16),
                   ],
                 ),
               ),
@@ -595,15 +1158,8 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
             const SizedBox(height: 24),
             
             const SizedBox(height: 100),
-                  ],
-                ),
-              ),
-            ),
           ],
-            ),
-          ),
-
-        ],
+        ),
       ),
     );
   }
@@ -741,16 +1297,28 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
     super.dispose();
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(String title, {bool isIncomplete = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 16,
-          color: AppTheme.textPrimary,
-          fontWeight: FontWeight.w600,
-        ),
+      child: Row(
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 16,
+              color: AppTheme.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          if (isIncomplete)
+            const SizedBox(width: 8),
+          if (isIncomplete)
+            Icon(
+              Icons.error,
+              color: Colors.red,
+              size: 18,
+            ),
+        ],
       ),
     );
   }
@@ -759,11 +1327,12 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
     required String label,
     required TextEditingController controller,
     required IconData icon,
+    bool isIncomplete = false,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle(label),
+        _buildSectionTitle(label, isIncomplete: isIncomplete),
         Container(
           decoration: BoxDecoration(
             color: Colors.white,

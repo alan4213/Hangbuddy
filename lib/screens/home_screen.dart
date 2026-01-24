@@ -30,7 +30,7 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, WidgetsBindingObserver, RouteAware {
   final Map<String, UserModel> _userCache = {};
   double _distanceFilter = 40.0;
   double? _userLatitude;
@@ -52,31 +52,66 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   final GlobalKey _createButtonKey = GlobalKey();
   bool _showTutorial = false;
   
-  // Auto-refresh timer
-  Timer? _refreshTimer;
+  // Refresh timers
+  Timer? _idleTimer;
+  DateTime _lastInteraction = DateTime.now();
+  static final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _getCurrentLocation();
+    _startIdleTimer();
   }
   
-  void _checkAndShowTutorial() async {
-    final isCompleted = await TutorialService.isTutorialCompleted('home_screen');
-    if (!isCompleted && !_isLoading && _hangouts.isNotEmpty && mounted && !_showTutorial) {
-      Future.delayed(const Duration(milliseconds: 500), () {
-        if (mounted && !_showTutorial) {
-          setState(() {
-            _showTutorial = true;
-          });
-        }
-      });
-    }
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)! as PageRoute);
   }
   
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    routeObserver.unsubscribe(this);
+    _idleTimer?.cancel();
     super.dispose();
+  }
+  
+  @override
+  void didPopNext() {
+    // Refresh when returning from other screens
+    _loadHangouts();
+    _startIdleTimer();
+  }
+  
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // Condition 1: Refresh when user returns to app
+      _loadHangouts();
+      _startIdleTimer();
+    } else if (state == AppLifecycleState.paused) {
+      _idleTimer?.cancel();
+    }
+  }
+  
+  void _startIdleTimer() {
+    _idleTimer?.cancel();
+    _lastInteraction = DateTime.now();
+    
+    // Condition 2: Refresh every 3 minutes of idle time
+    _idleTimer = Timer.periodic(const Duration(minutes: 3), (timer) {
+      if (mounted) {
+        _loadHangouts();
+      }
+    });
+  }
+  
+  void _resetIdleTimer() {
+    _lastInteraction = DateTime.now();
+    _startIdleTimer();
   }
   
   void _loadHangouts() async {
@@ -89,21 +124,21 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     
     setState(() => _isLoading = true);
     try {
-      // Use real-time stream instead of periodic refresh
-      HangoutService.getActiveHangoutRequests(
+      // Convert stream to single read
+      final hangouts = await HangoutService.getActiveHangoutRequests(
         userLatitude: _userLatitude,
         userLongitude: _userLongitude,
         maxDistanceFilter: _distanceFilter,
-      ).listen((hangouts) async {
-        if (mounted) {
-          final filtered = await _applyFilters(hangouts);
-          final sorted = await _sortHangoutsByRelevance(filtered);
-          setState(() {
-            _hangouts = sorted;
-            _isLoading = false;
-          });
-        }
-      });
+      ).first; // Get first emission from stream
+      
+      if (mounted) {
+        final filtered = await _applyFilters(hangouts);
+        final sorted = await _sortHangoutsByRelevance(filtered);
+        setState(() {
+          _hangouts = sorted;
+          _isLoading = false;
+        });
+      }
       
     } catch (e) {
       print('ERROR loading hangouts: $e');
@@ -269,72 +304,90 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     }
     
     if (_hangouts.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE8F4F8),
-                borderRadius: BorderRadius.circular(100),
-              ),
-              child: const Icon(
-                Icons.add_circle_outline,
-                size: 80,
-                color: Color(0xFF6B7280),
+      return RefreshIndicator(
+        onRefresh: () async {
+          _resetIdleTimer();
+          await Future.delayed(const Duration(milliseconds: 500));
+          _loadHangouts();
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height - 200,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 200,
+                    height: 200,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE8F4F8),
+                      borderRadius: BorderRadius.circular(100),
+                    ),
+                    child: const Icon(
+                      Icons.add_circle_outline,
+                      size: 80,
+                      color: Color(0xFF6B7280),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Looking for company?',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Check back later or create your own hangout',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pushNamed(context, '/create'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryColor,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    ),
+                    child: const Text(
+                      'Create Hangout',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 24),
-            const Text(
-              'Looking for company?',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Check back later or create your own hangout',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () => Navigator.pushNamed(context, '/create'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryColor,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              ),
-              child: const Text(
-                'Create Hangout',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-              ),
-            ),
-          ],
+          ),
         ),
       );
     }
     
     return RefreshIndicator(
       onRefresh: () async {
+        _resetIdleTimer(); // Reset idle timer on manual refresh
         await Future.delayed(const Duration(milliseconds: 500));
         _loadHangouts();
       },
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: _hangouts.length,
-        itemBuilder: (context, index) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: _buildHangoutCard(_hangouts[index]),
-          );
-        },
+      child: GestureDetector(
+        onTap: _resetIdleTimer, // Reset timer on any interaction
+        onPanDown: (_) => _resetIdleTimer(),
+        child: ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: _hangouts.length,
+          itemBuilder: (context, index) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: _buildHangoutCard(_hangouts[index]),
+            );
+          },
+        ),
       ),
     );
   }
@@ -819,6 +872,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   void _showDistanceFilter() {
+    _resetIdleTimer(); // Reset timer on filter interaction
     showDialog(
       context: context,
       builder: (context) => Dialog(

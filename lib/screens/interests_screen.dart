@@ -6,8 +6,16 @@ import 'photos_screen.dart';
 import '../widgets/progress_bar.dart';
 
 class InterestsScreen extends StatefulWidget {
-  final SignupData signupData;
-  const InterestsScreen({super.key, required this.signupData});
+  final SignupData? signupData;
+  final List<String>? initialInterests;
+  final bool isEditMode;
+  
+  const InterestsScreen({
+    super.key, 
+    this.signupData,
+    this.initialInterests,
+    this.isEditMode = false,
+  });
 
   @override
   State<InterestsScreen> createState() => _InterestsScreenState();
@@ -32,10 +40,143 @@ class _InterestsScreenState extends State<InterestsScreen> {
   final Set<String> _selectedInterests = {};
   bool _isLoading = false;
 
+  IconData _getInterestIcon(String interest) {
+    switch (interest.toLowerCase()) {
+      case 'travel':
+        return Icons.flight;
+      case 'photography':
+        return Icons.camera_alt;
+      case 'cooking':
+        return Icons.restaurant;
+      case 'wine':
+        return Icons.wine_bar;
+      case 'coffee':
+        return Icons.local_cafe;
+      case 'tea':
+        return Icons.emoji_food_beverage;
+      case 'hiking':
+        return Icons.hiking;
+      case 'running':
+        return Icons.directions_run;
+      case 'yoga':
+        return Icons.self_improvement;
+      case 'gym':
+        return Icons.fitness_center;
+      case 'crossfit':
+        return Icons.sports_gymnastics;
+      case 'cycling':
+        return Icons.directions_bike;
+      case 'swimming':
+        return Icons.pool;
+      case 'rock climbing':
+        return Icons.terrain;
+      case 'skiing':
+        return Icons.downhill_skiing;
+      case 'surfing':
+        return Icons.surfing;
+      case 'dancing':
+        return Icons.music_note;
+      case 'music':
+        return Icons.music_note;
+      case 'concerts':
+        return Icons.library_music;
+      case 'festivals':
+        return Icons.celebration;
+      case 'art':
+        return Icons.palette;
+      case 'museums':
+        return Icons.museum;
+      case 'theater':
+        return Icons.theater_comedy;
+      case 'movies':
+        return Icons.movie;
+      case 'netflix':
+        return Icons.tv;
+      case 'reading':
+        return Icons.menu_book;
+      case 'writing':
+        return Icons.edit;
+      case 'podcasts':
+        return Icons.podcasts;
+      case 'gaming':
+        return Icons.sports_esports;
+      case 'board games':
+        return Icons.casino;
+      case 'trivia':
+        return Icons.quiz;
+      case 'karaoke':
+        return Icons.mic;
+      case 'comedy shows':
+        return Icons.sentiment_very_satisfied;
+      case 'food tours':
+        return Icons.tour;
+      case 'brunch':
+        return Icons.brunch_dining;
+      case 'fine dining':
+        return Icons.restaurant_menu;
+      case 'street food':
+        return Icons.local_dining;
+      case 'baking':
+        return Icons.cake;
+      case 'gardening':
+        return Icons.local_florist;
+      case 'diy projects':
+        return Icons.build;
+      case 'volunteering':
+        return Icons.volunteer_activism;
+      case 'meditation':
+        return Icons.spa;
+      case 'fashion':
+        return Icons.checkroom;
+      case 'shopping':
+        return Icons.shopping_bag;
+      case 'thrifting':
+        return Icons.store;
+      case 'vintage':
+        return Icons.history;
+      case 'sustainability':
+        return Icons.eco;
+      case 'technology':
+        return Icons.computer;
+      case 'startups':
+        return Icons.rocket_launch;
+      case 'investing':
+        return Icons.trending_up;
+      case 'real estate':
+        return Icons.home;
+      case 'dogs':
+        return Icons.pets;
+      case 'cats':
+        return Icons.pets;
+      case 'animals':
+        return Icons.pets;
+      case 'nature':
+        return Icons.nature;
+      case 'beach':
+        return Icons.beach_access;
+      case 'mountains':
+        return Icons.landscape;
+      case 'road trips':
+        return Icons.directions_car;
+      case 'backpacking':
+        return Icons.backpack;
+      case 'camping':
+        return Icons.cabin;
+      case 'adventure sports':
+        return Icons.sports;
+      default:
+        return Icons.favorite;
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    _selectedInterests.addAll(widget.signupData.interests);
+    if (widget.isEditMode && widget.initialInterests != null) {
+      _selectedInterests.addAll(widget.initialInterests!);
+    } else if (widget.signupData?.interests != null) {
+      _selectedInterests.addAll(widget.signupData!.interests);
+    }
   }
 
   @override
@@ -53,7 +194,7 @@ class _InterestsScreenState extends State<InterestsScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            const ProgressBar(currentStep: 8, totalSteps: 8),
+            if (!widget.isEditMode) const ProgressBar(currentStep: 8, totalSteps: 8),
             Expanded(
               child: Padding(
                 padding: EdgeInsets.all(MediaQuery.of(context).size.width * 0.08),
@@ -110,13 +251,27 @@ class _InterestsScreenState extends State<InterestsScreen> {
                           ),
                         ),
                         child: Center(
-                          child: Text(
-                            interest,
-                            style: TextStyle(
-                              color: isSelected ? Colors.white : AppTheme.textPrimary,
-                              fontWeight: FontWeight.w500,
-                              fontSize: MediaQuery.of(context).size.width * 0.035,
-                            ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                _getInterestIcon(interest),
+                                color: isSelected ? Colors.white : AppTheme.primaryColor,
+                                size: MediaQuery.of(context).size.width * 0.04,
+                              ),
+                              SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  interest,
+                                  style: TextStyle(
+                                    color: isSelected ? Colors.white : AppTheme.textPrimary,
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: MediaQuery.of(context).size.width * 0.035,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -140,7 +295,7 @@ class _InterestsScreenState extends State<InterestsScreen> {
               
               LoadingButton(
                 isLoading: _isLoading,
-                text: 'Continue',
+                text: widget.isEditMode ? 'Save' : 'Continue',
                 onPressed: () async {
                   if (_selectedInterests.length < 3) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -149,19 +304,21 @@ class _InterestsScreenState extends State<InterestsScreen> {
                     return;
                   }
                   
-                  setState(() => _isLoading = true);
-                  
-                  widget.signupData.interests = _selectedInterests.toList();
-                  
-                  await Future.delayed(const Duration(milliseconds: 300));
-                  if (mounted) {
-                    setState(() => _isLoading = false);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => PhotosScreen(signupData: widget.signupData),
-                      ),
-                    );
+                  if (widget.isEditMode) {
+                    Navigator.pop(context, _selectedInterests.toList());
+                  } else {
+                    setState(() => _isLoading = true);
+                    widget.signupData!.interests = _selectedInterests.toList();
+                    await Future.delayed(const Duration(milliseconds: 300));
+                    if (mounted) {
+                      setState(() => _isLoading = false);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => PhotosScreen(signupData: widget.signupData!),
+                        ),
+                      );
+                    }
                   }
                 },
               ),

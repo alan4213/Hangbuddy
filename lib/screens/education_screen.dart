@@ -7,8 +7,16 @@ import '../widgets/progress_bar.dart';
 
 
 class EducationScreen extends StatefulWidget {
-  final SignupData signupData;
-  const EducationScreen({super.key, required this.signupData});
+  final SignupData? signupData;
+  final String? initialEducation;
+  final bool isEditMode;
+  
+  const EducationScreen({
+    super.key, 
+    this.signupData,
+    this.initialEducation,
+    this.isEditMode = false,
+  });
 
   @override
   State<EducationScreen> createState() => _EducationScreenState();
@@ -24,7 +32,9 @@ class _EducationScreenState extends State<EducationScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedEducation = widget.signupData.education;
+    _selectedEducation = widget.isEditMode 
+        ? widget.initialEducation 
+        : widget.signupData?.education;
   }
 
   @override
@@ -42,7 +52,7 @@ class _EducationScreenState extends State<EducationScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            const ProgressBar(currentStep: 5, totalSteps: 8),
+            if (!widget.isEditMode) const ProgressBar(currentStep: 5, totalSteps: 8),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(32),
@@ -100,7 +110,7 @@ class _EducationScreenState extends State<EducationScreen> {
               
               LoadingButton(
                 isLoading: _isLoading,
-                text: 'Continue',
+                text: widget.isEditMode ? 'Save' : 'Continue',
                 onPressed: () async {
                   if (_selectedEducation == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -109,19 +119,21 @@ class _EducationScreenState extends State<EducationScreen> {
                     return;
                   }
                   
-                  setState(() => _isLoading = true);
-                  
-                  widget.signupData.education = _selectedEducation!;
-                  
-                  await Future.delayed(const Duration(milliseconds: 300));
-                  if (mounted) {
-                    setState(() => _isLoading = false);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => OccupationScreen(signupData: widget.signupData),
-                      ),
-                    );
+                  if (widget.isEditMode) {
+                    Navigator.pop(context, _selectedEducation);
+                  } else {
+                    setState(() => _isLoading = true);
+                    widget.signupData!.education = _selectedEducation!;
+                    await Future.delayed(const Duration(milliseconds: 300));
+                    if (mounted) {
+                      setState(() => _isLoading = false);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => OccupationScreen(signupData: widget.signupData!),
+                        ),
+                      );
+                    }
                   }
                 },
               ),

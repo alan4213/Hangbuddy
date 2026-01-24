@@ -6,8 +6,16 @@ import 'ethnicity_screen.dart';
 import '../widgets/progress_bar.dart';
 
 class HeightScreen extends StatefulWidget {
-  final SignupData signupData;
-  const HeightScreen({super.key, required this.signupData});
+  final SignupData? signupData;
+  final String? initialHeight;
+  final bool isEditMode;
+  
+  const HeightScreen({
+    super.key, 
+    this.signupData,
+    this.initialHeight,
+    this.isEditMode = false,
+  });
 
   @override
   State<HeightScreen> createState() => _HeightScreenState();
@@ -25,7 +33,9 @@ class _HeightScreenState extends State<HeightScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedHeight = widget.signupData.height;
+    _selectedHeight = widget.isEditMode 
+        ? widget.initialHeight 
+        : widget.signupData?.height;
   }
 
   @override
@@ -43,7 +53,7 @@ class _HeightScreenState extends State<HeightScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            const ProgressBar(currentStep: 4, totalSteps: 8),
+            if (!widget.isEditMode) const ProgressBar(currentStep: 4, totalSteps: 8),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(32),
@@ -129,7 +139,7 @@ class _HeightScreenState extends State<HeightScreen> {
               
               LoadingButton(
                 isLoading: _isLoading,
-                text: 'Continue',
+                text: widget.isEditMode ? 'Save' : 'Continue',
                 onPressed: () async {
                   if (_selectedHeight == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -138,19 +148,21 @@ class _HeightScreenState extends State<HeightScreen> {
                     return;
                   }
                   
-                  setState(() => _isLoading = true);
-                  
-                  widget.signupData.height = _selectedHeight;
-                  
-                  await Future.delayed(const Duration(milliseconds: 300));
-                  if (mounted) {
-                    setState(() => _isLoading = false);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => EthnicityScreen(signupData: widget.signupData),
-                      ),
-                    );
+                  if (widget.isEditMode) {
+                    Navigator.pop(context, _selectedHeight);
+                  } else {
+                    setState(() => _isLoading = true);
+                    widget.signupData!.height = _selectedHeight;
+                    await Future.delayed(const Duration(milliseconds: 300));
+                    if (mounted) {
+                      setState(() => _isLoading = false);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => EthnicityScreen(signupData: widget.signupData!),
+                        ),
+                      );
+                    }
                   }
                 },
               ),

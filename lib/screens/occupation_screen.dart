@@ -6,8 +6,16 @@ import 'religion_screen.dart';
 import '../widgets/progress_bar.dart';
 
 class OccupationScreen extends StatefulWidget {
-  final SignupData signupData;
-  const OccupationScreen({super.key, required this.signupData});
+  final SignupData? signupData;
+  final String? initialOccupation;
+  final bool isEditMode;
+  
+  const OccupationScreen({
+    super.key, 
+    this.signupData,
+    this.initialOccupation,
+    this.isEditMode = false,
+  });
 
   @override
   State<OccupationScreen> createState() => _OccupationScreenState();
@@ -28,7 +36,9 @@ class _OccupationScreenState extends State<OccupationScreen> {
   @override
   void initState() {
     super.initState();
-    _selectedOccupation = widget.signupData.occupation;
+    _selectedOccupation = widget.isEditMode 
+        ? widget.initialOccupation 
+        : widget.signupData?.occupation;
   }
 
   @override
@@ -46,7 +56,7 @@ class _OccupationScreenState extends State<OccupationScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            const ProgressBar(currentStep: 6, totalSteps: 8),
+            if (!widget.isEditMode) const ProgressBar(currentStep: 6, totalSteps: 8),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(32),
@@ -132,7 +142,7 @@ class _OccupationScreenState extends State<OccupationScreen> {
               
               LoadingButton(
                 isLoading: _isLoading,
-                text: 'Continue',
+                text: widget.isEditMode ? 'Save' : 'Continue',
                 onPressed: () async {
                   if (_selectedOccupation == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -141,19 +151,21 @@ class _OccupationScreenState extends State<OccupationScreen> {
                     return;
                   }
                   
-                  setState(() => _isLoading = true);
-                  
-                  widget.signupData.occupation = _selectedOccupation;
-                  
-                  await Future.delayed(const Duration(milliseconds: 300));
-                  if (mounted) {
-                    setState(() => _isLoading = false);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ReligionScreen(signupData: widget.signupData),
-                      ),
-                    );
+                  if (widget.isEditMode) {
+                    Navigator.pop(context, _selectedOccupation);
+                  } else {
+                    setState(() => _isLoading = true);
+                    widget.signupData!.occupation = _selectedOccupation;
+                    await Future.delayed(const Duration(milliseconds: 300));
+                    if (mounted) {
+                      setState(() => _isLoading = false);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ReligionScreen(signupData: widget.signupData!),
+                        ),
+                      );
+                    }
                   }
                 },
               ),

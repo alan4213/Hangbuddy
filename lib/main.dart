@@ -63,11 +63,14 @@ void main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
+  static final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       navigatorKey: NotificationService.navigatorKey,
+      navigatorObservers: [routeObserver],
       theme: AppTheme.theme,
       home: StreamBuilder<User?>(
         stream: FirebaseAuth.instance.authStateChanges(),

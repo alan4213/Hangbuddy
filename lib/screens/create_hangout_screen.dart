@@ -89,257 +89,259 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
     final createContent = Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                child: Stack(
-                  children: [
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: IconButton(
-                        icon: Icon(Icons.close, color: AppTheme.primaryColor),
-                        onPressed: () {
-                          HapticFeedback.lightImpact();
-                          Navigator.pop(context);
-                        },
-                      ),
-                    ),
-                    Center(
-                      child: Text(
-                        'Create Hangout',
-                        style: TextStyle(
-                          fontSize: Responsive.fontSize(context, Responsive.headingFontSize),
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
+        child: Column(
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Create Hangout',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.textPrimary,
+                  ),
                 ),
               ),
-            Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: Responsive.padding(context, Responsive.mediumPadding),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                    // Title
-            _buildTextField(
-              key: _titleKey,
-              controller: _titleController,
-              label: 'Hangout Title',
-              hint: 'What are you planning?',
             ),
+            
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 20),
+                    
+                    // Title Field
+                    _buildInputField(
+                      key: _titleKey,
+                      controller: _titleController,
+                      label: 'What\'s the plan?',
+                      hint: 'Enter hangout title...',
+                    ),
 
                     const SizedBox(height: 24),
 
-                    // Category
-            _buildSectionTitle('Category'),
-            GestureDetector(
-              key: _categoryKey,
-              onTap: () => setState(() => _showCategoryDropdown = !_showCategoryDropdown),
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey[300]!),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: _getCategoryColor(_selectedCategory).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        _getCategoryIcon(_selectedCategory),
-                        color: _getCategoryColor(_selectedCategory),
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        _selectedCategory,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ),
-                    Icon(
-                      _showCategoryDropdown ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                      color: Colors.grey[600],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            if (_showCategoryDropdown)
-              Container(
-                margin: const EdgeInsets.only(top: 8),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                constraints: const BoxConstraints(maxHeight: 250),
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: _categories.length,
-                  itemBuilder: (context, index) {
-                    final category = _categories[index];
-                    final isSelected = _selectedCategory == category['name'];
-                    return ListTile(
-                      onTap: () {
-                        setState(() {
-                          _selectedCategory = category['name'];
-                          _showCategoryDropdown = false;
-                        });
-                      },
-                      leading: Container(
-                        padding: const EdgeInsets.all(8),
+                    // Category Field
+                    _buildSectionTitle('Category'),
+                    GestureDetector(
+                      key: _categoryKey,
+                      onTap: () => setState(() => _showCategoryDropdown = !_showCategoryDropdown),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: category['color'].withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey[300]!),
                         ),
-                        child: Icon(
-                          category['icon'],
-                          color: category['color'],
-                          size: 20,
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: _getCategoryColor(_selectedCategory).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Icon(
+                                _getCategoryIcon(_selectedCategory),
+                                color: _getCategoryColor(_selectedCategory),
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                _selectedCategory,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ),
+                            Icon(
+                              _showCategoryDropdown ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                              color: Colors.grey[600],
+                            ),
+                          ],
                         ),
                       ),
-                      title: Text(
-                        category['name'],
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                          color: isSelected ? category['color'] : Colors.black87,
+                    ),
+                    if (_showCategoryDropdown)
+                      Container(
+                        margin: const EdgeInsets.only(top: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        constraints: const BoxConstraints(maxHeight: 250),
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: _categories.length,
+                          itemBuilder: (context, index) {
+                            final category = _categories[index];
+                            final isSelected = _selectedCategory == category['name'];
+                            return ListTile(
+                              onTap: () {
+                                setState(() {
+                                  _selectedCategory = category['name'];
+                                  _showCategoryDropdown = false;
+                                });
+                              },
+                              leading: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: category['color'].withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  category['icon'],
+                                  color: category['color'],
+                                  size: 20,
+                                ),
+                              ),
+                              title: Text(
+                                category['name'],
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                                  color: isSelected ? category['color'] : Colors.black87,
+                                ),
+                              ),
+                              trailing: isSelected
+                                  ? Icon(Icons.check, color: category['color'], size: 20)
+                                  : null,
+                              dense: true,
+                            );
+                          },
                         ),
                       ),
-                      trailing: isSelected
-                          ? Icon(Icons.check, color: category['color'], size: 20)
-                          : null,
-                      dense: true,
-                    );
-                  },
-                ),
-              ),
 
                     const SizedBox(height: 24),
 
-                    // Location
-            _buildLocationField(),
+                    // Location Field
+                    _buildLocationField(),
 
                     const SizedBox(height: 24),
 
                     // Distance Range
-            _buildDistanceSlider(),
+                    _buildDistanceSlider(),
 
                     const SizedBox(height: 24),
 
                     // Date & Time
-            Row(
-              key: _dateTimeKey,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildSectionTitle('Date'),
-                      GestureDetector(
-                        onTap: _selectDate,
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.grey[300]!),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.calendar_today, color: Colors.grey),
-                              const SizedBox(width: 8),
-                              Flexible(
-                                child: Text(
-                                  '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
-                                  overflow: TextOverflow.ellipsis,
-                                ),
+                    _buildSectionTitle('When?'),
+                    Row(
+                      key: _dateTimeKey,
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: _selectDate,
+                            child: Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.grey[300]!),
                               ),
-                            ],
+                              child: Row(
+                                children: [
+                                  Icon(Icons.calendar_today, color: AppTheme.primaryColor, size: 20),
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: Text(
+                                      '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
+                                      style: const TextStyle(fontSize: 14),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildSectionTitle('Time'),
-                      GestureDetector(
-                        onTap: _selectTime,
-                        child: Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.grey[300]!),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(Icons.access_time, color: Colors.grey),
-                              const SizedBox(width: 8),
-                              Flexible(
-                                child: Text(
-                                  _selectedTime.format(context),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: _selectTime,
+                            child: Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: Colors.grey[300]!),
                               ),
-                            ],
+                              child: Row(
+                                children: [
+                                  Icon(Icons.access_time, color: AppTheme.primaryColor, size: 20),
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: Text(
+                                      _selectedTime.format(context),
+                                      style: const TextStyle(fontSize: 14),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 40),
+                  ],
                 ),
-              ],
+              ),
             ),
-
-                    const SizedBox(height: 32),
-
+            
             // Create Button
-            LoadingButton(
-              key: _createButtonKey,
-              isLoading: _isCreating,
-              text: 'Create Hangout',
-              onPressed: _createHangout,
-            ),
-                ],
+            Container(
+              padding: const EdgeInsets.all(20),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  key: _createButtonKey,
+                  onPressed: _isCreating ? null : _createHangout,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.primaryColor,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: _isCreating
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'Create Hangout',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                ),
               ),
             ),
           ],
-          ),
         ),
       ),
     );
@@ -416,7 +418,7 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
     );
   }
 
-  Widget _buildTextField({
+  Widget _buildInputField({
     Key? key,
     required TextEditingController controller,
     required String label,
@@ -428,31 +430,39 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
       key: key,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle(label),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 8),
         TextField(
           controller: controller,
           maxLines: maxLines,
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(
-              color: Colors.grey, 
-              fontSize: Responsive.fontSize(context, Responsive.smallFontSize),
+            hintStyle: const TextStyle(
+              color: Colors.grey,
+              fontSize: 14,
             ),
-            prefixIcon: prefixIcon != null ? Icon(prefixIcon, color: Colors.grey) : null,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: Colors.grey[300]!),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: Colors.grey[300]!),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide(color: AppTheme.primaryColor),
             ),
             filled: true,
             fillColor: Colors.white,
+            contentPadding: const EdgeInsets.all(16),
           ),
         ),
       ],
@@ -491,8 +501,16 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
                   color: AppTheme.primaryColor,
                   width: 2,
                 ),
-                dayPeriodColor: AppTheme.primaryColor.withOpacity(0.1),
-                dayPeriodTextColor: AppTheme.primaryColor,
+                dayPeriodColor: MaterialStateColor.resolveWith((states) {
+                  return states.contains(MaterialState.selected)
+                      ? AppTheme.primaryColor
+                      : Colors.transparent;
+                }),
+                dayPeriodTextColor: MaterialStateColor.resolveWith((states) {
+                  return states.contains(MaterialState.selected)
+                      ? Colors.white
+                      : Colors.grey[600]!;
+                }),
                 hourMinuteColor: AppTheme.primaryColor.withOpacity(0.1),
                 hourMinuteTextColor: AppTheme.primaryColor,
                 dialHandColor: AppTheme.primaryColor,
@@ -593,106 +611,53 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
       key: _locationKey,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle('Location'),
+        const Text(
+          'Location',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 8),
         Row(
           children: [
             Expanded(
-              child: Column(
-                children: [
-                  TextField(
-                    controller: _locationController,
-                    decoration: InputDecoration(
-                      hintText: 'Enter location or use GPS',
-                      prefixIcon: const Icon(Icons.location_on, color: Colors.grey),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.grey[300]!),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: Colors.grey[300]!),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: AppTheme.primaryColor),
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                    ),
-                    onChanged: (value) {
-                      _updateLocationSuggestions(value);
-                    },
+              child: TextField(
+                controller: _locationController,
+                decoration: InputDecoration(
+                  hintText: 'Enter location or use GPS',
+                  hintStyle: const TextStyle(
+                    color: Colors.grey,
+                    fontSize: 14,
                   ),
-                  if (_showSuggestions && _locationSuggestions.isNotEmpty)
-                    Container(
-                      margin: const EdgeInsets.only(top: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      constraints: const BoxConstraints(maxHeight: 150),
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: _locationSuggestions.length,
-                        itemBuilder: (context, index) {
-                          return ListTile(
-                            dense: true,
-                            leading: const Icon(Icons.location_on, size: 16),
-                            title: Text(
-                              _locationSuggestions[index],
-                              style: const TextStyle(fontSize: 14),
-                            ),
-                            onTap: () => _selectLocation(_locationSuggestions[index]),
-                          );
-                        },
-                      ),
-                    ),
-                  if (_showSuggestions && _locationSuggestions.isNotEmpty)
-                    Container(
-                      margin: const EdgeInsets.only(top: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      constraints: const BoxConstraints(maxHeight: 200),
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: _locationSuggestions.length,
-                        itemBuilder: (context, index) {
-                          return ListTile(
-                            dense: true,
-                            leading: const Icon(Icons.location_on, size: 16),
-                            title: Text(
-                              _locationSuggestions[index],
-                              style: const TextStyle(fontSize: 14),
-                            ),
-                            onTap: () => _selectLocation(_locationSuggestions[index]),
-                          );
-                        },
-                      ),
-                    ),
-                ],
+                  prefixIcon: Icon(Icons.location_on, color: AppTheme.primaryColor, size: 20),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.grey[300]!),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: AppTheme.primaryColor),
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.all(16),
+                ),
+                onChanged: (value) {
+                  _updateLocationSuggestions(value);
+                },
               ),
             ),
             const SizedBox(width: 8),
             Container(
               decoration: BoxDecoration(
                 color: AppTheme.primaryColor,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: IconButton(
                 onPressed: _isGettingLocation ? null : _getCurrentLocation,
@@ -710,6 +675,37 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
             ),
           ],
         ),
+        if (_showSuggestions && _locationSuggestions.isNotEmpty)
+          Container(
+            margin: const EdgeInsets.only(top: 4),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            constraints: const BoxConstraints(maxHeight: 150),
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: _locationSuggestions.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  dense: true,
+                  leading: const Icon(Icons.location_on, size: 16),
+                  title: Text(
+                    _locationSuggestions[index],
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                  onTap: () => _selectLocation(_locationSuggestions[index]),
+                );
+              },
+            ),
+          ),
       ],
     );
   }
@@ -718,19 +714,21 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle('Visibility Range'),
+        const Text(
+          'Visibility Range',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey[300]!),
           ),
           child: Column(
             children: [
@@ -739,8 +737,8 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
                   Expanded(
                     child: Text(
                       'Who can see this hangout?',
-                      style: TextStyle(
-                        fontSize: Responsive.fontSize(context, Responsive.smallFontSize),
+                      style: const TextStyle(
+                        fontSize: 14,
                         fontWeight: FontWeight.w500,
                         color: Colors.black87,
                       ),
@@ -749,7 +747,7 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
                   Text(
                     'Within ${_maxDistance.toInt()} km',
                     style: TextStyle(
-                      fontSize: Responsive.fontSize(context, Responsive.smallFontSize),
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: AppTheme.primaryColor,
                     ),
@@ -766,10 +764,10 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
                   setState(() => _maxDistance = value);
                 },
               ),
-              Text(
+              const Text(
                 'People within this range can see your hangout',
                 style: TextStyle(
-                  fontSize: Responsive.fontSize(context, Responsive.smallFontSize),
+                  fontSize: 12,
                   color: Colors.grey,
                   fontWeight: FontWeight.w400,
                 ),
