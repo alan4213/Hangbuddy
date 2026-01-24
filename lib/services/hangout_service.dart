@@ -60,15 +60,16 @@ class HangoutService {
     return _firestore
         .collection('hangout_requests')
         .where('status', isEqualTo: 'active')
-        .snapshots()
+        .get(GetOptions(source: Source.server))
+        .asStream()
         .map((snapshot) {
       final filteredHangouts = <HangoutRequest>[];
       
       for (final doc in snapshot.docs) {
         final hangout = HangoutRequest.fromMap(doc.data(), doc.id);
         
-        // Skip own hangouts and already viewed hangouts
-        if (hangout.creatorId == user.uid || hangout.viewedByUsers.contains(user.uid)) {
+        // Skip own hangouts only
+        if (hangout.creatorId == user.uid) {
           continue;
         }
         

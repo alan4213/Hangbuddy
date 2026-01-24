@@ -81,16 +81,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   
   @override
   void didPopNext() {
-    // Refresh when returning from other screens
-    _loadHangouts();
+    // Refresh silently when returning from other screens
+    _loadHangoutsQuietly();
     _startIdleTimer();
   }
   
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      // Condition 1: Refresh when user returns to app
-      _loadHangouts();
+      // Silent refresh when user returns to app
+      _loadHangoutsQuietly();
       _startIdleTimer();
     } else if (state == AppLifecycleState.paused) {
       _idleTimer?.cancel();
@@ -104,7 +104,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     // Condition 2: Refresh every 3 minutes of idle time
     _idleTimer = Timer.periodic(const Duration(minutes: 3), (timer) {
       if (mounted) {
-        _loadHangouts();
+        _loadHangoutsQuietly();
       }
     });
   }
@@ -114,6 +114,33 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     _startIdleTimer();
   }
   
+  void _loadHangoutsQuietly() async {
+    final currentUser = auth.FirebaseAuth.instance.currentUser;
+    
+    if (_userLatitude == null || _userLongitude == null) {
+      return;
+    }
+    
+    try {
+      final hangouts = await HangoutService.getActiveHangoutRequests(
+        userLatitude: _userLatitude,
+        userLongitude: _userLongitude,
+        maxDistanceFilter: _distanceFilter,
+      ).first;
+      
+      if (mounted) {
+        final filtered = await _applyFilters(hangouts);
+        final sorted = await _sortHangoutsByRelevance(filtered);
+        setState(() {
+          _hangouts = sorted;
+        });
+      }
+      
+    } catch (e) {
+      print('ERROR loading hangouts quietly: $e');
+    }
+  }
+
   void _loadHangouts() async {
     final currentUser = auth.FirebaseAuth.instance.currentUser;
     
@@ -124,12 +151,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     
     setState(() => _isLoading = true);
     try {
-      // Convert stream to single read
       final hangouts = await HangoutService.getActiveHangoutRequests(
         userLatitude: _userLatitude,
         userLongitude: _userLongitude,
         maxDistanceFilter: _distanceFilter,
-      ).first; // Get first emission from stream
+      ).first;
       
       if (mounted) {
         final filtered = await _applyFilters(hangouts);
@@ -308,7 +334,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
         onRefresh: () async {
           _resetIdleTimer();
           await Future.delayed(const Duration(milliseconds: 500));
-          _loadHangouts();
+          _loadHangoutsQuietly();
         },
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -373,7 +399,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
       onRefresh: () async {
         _resetIdleTimer(); // Reset idle timer on manual refresh
         await Future.delayed(const Duration(milliseconds: 500));
-        _loadHangouts();
+        _loadHangoutsQuietly();
       },
       child: GestureDetector(
         onTap: _resetIdleTimer, // Reset timer on any interaction
@@ -431,10 +457,35 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                   image: DecorationImage(
                     image: NetworkImage(_getCategoryImageUrl(hangout.category)),
                     fit: BoxFit.cover,
+                    colorFilter: _isViewed(hangout) ? ColorFilter.mode(
+                      Colors.grey.withOpacity(0.3),
+                      BlendMode.overlay,
+                    ) : null,
                   ),
                 ),
                 child: Stack(
                   children: [
+                    // Viewed indicator
+                    if (_isViewed(hangout))
+                      Positioned(
+                        top: 12,
+                        left: 12,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.withOpacity(0.8),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Text(
+                            'Viewed',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
                     // Favorite button
                     Positioned(
                       top: 12,
@@ -612,6 +663,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     return currentUser != null && 
            (hangout.interestedUsers.contains(currentUser.uid) || 
             _likedHangouts.contains(hangout.id));
+  }
+
+  bool _isViewed(HangoutRequest hangout) {
+    final currentUser = auth.FirebaseAuth.instance.currentUser;
+    return currentUser != null && hangout.viewedByUsers.contains(currentUser.uid);
   }
 
   void _handleLike(HangoutRequest hangout) {
@@ -925,7 +981,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                       child: ElevatedButton(
                         onPressed: () {
                           Navigator.pop(context);
-                          _loadHangouts();
+                          _loadHangoutsQuietly();
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.primaryColor,
@@ -1047,7 +1103,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                 ElevatedButton(
                   onPressed: () {
                     Navigator.pop(context);
-                    _loadHangouts();
+                    _loadHangoutsQuietly();
                   },
                   style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
                   child: const Text('Apply', style: TextStyle(color: Colors.white)),
@@ -1086,7 +1142,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                   onChanged: (value) {
                     setState(() => _genderFilter = value);
                     Navigator.pop(context);
-                    _loadHangouts();
+                    _loadHangoutsQuietly();
                   },
                 ),
               )),
@@ -1143,7 +1199,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                       child: ElevatedButton(
                         onPressed: () {
                           Navigator.pop(context);
-                          _loadHangouts();
+                          _loadHangoutsQuietly();
                         },
                         style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
                         child: const Text('Apply', style: TextStyle(color: Colors.white)),
