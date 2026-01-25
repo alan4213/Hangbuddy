@@ -54,6 +54,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   
   // Refresh timers
   Timer? _idleTimer;
+  Timer? _locationCheckTimer;
   DateTime _lastInteraction = DateTime.now();
   static final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
@@ -76,6 +77,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
       _loadHangoutsInBackground();
     }
     _startIdleTimer();
+    _startLocationServiceCheck();
   }
   
   @override
@@ -89,6 +91,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     WidgetsBinding.instance.removeObserver(this);
     routeObserver.unsubscribe(this);
     _idleTimer?.cancel();
+    _locationCheckTimer?.cancel();
     super.dispose();
   }
   
@@ -658,7 +661,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
-                            _cleanLocation(hangout.location),
+                            hangout.location,
                             style: TextStyle(
                               fontSize: 14,
                               color: Colors.grey[600],
@@ -915,6 +918,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     });
     
     try {
+      // Check if location services are enabled
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        setState(() {
+          _isGettingLocation = false;
+          _isLoading = false;
+        });
+        _showLocationServiceDialog();
+        return;
+      }
+      
       final position = await LocationService.getCurrentPosition();
       if (position != null) {
         print('DEBUG: Got user location: ${position.latitude}, ${position.longitude}');
@@ -933,6 +947,132 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     } finally {
       setState(() => _isGettingLocation = false);
     }
+  }
+  
+  void _showLocationServiceDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            margin: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.location_off,
+                    color: AppTheme.primaryColor,
+                    size: 40,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'Location Required',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Please enable location services to find hangouts near you.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.grey,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          Navigator.of(context).pop();
+                          await Geolocator.openLocationSettings();
+                          Future.delayed(const Duration(seconds: 2), () {
+                            _getCurrentLocation();
+                          });
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.primaryColor,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text(
+                          'Open Settings',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+  
+  void _startLocationServiceCheck() {
+    _locationCheckTimer = Timer.periodic(const Duration(seconds: 10), (timer) async {
+      if (mounted) {
+        bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+        if (!serviceEnabled && _userLatitude != null) {
+          // Location was turned off after being on
+          _showLocationServiceDialog();
+        }
+      }
+    });
   }
 
   // Debug method to check all hangouts in database
@@ -1068,6 +1208,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     
     for (final hangout in hangouts) {
       print('DEBUG: Filtering hangout "${hangout.title}"');
+      
+      // Filter out expired hangouts first
+      if (hangout.dateTime.isBefore(DateTime.now())) {
+        print('  - FILTERED OUT: Hangout expired at ${hangout.dateTime}');
+        continue;
+      }
+      
       final user = await _getUserData(hangout.creatorId);
       if (user == null) {
         print('  - FILTERED OUT: User data not found');

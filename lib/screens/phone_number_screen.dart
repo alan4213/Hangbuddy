@@ -318,16 +318,38 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                               );
                               return;
                             }
+                            
                             setState(() => _isLoading = true);
+                            
                             try {
+                              // Check if phone number already exists
+                              bool phoneExists = await UserService.checkPhoneNumberExists(_fullPhoneNumber);
+                              
+                              if (phoneExists) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('This phone number is already registered. Please use a different number or sign in.'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                                setState(() => _isLoading = false);
+                                return;
+                              }
+                              
                               await AuthService.sendOTP(_fullPhoneNumber);
-                              if (mounted) Navigator.pushNamed(context, '/otp');
+                              if (mounted) {
+                                Navigator.pushNamed(context, '/otp');
+                              }
                             } catch (e) {
                               if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Error: $e'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                                setState(() => _isLoading = false);
                               }
-                            } finally {
-                              if (mounted) setState(() => _isLoading = false);
                             }
                           },
                           style: ElevatedButton.styleFrom(

@@ -245,4 +245,25 @@ class UserService {
       rethrow;
     }
   }
+  
+  static Future<bool> checkPhoneNumberExists(String phoneNumber) async {
+    try {
+      if (phoneNumber.trim().isEmpty) {
+        return false;
+      }
+      
+      final cleanPhoneNumber = phoneNumber.trim();
+      
+      final querySnapshot = await _firestore
+          .collection('users')
+          .where('phoneNumber', isEqualTo: cleanPhoneNumber)
+          .limit(1)
+          .get();
+      
+      return querySnapshot.docs.isNotEmpty;
+    } catch (e) {
+      print('Error checking phone number: $e');
+      throw Exception('Unable to verify phone number. Please check your internet connection.');
+    }
+  }
 }

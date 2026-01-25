@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/hangout_service.dart';
 import '../services/location_service.dart';
 import 'package:geolocator/geolocator.dart';
@@ -537,41 +539,72 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
       return;
     }
 
-    final dateTime = DateTime(
-      _selectedDate.year,
-      _selectedDate.month,
-      _selectedDate.day,
-      _selectedTime.hour,
-      _selectedTime.minute,
-    );
-
-    final now = DateTime.now();
-    final minTime = now.add(const Duration(minutes: 30));
-    final maxTime = now.add(const Duration(days: 7));
-
-    if (dateTime.isBefore(minTime)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Hangout must be at least 30 minutes from now'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    if (dateTime.isAfter(maxTime)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Hangout cannot be more than 7 days from now'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
     setState(() => _isCreating = true);
 
     try {
+      // Check if user already has an active hangout
+      final currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser != null) {
+        final activeHangouts = await FirebaseFirestore.instance
+            .collection('hangout_requests')
+            .where('creatorId', isEqualTo: currentUser.uid)
+            .where('status', isEqualTo: 'active')
+            .get();
+        
+        // Filter for future hangouts on client side
+        final futureHangouts = activeHangouts.docs.where((doc) {
+          final data = doc.data();
+          final dateTime = (data['dateTime'] as Timestamp).toDate();
+          return dateTime.isAfter(DateTime.now());
+        }).toList();
+        
+        if (futureHangouts.isNotEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('You already have an active hangout. Please wait for it to complete or cancel it first.'),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 4),
+            ),
+          );
+          setState(() => _isCreating = false);
+          return;
+        }
+      }
+
+      final dateTime = DateTime(
+        _selectedDate.year,
+        _selectedDate.month,
+        _selectedDate.day,
+        _selectedTime.hour,
+        _selectedTime.minute,
+      );
+
+      final now = DateTime.now();
+      final minTime = now.add(const Duration(minutes: 30));
+      final maxTime = now.add(const Duration(days: 7));
+
+      if (dateTime.isBefore(minTime)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Hangout must be at least 30 minutes from now'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() => _isCreating = false);
+        return;
+      }
+
+      if (dateTime.isAfter(maxTime)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Hangout cannot be more than 7 days from now'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        setState(() => _isCreating = false);
+        return;
+      }
+
       await HangoutService.createHangoutRequest(
         title: _titleController.text,
         category: _selectedCategory,
@@ -595,6 +628,8 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
         Navigator.pop(context); // Go back to previous screen
       });
     } catch (e) {
+      print('ERROR creating hangout: $e');
+      print('Error type: ${e.runtimeType}');
       ErrorHandler.showErrorSnackBar(
         context,
         e,

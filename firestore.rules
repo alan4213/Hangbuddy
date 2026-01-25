@@ -7,6 +7,13 @@ service cloud.firestore {
       allow write: if request.auth != null && request.auth.uid == userId;
     }
     
+    // Allow phone number checking for registration (limited query)
+    match /users/{userId} {
+      allow read: if request.query.limit <= 1 && 
+        'phoneNumber' in request.query.where &&
+        request.query.where.phoneNumber is string;
+    }
+    
     // Hangout requests - only creator can manage, others can read all
     match /hangout_requests/{requestId} {
       allow read: if request.auth != null;
