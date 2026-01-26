@@ -260,6 +260,73 @@ class _EmailScreenState extends State<EmailScreen> {
                                   final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
                                   
                                   if (googleUser != null) {
+                                    // Check if email is already linked to another account
+                                    final emailExists = await UserService.checkEmailExists(googleUser.email!);
+                                    if (emailExists) {
+                                      await showDialog(
+                                        context: context,
+                                        barrierDismissible: false,
+                                        builder: (context) => AlertDialog(
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(20),
+                                          ),
+                                          title: Row(
+                                            children: [
+                                              Container(
+                                                width: 40,
+                                                height: 40,
+                                                decoration: BoxDecoration(
+                                                  gradient: AppTheme.primaryGradient,
+                                                  borderRadius: BorderRadius.circular(20),
+                                                ),
+                                                child: Icon(Icons.error_outline, color: Colors.white, size: 24),
+                                              ),
+                                              SizedBox(width: 12),
+                                              Expanded(
+                                                child: Text(
+                                                  'Email Already Linked',
+                                                  style: TextStyle(
+                                                    fontSize: 18,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: AppTheme.textPrimary,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          content: Text(
+                                            'This email is already linked to another phone number. Please use a different email or sign in with the existing account.',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              color: AppTheme.textSecondary,
+                                              height: 1.4,
+                                            ),
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(context),
+                                              style: TextButton.styleFrom(
+                                                padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                                shape: RoundedRectangleBorder(
+                                                  borderRadius: BorderRadius.circular(12),
+                                                ),
+                                              ),
+                                              child: Text(
+                                                'OK',
+                                                style: TextStyle(
+                                                  color: AppTheme.primaryColor,
+                                                  fontWeight: FontWeight.w600,
+                                                  fontSize: 16,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                      setState(() => _isLoading = false);
+                                      return;
+                                    }
+                                    
                                     final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
                                     final AuthCredential credential = GoogleAuthProvider.credential(
                                       accessToken: googleAuth.accessToken,

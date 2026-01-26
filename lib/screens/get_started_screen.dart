@@ -21,17 +21,17 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
   void initState() {
     super.initState();
     // Start playing preloaded video with reduced frame rate
-    VideoService.play();
+    // VideoService.play();
     // Reduce video processing load
-    if (VideoService.controller != null) {
-      VideoService.controller!.setPlaybackSpeed(0.8); // Slightly slower
-    }
+    // if (VideoService.controller != null) {
+    //   VideoService.controller!.setPlaybackSpeed(0.8); // Slightly slower
+    // }
   }
 
   @override
   void dispose() {
     // Pause video to free up buffers
-    VideoService.pause();
+    // VideoService.pause();
     super.dispose();
   }
 
@@ -41,18 +41,19 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
       body: Stack(
         children: [
           // Full-bleed background - use preloaded video or fallback
-          VideoService.isInitialized && VideoService.controller != null
-              ? SizedBox.expand(
-                  child: FittedBox(
-                    fit: BoxFit.cover,
-                    child: SizedBox(
-                      width: VideoService.controller!.value.size.width,
-                      height: VideoService.controller!.value.size.height,
-                      child: VideoPlayer(VideoService.controller!),
-                    ),
-                  ),
-                )
-              : Container(
+          // VideoService.isInitialized && VideoService.controller != null
+          //     ? SizedBox.expand(
+          //         child: FittedBox(
+          //           fit: BoxFit.cover,
+          //           child: SizedBox(
+          //             width: VideoService.controller!.value.size.width,
+          //             height: VideoService.controller!.value.size.height,
+          //             child: VideoPlayer(VideoService.controller!),
+          //           ),
+          //         ),
+          //       )
+          //     : 
+          Container(
                   width: double.infinity,
                   height: double.infinity,
                   decoration: BoxDecoration(

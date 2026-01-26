@@ -23,7 +23,7 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
   @override
   void initState() {
     super.initState();
-    VideoService.play();
+    // VideoService.play();
   }
 
   void _showEmailSignInDialog() {
@@ -95,18 +95,19 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
       body: Stack(
         children: [
           // Full-bleed background - use preloaded video or fallback
-          VideoService.isInitialized && VideoService.controller != null
-              ? SizedBox.expand(
-                  child: FittedBox(
-                    fit: BoxFit.cover,
-                    child: SizedBox(
-                      width: VideoService.controller!.value.size.width,
-                      height: VideoService.controller!.value.size.height,
-                      child: VideoPlayer(VideoService.controller!),
-                    ),
-                  ),
-                )
-              : Container(
+          // VideoService.isInitialized && VideoService.controller != null
+          //     ? SizedBox.expand(
+          //         child: FittedBox(
+          //           fit: BoxFit.cover,
+          //           child: SizedBox(
+          //             width: VideoService.controller!.value.size.width,
+          //             height: VideoService.controller!.value.size.height,
+          //             child: VideoPlayer(VideoService.controller!),
+          //           ),
+          //         ),
+          //       )
+          //     : 
+          Container(
                   width: double.infinity,
                   height: double.infinity,
                   decoration: BoxDecoration(
@@ -322,25 +323,87 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                             setState(() => _isLoading = true);
                             
                             try {
+                              print('=== PHONE CHECK DEBUG ===');
+                              print('Phone number to check: $_fullPhoneNumber');
+                              
                               // Check if phone number already exists
                               bool phoneExists = await UserService.checkPhoneNumberExists(_fullPhoneNumber);
+                              print('Phone exists result: $phoneExists');
                               
                               if (phoneExists) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('This phone number is already registered. Please use a different number or sign in.'),
-                                    backgroundColor: Colors.red,
+                                print('Phone exists - showing error');
+                                await showDialog(
+                                  context: context,
+                                  barrierDismissible: false,
+                                  builder: (context) => AlertDialog(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    title: Row(
+                                      children: [
+                                        Container(
+                                          width: 40,
+                                          height: 40,
+                                          decoration: BoxDecoration(
+                                            gradient: AppTheme.primaryGradient,
+                                            borderRadius: BorderRadius.circular(20),
+                                          ),
+                                          child: Icon(Icons.phone_locked, color: Colors.white, size: 24),
+                                        ),
+                                        SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            'Phone Already Registered',
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppTheme.textPrimary,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    content: Text(
+                                      'This phone number is already registered. Please use a different number or sign in with your existing account.',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: AppTheme.textSecondary,
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        style: TextButton.styleFrom(
+                                          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                        ),
+                                        child: Text(
+                                          'OK',
+                                          style: TextStyle(
+                                            color: AppTheme.primaryColor,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 );
                                 setState(() => _isLoading = false);
                                 return;
                               }
                               
+                              print('Phone is unique - sending OTP');
                               await AuthService.sendOTP(_fullPhoneNumber);
                               if (mounted) {
                                 Navigator.pushNamed(context, '/otp');
                               }
                             } catch (e) {
+                              print('=== ERROR IN PHONE CHECK ===');
+                              print('Error: $e');
                               if (mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(

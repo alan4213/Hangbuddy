@@ -1,7 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'notification_service.dart';
 
 class AuthService {
@@ -14,10 +13,10 @@ class AuthService {
   static Future<void> sendOTP(String phone) async {
     _phoneNumber = phone;
     
-    // Configure Firebase Auth to disable reCAPTCHA
+    // Enable reCAPTCHA for phone verification
     await FirebaseAuth.instance.setSettings(
-      appVerificationDisabledForTesting: true,
-      forceRecaptchaFlow: false,
+      appVerificationDisabledForTesting: false,
+      forceRecaptchaFlow: true,
     );
     
     await FirebaseAuth.instance.verifyPhoneNumber(
@@ -277,56 +276,6 @@ class AuthService {
       }
     } catch (e) {
       print('Error storing email: $e');
-      throw e;
-    }
-  }
-  
-  // Initialize dynamic links listener
-  static void initializeDynamicLinks() {
-    FirebaseDynamicLinks.instance.onLink.listen((dynamicLinkData) {
-      final Uri deepLink = dynamicLinkData.link;
-      handleDynamicLink(deepLink);
-    }).onError((error) {
-      print('Dynamic link error: $error');
-    });
-  }
-  
-  // Handle dynamic link
-  static Future<void> handleDynamicLink(Uri link) async {
-    try {
-      final email = link.queryParameters['email'];
-      if (email != null && FirebaseAuth.instance.isSignInWithEmailLink(link.toString())) {
-        await signInWithEmailLink(email, link.toString());
-      }
-    } catch (e) {
-      print('Error handling dynamic link: $e');
-    }
-  }
-  
-  // Verify email link and sign in
-  static Future<UserCredential?> signInWithEmailLink(String email, String emailLink) async {
-    try {
-      if (FirebaseAuth.instance.isSignInWithEmailLink(emailLink)) {
-        final result = await FirebaseAuth.instance.signInWithEmailLink(
-          email: email,
-          emailLink: emailLink,
-        );
-        
-        // Store in Firestore
-        if (result.user != null) {
-          await FirebaseFirestore.instance.collection('users').doc(result.user!.uid).set({
-            'email': email,
-            'uid': result.user!.uid,
-            'createdAt': DateTime.now().millisecondsSinceEpoch,
-            'updatedAt': DateTime.now().millisecondsSinceEpoch,
-          }, SetOptions(merge: true));
-        }
-        
-        return result;
-      }
-      return null;
-    } catch (e) {
-      print('Error signing in with email link: $e');
       throw e;
     }
   }

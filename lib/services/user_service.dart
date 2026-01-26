@@ -104,6 +104,11 @@ class UserService {
         .set(userData, SetOptions(merge: true));
         
     print('User profile created successfully in Firestore');
+    
+    // Register phone number in separate collection for duplicate checking
+    if (finalPhoneNumber.isNotEmpty) {
+      await registerPhoneNumber(finalPhoneNumber);
+    }
   }
 
   static Future<UserModel?> getUserProfile() async {
@@ -237,33 +242,164 @@ class UserService {
     if (user == null) throw Exception('No authenticated user');
 
     try {
-      // Delete Firebase Auth account only
+      // Soft delete - mark user as deleted but keep data for 30 days
+      await _firestore.collection('users').doc(user.uid).update({
+        'deleted': true,
+        'deletedAt': DateTime.now().millisecondsSinceEpoch,
+        'updatedAt': DateTime.now().millisecondsSinceEpoch,
+      });
+      
+      // Keep phone number blocked during grace period
+      // Phone number will be freed after permanent deletion (30 days)
+      
+      // Delete Firebase Auth account (user can't sign in anymore)
       await user.delete();
-      print('Firebase Auth account deleted');
+      print('User account soft-deleted (30 day grace period)');
     } catch (e) {
       print('Error deleting user account: $e');
       rethrow;
     }
   }
-  
-  static Future<bool> checkPhoneNumberExists(String phoneNumber) async {
+
+  // Method to permanently delete user data (run by admin/cron job after 30 days)
+  static Future<void> permanentlyDeleteUser(String uid, String phoneNumber) async {
     try {
-      if (phoneNumber.trim().isEmpty) {
-        return false;
+      // Delete phone number from phone_numbers collection
+      if (phoneNumber.isNotEmpty) {
+        final encodedPhone = _encodePhoneNumber(phoneNumber);
+        await _firestore.collection('phone_numbers').doc(encodedPhone).delete();
+        print('Phone number freed: $phoneNumber');
       }
       
+      // Delete user document from Firestore
+      await _firestore.collection('users').doc(uid).delete();
+      print('User permanently deleted: $uid');
+    } catch (e) {
+      print('Error permanently deleting user: $e');
+      rethrow;
+    }
+  }
+  
+  static String _encodePhoneNumber(String phoneNumber) {
+    // Replace + with 'plus' and other special characters
+    return phoneNumber.replaceAll('+', 'plus').replaceAll('-', 'dash');
+  }
+
+  static Future<bool> checkPhoneNumberExists(String phoneNumber) async {
+    try {
       final cleanPhoneNumber = phoneNumber.trim();
+      final encodedPhone = _encodePhoneNumber(cleanPhoneNumber);
+      print('=== CHECKING PHONE NUMBER EXISTS ===');
+      print('Original phone: $cleanPhoneNumber');
+      print('Encoded phone: $encodedPhone');
+      
+      final doc = await _firestore.collection('phone_numbers').doc(encodedPhone).get();
+      
+      print('Document exists: ${doc.exists}');
+      if (doc.exists) {
+        print('Document data: ${doc.data()}');
+      }
+      
+      return doc.exists;
+    } catch (e) {
+      print('=== ERROR CHECKING PHONE NUMBER ===');
+      print('Error: $e');
+      throw Exception('Unable to verify phone number. Please check your internet connection.');
+    }
+  }
+
+  static Future<void> registerPhoneNumber(String phoneNumber) async {
+    try {
+      final cleanPhoneNumber = phoneNumber.trim();
+      final encodedPhone = _encodePhoneNumber(cleanPhoneNumber);
+      print('=== REGISTERING PHONE NUMBER ===');
+      print('Original phone: $cleanPhoneNumber');
+      print('Encoded phone: $encodedPhone');
+      
+      await _firestore.collection('phone_numbers').doc(encodedPhone).set({
+        'originalPhone': cleanPhoneNumber,
+        'exists': true,
+        'createdAt': DateTime.now().millisecondsSinceEpoch,
+      });
+      
+      print('Phone number registration completed successfully');
+    } catch (e) {
+      print('=== ERROR REGISTERING PHONE NUMBER ===');
+      print('Error: $e');
+      rethrow;
+    }
+  }
+
+  static Future<void> migrateExistingPhoneNumbers() async {
+    try {
+      print('=== STARTING PHONE NUMBER MIGRATION ===');
+      final usersSnapshot = await _firestore.collection('users').get();
+      print('Found ${usersSnapshot.docs.length} user documents');
+      
+      int migratedCount = 0;
+      for (var doc in usersSnapshot.docs) {
+        final data = doc.data();
+        final phoneNumber = data['phoneNumber'] as String?;
+        
+        if (phoneNumber != null && phoneNumber.isNotEmpty) {
+          print('Migrating phone: $phoneNumber for user: ${doc.id}');
+          await registerPhoneNumber(phoneNumber);
+          migratedCount++;
+        } else {
+          print('Skipping user ${doc.id} - no phone number');
+        }
+      }
+      
+      print('=== MIGRATION COMPLETED: $migratedCount phones migrated ===');
+    } catch (e) {
+      print('=== MIGRATION ERROR: $e ===');
+      rethrow;
+    }
+  }
+
+  static Future<bool> checkEmailExists(String email) async {
+    try {
+      final cleanEmail = email.trim().toLowerCase();
+      print('=== CHECKING EMAIL EXISTS ===');
+      print('Email: $cleanEmail');
       
       final querySnapshot = await _firestore
           .collection('users')
-          .where('phoneNumber', isEqualTo: cleanPhoneNumber)
+          .where('email', isEqualTo: cleanEmail)
           .limit(1)
           .get();
       
-      return querySnapshot.docs.isNotEmpty;
+      final exists = querySnapshot.docs.isNotEmpty;
+      print('Email exists: $exists');
+      
+      if (exists) {
+        final existingUser = querySnapshot.docs.first.data();
+        print('Email linked to phone: ${existingUser['phoneNumber']}');
+      }
+      
+      return exists;
     } catch (e) {
-      print('Error checking phone number: $e');
-      throw Exception('Unable to verify phone number. Please check your internet connection.');
+      print('Error checking email: $e');
+      throw Exception('Unable to verify email. Please check your internet connection.');
+    }
+  }
+  static Future<void> checkPhoneNumbersCollection() async {
+    try {
+      print('=== CHECKING PHONE_NUMBERS COLLECTION ===');
+      final snapshot = await _firestore.collection('phone_numbers').limit(5).get();
+      print('Collection exists: ${snapshot.docs.isNotEmpty}');
+      print('Document count (first 5): ${snapshot.docs.length}');
+      
+      for (var doc in snapshot.docs) {
+        print('  - Phone: ${doc.id}');
+        print('  - Data: ${doc.data()}');
+      }
+      
+      if (snapshot.docs.isEmpty) {
+        print('Collection is empty - migration may not have run');
+      }
+    } catch (e) {
+      print('Error checking collection: $e');
     }
   }
 }

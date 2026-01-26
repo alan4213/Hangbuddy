@@ -49,14 +49,17 @@ void main() async {
   
   await Firebase.initializeApp();
   
-  // Configure Firebase Auth to disable reCAPTCHA globally
+  // Configure Firebase Auth to enable reCAPTCHA
   await FirebaseAuth.instance.setSettings(
-    appVerificationDisabledForTesting: true,
-    forceRecaptchaFlow: false,
+    appVerificationDisabledForTesting: false,
+    forceRecaptchaFlow: true,
   );
   
+  // Skip migration - phone validation already working
+  // Migration will happen naturally as users register
+  print('=== SKIPPING MIGRATION - USING NATURAL MIGRATION ===');
+  
   await NotificationService.initialize();
-  AuthService.initializeDynamicLinks();
   runApp(const MyApp());
 }
 
