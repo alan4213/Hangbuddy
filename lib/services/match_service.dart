@@ -5,6 +5,7 @@ import 'notification_service.dart';
 class MatchService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   static final FirebaseAuth _auth = FirebaseAuth.instance;
+  static final Set<String> _pendingMatches = {};
 
   static Future<void> createMatch({
     required String user1Id,
@@ -14,6 +15,19 @@ class MatchService {
     required DateTime hangoutDateTime,
     String? hangoutCategory,
   }) async {
+    // Create unique key for this match request
+    final matchKey = '${user1Id}_${user2Id}_$hangoutTitle';
+    
+    // Check if this exact match is already being processed
+    if (_pendingMatches.contains(matchKey)) {
+      print('Match request already in progress for $matchKey');
+      return;
+    }
+    
+    // Add to pending set
+    _pendingMatches.add(matchKey);
+    
+    try {
     // If category is not provided, try to fetch it from the original hangout
     if (hangoutCategory == null) {
       try {
@@ -67,6 +81,12 @@ class MatchService {
     // Send match notifications to both users
     await _sendMatchNotification(user2Id, user1Id, hangoutTitle);
     await _sendMatchNotification(user1Id, user2Id, hangoutTitle);
+    } catch (e) {
+      print('Error creating match: $e');
+      rethrow;
+    } finally {
+      _pendingMatches.remove(matchKey);
+    }
   }
   
   static Future<void> _sendMatchNotification(String userId, String matchedUserId, String hangoutTitle) async {
@@ -144,8 +164,9 @@ class MatchService {
             final data = doc.data();
             print('Match data: $data');
             final isUserMatch = data['user1Id'] == user.uid || data['user2Id'] == user.uid;
-            print('Is user match: $isUserMatch');
-            return isUserMatch;
+            final isDeleted = data['deletedFor_${user.uid}'] == true;
+            print('Is user match: $isUserMatch, Is deleted: $isDeleted');
+            return isUserMatch && !isDeleted;
           })
           .map((doc) => doc.data())
           .toList();

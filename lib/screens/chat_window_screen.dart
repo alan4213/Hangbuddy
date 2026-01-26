@@ -195,8 +195,8 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
                 case 'clear':
                   _showClearChatDialog();
                   break;
-                case 'mute':
-                  _toggleMute();
+                case 'delete':
+                  _showDeleteChatDialog();
                   break;
                 case 'block':
                   _showBlockDialog();
@@ -225,7 +225,7 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
                 ),
               ),
               PopupMenuItem(
-                value: 'mute',
+                value: 'delete',
                 child: Row(
                   children: [
                     Container(
@@ -234,10 +234,10 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
                         color: AppTheme.primaryColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Icon(Icons.notifications_off, color: AppTheme.primaryColor, size: 20),
+                      child: Icon(Icons.delete_outline, color: AppTheme.primaryColor, size: 20),
                     ),
                     SizedBox(width: 12),
-                    Text('Mute notifications', style: TextStyle(fontSize: 16)),
+                    Text('Delete chat', style: TextStyle(color: AppTheme.primaryColor, fontSize: 16)),
                   ],
                 ),
               ),
@@ -248,13 +248,13 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
                     Container(
                       padding: EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.1),
+                        color: AppTheme.primaryColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Icon(Icons.block, color: Colors.red, size: 20),
+                      child: Icon(Icons.block, color: AppTheme.primaryColor, size: 20),
                     ),
                     SizedBox(width: 12),
-                    Text('Block user', style: TextStyle(color: Colors.red, fontSize: 16)),
+                    Text('Block user', style: TextStyle(color: AppTheme.primaryColor, fontSize: 16)),
                   ],
                 ),
               ),
@@ -265,13 +265,13 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
                     Container(
                       padding: EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.red.withOpacity(0.1),
+                        color: AppTheme.primaryColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Icon(Icons.report, color: Colors.red, size: 20),
+                      child: Icon(Icons.report, color: AppTheme.primaryColor, size: 20),
                     ),
                     SizedBox(width: 12),
-                    Text('Report user', style: TextStyle(color: Colors.red, fontSize: 16)),
+                    Text('Report user', style: TextStyle(color: AppTheme.primaryColor, fontSize: 16)),
                   ],
                 ),
               ),
@@ -285,31 +285,6 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
           Expanded(
             child: Column(
               children: [
-                // Typing indicator
-                StreamBuilder<bool>(
-                  stream: _otherUserId != null ? ChatService.getTypingStatus(_otherUserId!) : Stream.value(false),
-                  builder: (context, snapshot) {
-                    final isTyping = snapshot.data ?? false;
-                    return AnimatedContainer(
-                      duration: Duration(milliseconds: 300),
-                      height: isTyping ? 30 : 0,
-                      child: isTyping ? Container(
-                        padding: EdgeInsets.symmetric(horizontal: 16),
-                        child: Row(
-                          children: [
-                            Text('${widget.match['name'] ?? widget.match['firstName'] ?? 'User'} is typing'),
-                            SizedBox(width: 8),
-                            SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          ],
-                        ),
-                      ) : null,
-                    );
-                  },
-                ),
                 // Messages
                 Expanded(
                   child: StreamBuilder<List<ChatMessage>>(
@@ -347,6 +322,49 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
             ),
           ),
           if (_replyingTo != null) _buildReplyPreview(),
+          // Typing indicator above message input
+          StreamBuilder<bool>(
+            stream: _otherUserId != null ? ChatService.getTypingStatus(_otherUserId!) : Stream.value(false),
+            builder: (context, snapshot) {
+              final isTyping = snapshot.data ?? false;
+              return AnimatedContainer(
+                duration: Duration(milliseconds: 300),
+                height: isTyping ? 40 : 0,
+                child: isTyping ? Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Row(
+                    children: [
+                      Text(
+                        '${widget.match['name'] ?? widget.match['firstName'] ?? 'User'} is typing',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.primaryColor,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: List.generate(3, (index) {
+                          return Container(
+                            margin: EdgeInsets.only(right: index < 2 ? 2 : 0),
+                            child: Container(
+                              width: 4,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryColor,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          );
+                        }),
+                      ),
+                    ],
+                  ),
+                ) : null,
+              );
+            },
+          ),
           _buildMessageInput(),
         ],
       ),
@@ -892,12 +910,18 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
         .map((doc) {
       if (!doc.exists) return false;
       final data = doc.data()!;
+      
+      // Check if user is explicitly online
+      final isOnline = data['isOnline'] as bool?;
+      if (isOnline == true) return true;
+      
+      // Fallback to lastSeen check
       final lastSeen = data['lastSeen'] as Timestamp?;
       if (lastSeen == null) return false;
       
       final now = DateTime.now();
       final lastSeenTime = lastSeen.toDate();
-      return now.difference(lastSeenTime).inMinutes < 5;
+      return now.difference(lastSeenTime).inMinutes < 2;
     });
   }
 
@@ -997,9 +1021,125 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
     );
   }
 
-  void _toggleMute() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Chat notifications muted')),
+  void _showDeleteChatDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white,
+                Colors.red.withOpacity(0.05),
+              ],
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.red,
+                      Colors.red.withOpacity(0.8),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.red.withOpacity(0.3),
+                      blurRadius: 15,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.delete_outline,
+                  color: Colors.white,
+                  size: 30,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Delete Chat',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Are you sure you want to delete this chat? This will only delete the chat for you.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(color: Colors.grey[300]!),
+                        ),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        _deleteChat();
+                        Navigator.pop(context);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'Delete',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -1042,55 +1182,222 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
     
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: Text('Report ${widget.match['name']}'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Why are you reporting this user?',
-                  style: TextStyle(fontWeight: FontWeight.w500),
-                ),
-                SizedBox(height: 16),
-                ...reasons.map((reason) => RadioListTile<String>(
-                  title: Text(reason, style: TextStyle(fontSize: 14)),
-                  value: reason,
-                  groupValue: selectedReason,
-                  onChanged: (value) => setState(() => selectedReason = value),
-                  contentPadding: EdgeInsets.zero,
-                )),
-                SizedBox(height: 16),
-                TextField(
-                  controller: descriptionController,
-                  decoration: InputDecoration(
-                    labelText: 'Additional details (optional)',
-                    hintText: 'Describe the issue...',
-                    border: OutlineInputBorder(),
+        builder: (context, setState) => Dialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          child: Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white,
+                  Colors.red.withOpacity(0.05),
+                ],
+              ),
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppTheme.primaryColor,
+                          AppTheme.primaryColor.withOpacity(0.8),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppTheme.primaryColor.withOpacity(0.3),
+                          blurRadius: 15,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.report,
+                      color: Colors.white,
+                      size: 30,
+                    ),
                   ),
-                  maxLines: 3,
-                ),
-              ],
+                  const SizedBox(height: 20),
+                  Text(
+                    'Report ${widget.match['name']}',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Why are you reporting this user?',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  ...reasons.map((reason) => Container(
+                    margin: EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: selectedReason == reason ? AppTheme.primaryColor : Colors.grey[300]!,
+                      ),
+                      color: selectedReason == reason ? AppTheme.primaryColor.withOpacity(0.1) : Colors.white,
+                    ),
+                    child: RadioListTile<String>(
+                      title: Text(
+                        reason,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: selectedReason == reason ? AppTheme.primaryColor : Colors.grey[700],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      value: reason,
+                      groupValue: selectedReason,
+                      activeColor: AppTheme.primaryColor,
+                      onChanged: (value) => setState(() => selectedReason = value),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12),
+                    ),
+                  )),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: descriptionController,
+                    decoration: InputDecoration(
+                      labelText: 'Additional details (optional)',
+                      hintText: 'Describe the issue...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: AppTheme.primaryColor),
+                      ),
+                      labelStyle: TextStyle(color: AppTheme.primaryColor),
+                    ),
+                    maxLines: 3,
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                              side: BorderSide(color: Colors.grey[300]!),
+                            ),
+                          ),
+                          child: Text(
+                            'Cancel',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: selectedReason != null ? () {
+                            _submitReport(selectedReason!, descriptionController.text);
+                            Navigator.pop(context);
+                          } : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryColor,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: const Text(
+                            'Report',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: selectedReason != null ? () {
-                _submitReport(selectedReason!, descriptionController.text);
-                Navigator.pop(context);
-              } : null,
-              child: Text('Report', style: TextStyle(color: Colors.red)),
-            ),
-          ],
         ),
       ),
     );
+  }
+
+  void _deleteChat() async {
+    if (_otherUserId == null) return;
+    
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+    
+    final chatId = ChatService.getChatId(currentUser.uid, _otherUserId!);
+    
+    try {
+      // Delete chat
+      await FirebaseFirestore.instance
+          .collection('chats')
+          .doc(chatId)
+          .update({
+        'deletedFor_${currentUser.uid}': true,
+      });
+      
+      // Delete match
+      final matchQuery = await FirebaseFirestore.instance
+          .collection('matches')
+          .where('status', isEqualTo: 'active')
+          .get();
+      
+      for (final doc in matchQuery.docs) {
+        final data = doc.data();
+        final participants = [data['user1Id'], data['user2Id']];
+        if (participants.contains(currentUser.uid) && participants.contains(_otherUserId)) {
+          print('Debug - Deleting match: ${doc.id}');
+          await doc.reference.update({
+            'deletedFor_${currentUser.uid}': true,
+          });
+        }
+      }
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Chat deleted')),
+      );
+      
+      // Navigate back to chat list
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error deleting chat: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   void _clearChat() async {
@@ -1167,6 +1474,128 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
 
   void _shareLocation() async {
     if (_otherUserId == null) return;
+    
+    // Show confirmation dialog first
+    final shouldShare = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white,
+                AppTheme.primaryColor.withOpacity(0.05),
+              ],
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppTheme.primaryColor,
+                      AppTheme.primaryColor.withOpacity(0.8),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.primaryColor.withOpacity(0.3),
+                      blurRadius: 15,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  Icons.location_on,
+                  color: Colors.white,
+                  size: 30,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Share Location',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Do you want to share your current location with ${widget.match['name'] ?? 'this user'}?',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(color: Colors.grey[300]!),
+                        ),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                        shadowColor: AppTheme.primaryColor.withOpacity(0.3),
+                      ),
+                      child: const Text(
+                        'Share',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    
+    if (shouldShare != true) return;
     
     try {
       LocationPermission permission = await Geolocator.checkPermission();
