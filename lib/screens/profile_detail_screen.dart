@@ -26,6 +26,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
   PageController _pageController = PageController();
   int _currentIndex = 0;
   Map<String, dynamic>? _freshUserData;
+  bool _isProcessingAccept = false;
   
   @override
   void initState() {
@@ -121,21 +122,58 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                           ),
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(16),
-                            child: images.isEmpty
-                                ? Container(
-                                    color: Colors.grey[300],
-                                    child: const Icon(Icons.person, size: 80, color: Colors.grey),
-                                  )
-                                : Container(
-                                    width: double.infinity,
-                                    height: double.infinity,
-                                    decoration: BoxDecoration(
-                                      image: DecorationImage(
-                                        image: NetworkImage(images[0]),
-                                        fit: BoxFit.cover,
+                            child: Stack(
+                              children: [
+                                images.isEmpty
+                                    ? Container(
+                                        color: Colors.grey[300],
+                                        child: const Icon(Icons.person, size: 80, color: Colors.grey),
+                                      )
+                                    : Container(
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                        decoration: BoxDecoration(
+                                          image: DecorationImage(
+                                            image: NetworkImage(images[0]),
+                                            fit: BoxFit.cover,
+                                          ),
+                                        ),
+                                      ),
+                                // Chat button overlay
+                                if (widget.showChatButton && widget.hangout?['status'] != 'deleted' && !_isHangoutExpired())
+                                  Positioned(
+                                    bottom: 16,
+                                    right: 16,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => ChatWindowScreen(
+                                              match: {
+                                                'name': '${widget.user['firstName']} ${widget.user['lastName']}',
+                                                'firstName': widget.user['firstName'],
+                                                'lastName': widget.user['lastName'],
+                                                ...widget.user,
+                                              },
+                                              otherUserId: widget.user['userId'] ?? widget.user['uid'] ?? '',
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                      child: Container(
+                                        width: 50,
+                                        height: 50,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          color: Colors.black.withOpacity(0.3),
+                                        ),
+                                        child: const Icon(Icons.chat_bubble_outline, color: Colors.white, size: 28),
                                       ),
                                     ),
                                   ),
+                              ],
+                            ),
                           ),
                         ),
                         Container(
@@ -154,14 +192,46 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                                       children: [
                                         Row(
                                           children: [
-                                            Text(
-                                              '${widget.user['firstName'] ?? ''} ${widget.user['lastName'] ?? ''}${widget.user['age'] != null ? ', ${widget.user['age']}' : ''}',
-                                              style: TextStyle(
-                                                fontSize: 24,
-                                                fontWeight: FontWeight.bold,
-                                                color: AppTheme.textPrimary,
-                                              ),
-                                            ),
+                                        Builder(
+                                          builder: (context) {
+                                            final firstName = widget.user['firstName'] ?? '';
+                                            final lastName = widget.user['lastName'] ?? '';
+                                            final fullName = '$firstName $lastName'.trim();
+                                            
+                                            if (fullName.length > 20 && lastName.isNotEmpty) {
+                                              return Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    firstName,
+                                                    style: TextStyle(
+                                                      fontSize: 24,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: AppTheme.textPrimary,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    lastName,
+                                                    style: TextStyle(
+                                                      fontSize: 24,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: AppTheme.textPrimary,
+                                                    ),
+                                                  ),
+                                                ],
+                                              );
+                                            } else {
+                                              return Text(
+                                                fullName,
+                                                style: TextStyle(
+                                                  fontSize: 24,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: AppTheme.textPrimary,
+                                                ),
+                                              );
+                                            }
+                                          },
+                                        ),
                                             if (widget.user['age'] != null)
                                               FutureBuilder<bool>(
                                                 future: _isUserVerified(widget.user['userId'] ?? widget.user['uid'] ?? ''),
@@ -178,22 +248,53 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                                           ],
                                         ),
                                         const SizedBox(height: 4),
-                                        if (widget.user['gender'] != null)
-                                          Text(
-                                            widget.user['gender']!,
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              color: AppTheme.textSecondary,
-                                            ),
-                                          ),
+                                        Row(
+                                          children: [
+                                            if (widget.user['gender'] != null)
+                                              Text(
+                                                widget.user['gender']!,
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  color: AppTheme.textSecondary,
+                                                ),
+                                              ),
+                                            if (widget.user['gender'] != null && widget.user['age'] != null)
+                                              Text(
+                                                ', ',
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  color: AppTheme.textSecondary,
+                                                ),
+                                              ),
+                                            if (widget.user['age'] != null)
+                                              Text(
+                                                '${widget.user['age']}',
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  color: AppTheme.textSecondary,
+                                                ),
+                                              ),
+                                          ],
+                                        ),
                                       ],
                                     ),
                                   ),
                                   if (widget.hangout != null && widget.hangoutId != null && !widget.showChatButton)
                                     GestureDetector(
-                                      onTap: () async {
+                                      onTap: _isProcessingAccept ? null : () async {
+                                        if (_isProcessingAccept) return;
+                                        
+                                        setState(() {
+                                          _isProcessingAccept = true;
+                                        });
+                                        
                                         final currentUser = FirebaseAuth.instance.currentUser;
-                                        if (currentUser == null) return;
+                                        if (currentUser == null) {
+                                          setState(() {
+                                            _isProcessingAccept = false;
+                                          });
+                                          return;
+                                        }
                                         
                                         try {
                                           await MatchService.createMatch(
@@ -222,6 +323,12 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                                               backgroundColor: Colors.red,
                                             ),
                                           );
+                                        } finally {
+                                          if (mounted) {
+                                            setState(() {
+                                              _isProcessingAccept = false;
+                                            });
+                                          }
                                         }
                                       },
                                       child: Container(
@@ -229,7 +336,9 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                                         height: 50,
                                         decoration: BoxDecoration(
                                           shape: BoxShape.circle,
-                                          color: AppTheme.primaryColor,
+                                          color: _isProcessingAccept 
+                                              ? Colors.grey 
+                                              : AppTheme.primaryColor,
                                           boxShadow: [
                                             BoxShadow(
                                               color: Colors.black.withOpacity(0.2),
@@ -244,10 +353,12 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                                           decoration: BoxDecoration(
                                             shape: BoxShape.circle,
                                             gradient: LinearGradient(
-                                              colors: [
-                                                AppTheme.primaryColor,
-                                                AppTheme.primaryColor.withOpacity(0.8),
-                                              ],
+                                              colors: _isProcessingAccept
+                                                  ? [Colors.grey, Colors.grey.withOpacity(0.8)]
+                                                  : [
+                                                      AppTheme.primaryColor,
+                                                      AppTheme.primaryColor.withOpacity(0.8),
+                                                    ],
                                               begin: Alignment.topLeft,
                                               end: Alignment.bottomRight,
                                             ),
@@ -259,47 +370,21 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                                               ),
                                             ],
                                           ),
-                                          child: const Icon(
-                                            Icons.check,
-                                            color: Colors.white,
-                                            size: 28,
-                                          ),
+                                          child: _isProcessingAccept
+                                              ? SizedBox(
+                                                  width: 20,
+                                                  height: 20,
+                                                  child: CircularProgressIndicator(
+                                                    strokeWidth: 2,
+                                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                                  ),
+                                                )
+                                              : const Icon(
+                                                  Icons.check,
+                                                  color: Colors.white,
+                                                  size: 28,
+                                                ),
                                         ),
-                                      ),
-                                    ),
-                                  if (widget.showChatButton && widget.hangout?['status'] != 'deleted' && !_isHangoutExpired())
-                                    GestureDetector(
-                                      onTap: () {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => ChatWindowScreen(
-                                              match: {
-                                                'name': '${widget.user['firstName']} ${widget.user['lastName']}',
-                                                'firstName': widget.user['firstName'],
-                                                'lastName': widget.user['lastName'],
-                                                ...widget.user,
-                                              },
-                                              otherUserId: widget.user['userId'] ?? widget.user['uid'] ?? '',
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                      child: Container(
-                                        width: 50,
-                                        height: 50,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          color: AppTheme.primaryColor,
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black.withOpacity(0.2),
-                                              blurRadius: 8,
-                                              offset: const Offset(0, 2),
-                                            ),
-                                          ],
-                                        ),
-                                        child: const Icon(Icons.chat_bubble_outline, color: Colors.white, size: 28),
                                       ),
                                     ),
                                 ],

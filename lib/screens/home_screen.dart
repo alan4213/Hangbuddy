@@ -674,15 +674,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                     // Join button
                     Row(
                       children: [
-                        if (hangout.interestedUsers.isNotEmpty)
-                          Text(
-                            '+${hangout.interestedUsers.length} interested',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
                         const Spacer(),
                         ElevatedButton(
                           onPressed: () => _handleJoin(hangout),

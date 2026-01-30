@@ -166,11 +166,27 @@ class LocationService {
   
   static Future<List<String>> getLocationSuggestions(String query) async {
     try {
-      final String url = 'https://nominatim.openstreetmap.org/search'
+      String? countryCode;
+      
+      // Get user's current country
+      final position = await getCurrentPosition();
+      if (position != null) {
+        final placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
+        if (placemarks.isNotEmpty && placemarks.first.isoCountryCode != null) {
+          countryCode = placemarks.first.isoCountryCode!.toLowerCase();
+        }
+      }
+      
+      String url = 'https://nominatim.openstreetmap.org/search'
           '?q=${Uri.encodeComponent(query)}'
           '&format=json'
           '&addressdetails=1'
           '&limit=8';
+      
+      // Add country restriction if detected
+      if (countryCode != null) {
+        url += '&countrycodes=$countryCode';
+      }
       
       final response = await http.get(
         Uri.parse(url),

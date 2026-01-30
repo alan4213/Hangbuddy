@@ -70,6 +70,7 @@ class _ChatScreenState extends State<ChatScreen> {
               // Chats and Matches List
               Expanded(
                 child: StreamBuilder<List<Map<String, dynamic>>>(
+                key: ValueKey('chats_stream'),
                 stream: ChatService.getChatsWithLastMessage(),
                 builder: (context, chatSnapshot) {
                   if (chatSnapshot.connectionState == ConnectionState.waiting) {
@@ -86,12 +87,17 @@ class _ChatScreenState extends State<ChatScreen> {
                   }
                   
                   if (chats.isNotEmpty) {
-                    return ListView.builder(
-                      itemCount: chats.length,
-                      itemBuilder: (context, index) {
-                        final chat = chats[index];
-                        return _buildChatCard(chat);
+                    return RefreshIndicator(
+                      onRefresh: () async {
+                        setState(() {});
                       },
+                      child: ListView.builder(
+                        itemCount: chats.length,
+                        itemBuilder: (context, index) {
+                          final chat = chats[index];
+                          return _buildChatCard(chat);
+                        },
+                      ),
                     );
                   }
                   
@@ -107,6 +113,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       }
                       
                       final matches = matchSnapshot.data ?? [];
+                      print('Matches found: ${matches.length}');
                       
                       if (matches.isEmpty) {
                         return Center(

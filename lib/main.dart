@@ -134,6 +134,8 @@ class _MainNavigationState extends State<MainNavigation> {
     super.initState();
     _checkUserStatus();
     _listenToInterestRequests();
+    // Clean up expired hangouts on app start
+    HangoutService.cleanupExpiredHangouts();
     NotificationService.setTabChangeCallback((index) {
       setState(() {
         _selectedIndex = index;

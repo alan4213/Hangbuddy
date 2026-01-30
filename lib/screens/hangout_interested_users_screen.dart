@@ -20,6 +20,7 @@ class HangoutInterestedUsersScreen extends StatefulWidget {
 
 class _HangoutInterestedUsersScreenState extends State<HangoutInterestedUsersScreen> {
   final Map<String, UserModel> _userCache = {};
+  final Set<String> _processingUsers = {};
 
   @override
   Widget build(BuildContext context) {
@@ -184,7 +185,9 @@ class _HangoutInterestedUsersScreenState extends State<HangoutInterestedUsersScr
                                   ),
                                   subtitle: Text('Age: ${user.age ?? 'N/A'}'),
                                   trailing: ElevatedButton(
-                                    onPressed: () => _acceptUser(user, currentHangout),
+                                    onPressed: _processingUsers.contains(user.uid) 
+                                        ? null 
+                                        : () => _acceptUser(user, currentHangout),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: AppTheme.primaryColor,
                                       shape: RoundedRectangleBorder(
@@ -238,6 +241,12 @@ class _HangoutInterestedUsersScreenState extends State<HangoutInterestedUsersScr
   }
 
   void _acceptUser(UserModel user, HangoutRequest currentHangout) async {
+    if (_processingUsers.contains(user.uid)) return;
+    
+    setState(() {
+      _processingUsers.add(user.uid);
+    });
+    
     try {
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser == null) {
@@ -287,6 +296,12 @@ class _HangoutInterestedUsersScreenState extends State<HangoutInterestedUsersScr
           backgroundColor: Colors.red,
         ),
       );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _processingUsers.remove(user.uid);
+        });
+      }
     }
   }
 }

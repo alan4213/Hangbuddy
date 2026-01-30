@@ -64,12 +64,26 @@ class HangoutService {
         .asStream()
         .map((snapshot) {
       final filteredHangouts = <HangoutRequest>[];
+      final now = DateTime.now();
       
       for (final doc in snapshot.docs) {
         final hangout = HangoutRequest.fromMap(doc.data(), doc.id);
         
-        // Skip own hangouts only
+        // Skip expired hangouts
+        if (hangout.dateTime.isBefore(now)) {
+          // Delete expired hangout in background
+          _deleteExpiredHangout(hangout.id);
+          continue;
+        }
+        
+        // Skip own hangouts
         if (hangout.creatorId == user.uid) {
+          continue;
+        }
+        
+        // Skip hangouts where user was already accepted
+        final acceptedUsers = doc.data()['acceptedUsers'] as List<dynamic>? ?? [];
+        if (acceptedUsers.contains(user.uid)) {
           continue;
         }
         
@@ -143,9 +157,22 @@ class HangoutService {
         .where('status', isEqualTo: 'active')
         .snapshots()
         .map((snapshot) {
-      final hangouts = snapshot.docs
-          .map((doc) => HangoutRequest.fromMap(doc.data(), doc.id))
-          .toList();
+      final now = DateTime.now();
+      final hangouts = <HangoutRequest>[];
+      
+      for (final doc in snapshot.docs) {
+        final hangout = HangoutRequest.fromMap(doc.data(), doc.id);
+        
+        // Skip expired hangouts
+        if (hangout.dateTime.isBefore(now)) {
+          // Delete expired hangout in background
+          _deleteExpiredHangout(hangout.id);
+          continue;
+        }
+        
+        hangouts.add(hangout);
+      }
+      
       hangouts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
       return hangouts;
     });
@@ -185,7 +212,8 @@ class HangoutService {
 
   static Future<void> acceptUser(String hangoutId, String userId) async {
     await _firestore.collection('hangout_requests').doc(hangoutId).update({
-      'interestedUsers': FieldValue.arrayRemove([userId])
+      'interestedUsers': FieldValue.arrayRemove([userId]),
+      'acceptedUsers': FieldValue.arrayUnion([userId])
     });
   }
   
@@ -223,6 +251,37 @@ class HangoutService {
   }
   
   // Debug method to check hangout visibility for a specific user
+  static Future<void> _deleteExpiredHangout(String hangoutId) async {
+    try {
+      await deleteHangout(hangoutId);
+    } catch (e) {
+      print('Error deleting expired hangout: $e');
+    }
+  }
+  
+  static Future<void> cleanupExpiredHangouts() async {
+    try {
+      final snapshot = await _firestore
+          .collection('hangout_requests')
+          .where('status', isEqualTo: 'active')
+          .get();
+      
+      final now = DateTime.now();
+      final batch = _firestore.batch();
+      
+      for (final doc in snapshot.docs) {
+        final hangout = HangoutRequest.fromMap(doc.data(), doc.id);
+        if (hangout.dateTime.isBefore(now)) {
+          batch.delete(doc.reference);
+        }
+      }
+      
+      await batch.commit();
+    } catch (e) {
+      print('Error cleaning up expired hangouts: $e');
+    }
+  }
+  
   static Future<void> debugHangoutVisibility(String friendUserId) async {
     final user = _auth.currentUser;
     if (user == null) {

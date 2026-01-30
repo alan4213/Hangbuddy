@@ -351,7 +351,18 @@ class ChatService {
         .where('participants', arrayContains: currentUser.uid)
         .snapshots()
         .map((snapshot) {
-          final chats = snapshot.docs.map((doc) {
+          print('Debug - Total chat documents found: ${snapshot.docs.length}');
+          final chats = snapshot.docs
+              .where((doc) {
+                final data = doc.data();
+                // Filter out deleted chats - check if deletedFor_currentUserId exists and is true
+                final deletedForCurrentUser = data['deletedFor_${currentUser.uid}'];
+                print('Debug - Chat ${doc.id}: deletedFor_${currentUser.uid} = $deletedForCurrentUser');
+                final shouldInclude = deletedForCurrentUser != true;
+                print('Debug - Chat ${doc.id}: shouldInclude = $shouldInclude');
+                return shouldInclude;
+              })
+              .map((doc) {
             final data = doc.data();
             return {
               'chatId': doc.id,
@@ -364,6 +375,7 @@ class ChatService {
           
           // Sort by lastMessageTime in memory
           chats.sort((a, b) => (b['lastMessageTime'] as int).compareTo(a['lastMessageTime'] as int));
+          print('Debug - Final filtered chats count: ${chats.length}');
           return chats;
         });
   }
