@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:lottie/lottie.dart';
 import 'profile_detail_screen.dart';
 import '../models/matches_model.dart';
 import '../services/hangout_service.dart';
@@ -402,34 +403,28 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    width: 200,
-                    height: 200,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE8F4F8),
-                      borderRadius: BorderRadius.circular(100),
-                    ),
-                    child: const Icon(
-                      Icons.add_circle_outline,
-                      size: 80,
-                      color: Color(0xFF6B7280),
-                    ),
+                  // Coffee cups image from assets
+                  Image.asset(
+                    'assets/images/mug.jpeg',
+                    width: 320,
+                    height: 320,
+                    fit: BoxFit.contain,
                   ),
-                  const SizedBox(height: 24),
                   const Text(
-                    'Looking for company?',
+                    'Need a plus one?',
                     style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey,
+                      fontSize: 24,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1F2937),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   const Text(
-                    'Check back later or create your own hangout',
+                    'Everything is better with company. Post a\nhangout to find a partner for your plan.',
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.grey,
+                      color: Color(0xFF6B7280),
+                      height: 1.5,
                     ),
                     textAlign: TextAlign.center,
                   ),

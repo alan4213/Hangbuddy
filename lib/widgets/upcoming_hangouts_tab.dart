@@ -66,20 +66,13 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    width: 200,
-                    height: 200,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE8F4F8),
-                      borderRadius: BorderRadius.circular(100),
-                    ),
-                    child: const Icon(
-                      Icons.event_available_outlined,
-                      size: 80,
-                      color: Color(0xFF6B7280),
-                    ),
+                  // Matches empty image from assets
+                  Image.asset(
+                    'assets/images/matches_empty.jpeg',
+                    width: 320,
+                    height: 320,
+                    fit: BoxFit.contain,
                   ),
-                  const SizedBox(height: 24),
                   const Text(
                     "No upcoming hangouts",
                     style: TextStyle(
@@ -92,7 +85,7 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
                   const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 40),
                     child: Text(
-                      "Start matching with people to plan exciting hangouts together!",
+                      "Start connecting with people to plan exciting hangouts together!",
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 16,

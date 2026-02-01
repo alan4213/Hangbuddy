@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/app_theme.dart';
 import '../services/user_service.dart';
+import '../services/preferences_service.dart';
 import '../models/user_model.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -14,6 +15,7 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   UserModel? _userProfile;
   bool _isLoading = true;
+  bool _notificationsMuted = false;
 
   @override
   void initState() {
@@ -24,8 +26,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _loadUserProfile() async {
     try {
       final profile = await UserService.getUserProfile();
+      final muted = await PreferencesService.areNotificationsMuted();
       setState(() {
         _userProfile = profile;
+        _notificationsMuted = muted;
         _isLoading = false;
       });
     } catch (e) {
@@ -58,6 +62,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
         padding: EdgeInsets.all(20),
         children: [
           _buildSettingsCard([
+            _buildNotificationToggle(),
+          ]),
+          
+          SizedBox(height: 20),
+          
+          _buildSettingsCard([
             _buildSettingsItem(Icons.privacy_tip_outlined, 'Privacy', () {}),
           ]),
           
@@ -75,6 +85,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
             _buildSettingsItem(Icons.info_outline, 'About', () {}),
           ]),
         ],
+      ),
+    );
+  }
+
+  Widget _buildNotificationToggle() {
+    return Container(
+      margin: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ListTile(
+        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: Container(
+          padding: EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: AppTheme.primaryColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            _notificationsMuted ? Icons.notifications_off : Icons.notifications,
+            color: AppTheme.primaryColor,
+            size: 20,
+          ),
+        ),
+        title: Text(
+          'Mute All Notifications',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        trailing: Switch(
+          value: _notificationsMuted,
+          activeColor: AppTheme.primaryColor,
+          onChanged: (value) async {
+            await PreferencesService.setNotificationsMuted(value);
+            setState(() {
+              _notificationsMuted = value;
+            });
+          },
+        ),
       ),
     );
   }

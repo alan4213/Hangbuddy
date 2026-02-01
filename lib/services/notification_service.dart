@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../screens/chat_window_screen.dart';
+import 'preferences_service.dart';
+import '../widgets/in_app_notification.dart';
 
 class NotificationService {
   static final FirebaseMessaging _messaging = FirebaseMessaging.instance;
@@ -24,9 +26,10 @@ class NotificationService {
       await _saveTokenToDatabase(token);
     }
 
-    // Handle foreground messages
+    // Handle foreground messages with in-app notifications
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       print('Foreground message received: ${message.notification?.title}');
+      _showInAppNotification(message);
     });
 
     // Handle background messages
@@ -42,6 +45,42 @@ class NotificationService {
     if (initialMessage != null) {
       _handleNotificationTap(initialMessage.data);
     }
+  }
+  
+  static void _showInAppNotification(RemoteMessage message) {
+    final context = navigatorKey.currentContext;
+    print('=== IN-APP NOTIFICATION DEBUG ===');
+    print('Context available: ${context != null}');
+    print('Message title: ${message.notification?.title}');
+    print('Message body: ${message.notification?.body}');
+    
+    if (context == null) {
+      print('No context available for in-app notification');
+      return;
+    }
+    
+    final title = message.notification?.title ?? 'New Notification';
+    final body = message.notification?.body ?? '';
+    final type = message.data['type'] ?? 'info';
+    
+    print('Showing in-app notification: $title');
+    
+    // Delay to ensure overlay is available
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final currentContext = navigatorKey.currentContext;
+      if (currentContext != null) {
+        InAppNotification.show(
+          currentContext,
+          title: title,
+          message: body,
+          type: type,
+          onTap: () {
+            InAppNotification.dismiss();
+            _handleNotificationTap(message.data);
+          },
+        );
+      }
+    });
   }
   
   static Future<void> _saveTokenToDatabase(String token) async {
@@ -64,6 +103,13 @@ class NotificationService {
   
   static Future<void> _sendDeviceNotification(String userId, String title, String body, [Map<String, dynamic>? data]) async {
     try {
+      // Check if notifications are muted
+      final isMuted = await PreferencesService.areNotificationsMuted();
+      if (isMuted) {
+        print('Notifications are muted, skipping notification: $title');
+        return;
+      }
+      
       // Get user's FCM token
       final userDoc = await FirebaseFirestore.instance.collection('users').doc(userId).get();
       final fcmToken = userDoc.data()?['fcmToken'];
@@ -78,6 +124,22 @@ class NotificationService {
           'title': title,
           'body': body,
           'data': data ?? {},
+          'android': {
+            'notification': {
+              'icon': 'ic_notification',
+              'color': '#6366F1',
+              'sound': 'default',
+              'channel_id': 'hangbuddy_notifications'
+            }
+          },
+          'apns': {
+            'payload': {
+              'aps': {
+                'sound': 'default',
+                'badge': 1
+              }
+            }
+          },
           'timestamp': FieldValue.serverTimestamp(),
         });
         print('FCM message queued: $title for user: $userId');

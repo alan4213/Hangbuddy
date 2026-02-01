@@ -197,7 +197,75 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                               if (result != null && mounted) {
                                 final userProfile = await UserService.getUserProfile();
                                 if (userProfile == null) {
-                                  Navigator.pushNamed(context, '/email');
+                                  // User signed in with Google but no profile exists
+                                  // Delete the Firebase Auth user and redirect to phone number screen
+                                  await result.user?.delete();
+                                  
+                                  // Show popup explaining the situation
+                                  await showDialog(
+                                    context: context,
+                                    barrierDismissible: false,
+                                    builder: (context) => AlertDialog(
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                      title: Row(
+                                        children: [
+                                          Container(
+                                            width: 40,
+                                            height: 40,
+                                            decoration: BoxDecoration(
+                                              gradient: AppTheme.primaryGradient,
+                                              borderRadius: BorderRadius.circular(20),
+                                            ),
+                                            child: Icon(Icons.account_circle, color: Colors.white, size: 24),
+                                          ),
+                                          SizedBox(width: 12),
+                                          Expanded(
+                                            child: Text(
+                                              'Account Not Found',
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppTheme.textPrimary,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      content: Text(
+                                        'No account found with this Google email. Please create a new account with your phone number.',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: AppTheme.textSecondary,
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.pop(context);
+                                            Navigator.pushReplacement(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => PhoneNumberScreen(showGoogleSignIn: false),
+                                              ),
+                                            );
+                                          },
+                                          style: TextButton.styleFrom(
+                                            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                          ),
+                                          child: Text(
+                                            'Create Account',
+                                            style: TextStyle(
+                                              color: AppTheme.primaryColor,
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: 16,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
                                 } else {
                                   Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
                                 }

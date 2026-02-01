@@ -117,45 +117,42 @@ class _ChatScreenState extends State<ChatScreen> {
                       
                       if (matches.isEmpty) {
                         return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Container(
-                                width: 200,
-                                height: 200,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFE8F4F8),
-                                  borderRadius: BorderRadius.circular(100),
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 80),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                // Chat empty image from assets
+                                Image.asset(
+                                  'assets/images/chat_empty.jpeg',
+                                  width: 320,
+                                  height: 320,
+                                  fit: BoxFit.contain,
                                 ),
-                                child: const Icon(
-                                  Icons.chat_bubble_outline,
-                                  size: 80,
-                                  color: Color(0xFF6B7280),
-                                ),
-                              ),
-                              const SizedBox(height: 24),
-                              const Text(
-                                "No conversations yet",
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              const Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 40),
-                                child: Text(
-                                  "Accept hangout requests to start chatting with your matches!",
-                                  textAlign: TextAlign.center,
+                                const SizedBox(height: 8),
+                                const Text(
+                                  "Send it.",
                                   style: TextStyle(
-                                    fontSize: 16,
-                                    color: Color(0xFF6B7280),
-                                    height: 1.4,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
                                   ),
                                 ),
-                              ),
-                            ],
+                                const SizedBox(height: 12),
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 40),
+                                  child: Text(
+                                    "Your inbox is waiting for its first message.\nJoin a hangout to find your duo.",
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Color(0xFF6B7280),
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       }

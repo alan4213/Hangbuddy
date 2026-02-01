@@ -69,39 +69,41 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
-                    width: 200,
-                    height: 200,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE8F4F8),
-                      borderRadius: BorderRadius.circular(100),
-                    ),
-                    child: const Icon(
-                      Icons.add_circle_outline,
-                      size: 80,
-                      color: Color(0xFF6B7280),
-                    ),
+                  // Coffee cups image from assets
+                  Image.asset(
+                    'assets/images/mug.jpeg',
+                    width: 320,
+                    height: 320,
+                    fit: BoxFit.contain,
                   ),
-                  const SizedBox(height: 24),
                   const Text(
-                    "No hangouts created",
+                    'Need a plus one?',
                     style: TextStyle(
                       fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1F2937),
                     ),
                   ),
                   const SizedBox(height: 12),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 40),
-                    child: Text(
-                      "Create your first hangout and start connecting with people!",
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Color(0xFF6B7280),
-                        height: 1.4,
-                      ),
+                  const Text(
+                    'Everything is better with company. Post a\nhangout to find a partner for your plan.',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Color(0xFF6B7280),
+                      height: 1.5,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pushNamed(context, '/create'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryColor,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    ),
+                    child: const Text(
+                      'Create Hangout',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
                     ),
                   ),
                 ],
