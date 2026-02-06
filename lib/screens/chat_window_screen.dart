@@ -24,7 +24,7 @@ class ChatWindowScreen extends StatefulWidget {
   _ChatWindowScreenState createState() => _ChatWindowScreenState();
 }
 
-class _ChatWindowScreenState extends State<ChatWindowScreen> {
+class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBindingObserver {
   final TextEditingController _messageController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
   String? _otherUserId;
@@ -47,6 +47,9 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _setOnlineStatus(true);
+    
     // Use provided otherUserId or get from match data
     if (widget.otherUserId != null) {
       _otherUserId = widget.otherUserId;
@@ -85,12 +88,37 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> {
   
   @override
   void dispose() {
+    _setOnlineStatus(false);
+    WidgetsBinding.instance.removeObserver(this);
     _saveDraft();
     _typingTimer?.cancel();
     _messageController.removeListener(_onTyping);
     _messageController.removeListener(_saveDraft);
     _messageController.dispose();
     super.dispose();
+  }
+  
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _setOnlineStatus(true);
+    } else if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      _setOnlineStatus(false);
+    }
+  }
+  
+  void _setOnlineStatus(bool isOnline) async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+    
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(currentUser.uid).update({
+        'isOnline': isOnline,
+        'lastSeen': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      print('Error updating online status: $e');
+    }
   }
   
   void _onTyping() {
