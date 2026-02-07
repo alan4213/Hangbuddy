@@ -36,6 +36,7 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
   File? _selectedPhoto;
   String? _uploadedPhotoUrl;
   bool _isUploading = false;
+  bool _matchExists = true;
   final List<Color> avatarColors = [
     Color(0xFF8B5CF6),
     Color(0xFF3B82F6),
@@ -74,6 +75,7 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
     if (_otherUserId != null) {
       _loadOtherUserData();
       _loadDraft();
+      _checkIfMatchExists();
       
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser != null) {
@@ -393,10 +395,40 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
               );
             },
           ),
-          _buildMessageInput(),
+          if (_matchExists) _buildMessageInput(),
+          if (!_matchExists) Container(
+            padding: EdgeInsets.all(16),
+            color: Colors.grey[200],
+            child: Center(
+              child: Text(
+                '${widget.match['name'] ?? 'User'} left the hangout',
+                style: TextStyle(color: Colors.grey[600], fontSize: 14),
+              ),
+            ),
+          ),
         ],
       ),
     );
+  }
+  
+  void _checkIfMatchExists() async {
+    if (_otherUserId == null) return;
+    
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+    
+    try {
+      // Check if other user deleted the chat
+      final otherUserDeleted = await ChatService.checkIfOtherUserDeleted(_otherUserId!);
+      
+      if (mounted) {
+        setState(() {
+          _matchExists = !otherUserDeleted;
+        });
+      }
+    } catch (e) {
+      print('Error checking match: $e');
+    }
   }
 
   Widget _buildSwipeableMessage(ChatMessage message) {
@@ -1387,15 +1419,17 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
     final chatId = ChatService.getChatId(currentUser.uid, _otherUserId!);
     
     try {
-      // Delete chat
+      // Set deletedBy timestamp for current user
       await FirebaseFirestore.instance
           .collection('chats')
           .doc(chatId)
-          .update({
-        'deletedFor_${currentUser.uid}': true,
-      });
+          .set({
+        'deletedBy': {
+          currentUser.uid: FieldValue.serverTimestamp(),
+        },
+      }, SetOptions(merge: true));
       
-      // Delete match
+      // Delete match for both users
       final matchQuery = await FirebaseFirestore.instance
           .collection('matches')
           .where('status', isEqualTo: 'active')
@@ -1405,10 +1439,7 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
         final data = doc.data();
         final participants = [data['user1Id'], data['user2Id']];
         if (participants.contains(currentUser.uid) && participants.contains(_otherUserId)) {
-          print('Debug - Deleting match: ${doc.id}');
-          await doc.reference.update({
-            'deletedFor_${currentUser.uid}': true,
-          });
+          await doc.reference.delete();
         }
       }
       
@@ -1416,7 +1447,6 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
         SnackBar(content: Text('Chat deleted')),
       );
       
-      // Navigate back to chat list
       Navigator.of(context).popUntil((route) => route.isFirst);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

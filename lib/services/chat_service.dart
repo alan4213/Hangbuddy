@@ -176,11 +176,29 @@ class ChatService {
         .orderBy('timestamp', descending: true)
         .snapshots()
         .asyncMap((snapshot) async {
+      // Get chat metadata to check deletedBy timestamp
+      final chatDoc = await FirebaseFirestore.instance
+          .collection('chats')
+          .doc(chatId)
+          .get();
+      
+      final deletedByTimestamp = chatDoc.exists 
+          ? (chatDoc.data()?['deletedBy']?[currentUser.uid] as Timestamp?)?.toDate()
+          : null;
+      
       final messages = snapshot.docs
           .where((doc) {
             final data = doc.data();
             final deletedFor = data['deletedFor'] as Map<String, dynamic>?;
-            return deletedFor?[currentUser.uid] != true;
+            if (deletedFor?[currentUser.uid] == true) return false;
+            
+            // Filter messages after deletedBy timestamp
+            if (deletedByTimestamp != null) {
+              final messageTime = (data['timestamp'] as Timestamp).toDate();
+              if (messageTime.isAfter(deletedByTimestamp)) return false;
+            }
+            
+            return true;
           })
           .map((doc) => ChatMessage.fromMap(doc.data(), doc.id))
           .toList();
@@ -350,30 +368,51 @@ class ChatService {
         .collection('chats')
         .where('participants', arrayContains: currentUser.uid)
         .snapshots()
-        .map((snapshot) {
+        .asyncMap((snapshot) async {
           print('Debug - Total chat documents found: ${snapshot.docs.length}');
-          final chats = snapshot.docs
-              .where((doc) {
-                final data = doc.data();
-                // Filter out deleted chats - check if deletedFor_currentUserId exists and is true
-                final deletedForCurrentUser = data['deletedFor_${currentUser.uid}'];
-                print('Debug - Chat ${doc.id}: deletedFor_${currentUser.uid} = $deletedForCurrentUser');
-                final shouldInclude = deletedForCurrentUser != true;
-                print('Debug - Chat ${doc.id}: shouldInclude = $shouldInclude');
-                return shouldInclude;
-              })
-              .map((doc) {
+          final chats = <Map<String, dynamic>>[];
+          
+          for (final doc in snapshot.docs) {
             final data = doc.data();
-            return {
+            final deletedForCurrentUser = data['deletedFor_${currentUser.uid}'];
+            print('Debug - Chat ${doc.id}: deletedFor_${currentUser.uid} = $deletedForCurrentUser');
+            
+            if (deletedForCurrentUser == true) continue;
+            
+            final participants = List<String>.from(data['participants'] ?? []);
+            final otherUserId = participants.firstWhere((id) => id != currentUser.uid, orElse: () => '');
+            
+            String? userName;
+            String? userPhoto;
+            
+            if (otherUserId.isNotEmpty) {
+              try {
+                final userDoc = await FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(otherUserId)
+                    .get();
+                
+                if (userDoc.exists) {
+                  final userData = userDoc.data()!;
+                  userName = userData['firstName'] ?? '';
+                  userPhoto = userData['profileImageUrl'] ?? (userData['photoUrls'] as List?)?.first;
+                }
+              } catch (e) {
+                print('Error fetching user data: $e');
+              }
+            }
+            
+            chats.add({
               'chatId': doc.id,
-              'participants': data['participants'] ?? [],
+              'participants': participants,
               'lastMessage': data['lastMessage'] ?? '',
               'lastMessageTime': data['lastMessageTime'] ?? 0,
               'unreadCount': data['unreadCount_${currentUser.uid}'] ?? 0,
-            };
-          }).toList();
+              'otherUserName': userName ?? 'User',
+              'otherUserPhoto': userPhoto,
+            });
+          }
           
-          // Sort by lastMessageTime in memory
           chats.sort((a, b) => (b['lastMessageTime'] as int).compareTo(a['lastMessageTime'] as int));
           print('Debug - Final filtered chats count: ${chats.length}');
           return chats;
@@ -420,5 +459,41 @@ class ChatService {
   
   static String _getChatId(String userId1, String userId2) {
     return getChatId(userId1, userId2);
+  }
+  
+  static Future<void> restoreChatAndClearMessages(String user1Id, String user2Id) async {
+    final chatId = getChatId(user1Id, user2Id);
+    final chatRef = FirebaseFirestore.instance.collection('chats').doc(chatId);
+    
+    final chatDoc = await chatRef.get();
+    if (!chatDoc.exists) {
+      await chatRef.set({
+        'participants': [user1Id, user2Id],
+        'lastMessage': '',
+        'lastMessageTime': 0,
+      });
+    } else {
+      // Remove deletedBy flags when matching again
+      await chatRef.update({
+        'deletedBy.$user1Id': FieldValue.delete(),
+        'deletedBy.$user2Id': FieldValue.delete(),
+      });
+    }
+  }
+  
+  static Future<bool> checkIfOtherUserDeleted(String otherUserId) async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return false;
+    
+    final chatId = _getChatId(currentUser.uid, otherUserId);
+    final chatDoc = await FirebaseFirestore.instance
+        .collection('chats')
+        .doc(chatId)
+        .get();
+    
+    if (!chatDoc.exists) return false;
+    
+    final deletedBy = chatDoc.data()?['deletedBy'] as Map<String, dynamic>?;
+    return deletedBy?.containsKey(otherUserId) ?? false;
   }
 }

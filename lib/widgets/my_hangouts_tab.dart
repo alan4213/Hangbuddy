@@ -4,10 +4,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/hangout_request_model.dart';
 import '../services/hangout_service.dart';
 import '../services/match_service.dart';
+import '../services/chat_service.dart';
 import '../theme/app_theme.dart';
 import '../screens/hangout_interested_users_screen.dart';
 import '../screens/profile_detail_screen.dart';
-import '../widgets/tutorial_overlay.dart';
 import '../utils/error_handler.dart';
 import '../screens/match_notification_screen.dart';
 
@@ -19,33 +19,12 @@ class MyHangoutsTab extends StatefulWidget {
 }
 
 class _MyHangoutsTabState extends State<MyHangoutsTab> {
-  // Tutorial keys
-  final GlobalKey _hangoutCardKey = GlobalKey();
-  final GlobalKey _interestedUsersKey = GlobalKey();
-  final GlobalKey _acceptButtonKey = GlobalKey();
-  bool _showTutorial = false;
-  bool _hasHangouts = false;
   List<HangoutRequest> _cachedHangouts = [];
   bool _isInitialLoad = true;
 
-  void _checkAndShowTutorial(List<HangoutRequest> hangouts) async {
-    // Only show tutorial if not already completed and conditions are met
-    final isCompleted = await TutorialService.isTutorialCompleted('my_hangouts_tab');
-    if (!isCompleted && hangouts.isNotEmpty && hangouts.any((h) => h.interestedUsers.isNotEmpty) && !_hasHangouts && !_showTutorial) {
-      _hasHangouts = true;
-      Future.delayed(const Duration(milliseconds: 500), () {
-        if (mounted && !_showTutorial) {
-          setState(() {
-            _showTutorial = true;
-          });
-        }
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final myHangoutsContent = Padding(
+    return Padding(
       padding: const EdgeInsets.all(12.0),
       child: StreamBuilder<List<HangoutRequest>>(
         stream: HangoutService.getUserHangouts(),
@@ -62,8 +41,6 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
             _isInitialLoad = false;
           }
           
-          _checkAndShowTutorial(hangouts);
-          
           if (hangouts.isEmpty) {
             return Center(
               child: Column(
@@ -72,8 +49,8 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
                   // Coffee cups image from assets
                   Image.asset(
                     'assets/images/mug_transp.png',
-                    width: 320,
-                    height: 320,
+                    width: 280,
+                    height: 280,
                     fit: BoxFit.contain,
                   ),
                   const Text(
@@ -86,7 +63,7 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
                   ),
                   const SizedBox(height: 12),
                   const Text(
-                    'Everything is better with company. Post a\nhangout to find a partner for your plan.',
+                    'Everything is better with company.\nPost a hangout to find a partner.',
                     style: TextStyle(
                       fontSize: 16,
                       color: Color(0xFF6B7280),
@@ -117,10 +94,9 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
               final hangout = hangouts[index];
               return Column(
                 children: [
-                  _buildHangoutCard(context, hangout, index == 0),
+                  _buildHangoutCard(context, hangout),
                   if (hangout.interestedUsers.isNotEmpty)
                     GridView.builder(
-                      key: index == 0 ? _interestedUsersKey : null,
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -133,7 +109,7 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
                       itemCount: hangout.interestedUsers.length,
                       itemBuilder: (context, userIndex) {
                         final userId = hangout.interestedUsers[userIndex];
-                        return _buildMatchCard(context, userId, hangout, index == 0 && userIndex == 0);
+                        return _buildMatchCard(context, userId, hangout);
                       },
                     ),
                 ],
@@ -143,34 +119,10 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
         },
       ),
     );
-    
-    if (_showTutorial) {
-      return TutorialOverlay(
-        screenName: 'my_hangouts_tab',
-        steps: [
-          TutorialStep(
-            title: 'Accept People',
-            description: 'Tap the check button to accept someone into your hangout. This will create a match and start a conversation.',
-            targetKey: _acceptButtonKey,
-            bubblePosition: const Offset(20, 500),
-          ),
-        ],
-        onComplete: () {
-          setState(() {
-            _showTutorial = false;
-          });
-          TutorialService.markTutorialCompleted('my_hangouts');
-        },
-        child: myHangoutsContent,
-      );
-    }
-    
-    return myHangoutsContent;
   }
 
-  Widget _buildHangoutCard(BuildContext context, HangoutRequest hangout, [bool isFirst = false]) {
+  Widget _buildHangoutCard(BuildContext context, HangoutRequest hangout) {
     return Container(
-      key: isFirst ? _hangoutCardKey : null,
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
@@ -402,7 +354,7 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
     );
   }
 
-  Widget _buildMatchCard(BuildContext context, String userId, HangoutRequest hangout, [bool isFirst = false]) {
+  Widget _buildMatchCard(BuildContext context, String userId, HangoutRequest hangout) {
     return FutureBuilder<Map<String, dynamic>?>(
       future: _getUserData(userId),
       builder: (context, snapshot) {
@@ -532,7 +484,6 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
                     child: GestureDetector(
                       onTap: () => _acceptUser(context, userId, hangout),
                       child: Container(
-                        key: isFirst ? _acceptButtonKey : null,
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
@@ -639,6 +590,9 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
       }
       
       print('Creating match between ${currentUser.uid} and $userId');
+      
+      // Restore chat and clear old messages if it was deleted
+      await ChatService.restoreChatAndClearMessages(currentUser.uid, userId);
       
       // Create match in background
       await MatchService.createMatch(

@@ -420,7 +420,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                   ),
                   const SizedBox(height: 12),
                   const Text(
-                    'Everything is better with company. Post a\nhangout to find a partner for your plan.',
+                    'Everything is better with company.\nPost a hangout to find a partner.',
                     style: TextStyle(
                       fontSize: 16,
                       color: Color(0xFF6B7280),

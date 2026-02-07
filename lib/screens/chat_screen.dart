@@ -125,24 +125,15 @@ class _ChatScreenState extends State<ChatScreen> {
                                 // Chat empty image from assets
                                 Image.asset(
                                   'assets/images/chat_empty_transp.png',
-                                  width: 320,
-                                  height: 320,
+                                  width: 280,
+                                  height: 280,
                                   fit: BoxFit.contain,
                                 ),
                                 const SizedBox(height: 8),
-                                const Text(
-                                  "Send it.",
-                                  style: TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
                                 const Padding(
                                   padding: EdgeInsets.symmetric(horizontal: 40),
                                   child: Text(
-                                    "Your inbox is waiting for its first message.\nJoin a hangout to find your duo.",
+                                    "Join a Hangout to find your duo.",
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       fontSize: 16,
@@ -183,163 +174,109 @@ class _ChatScreenState extends State<ChatScreen> {
     final participants = List<String>.from(chat['participants'] ?? []);
     final otherUserId = participants.firstWhere((id) => id != currentUser.uid, orElse: () => '');
     
-    print('Debug - Chat participants: $participants, otherUserId: $otherUserId');
     if (otherUserId.isEmpty) return const SizedBox();
     
-    return FutureBuilder<UserModel?>(
-      future: _getUserData(otherUserId),
-      builder: (context, userSnapshot) {
-        if (userSnapshot.connectionState == ConnectionState.waiting) {
-          return Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8F9FA),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: const Row(
-              children: [
-                CircleAvatar(radius: 28, backgroundColor: Colors.grey),
-                SizedBox(width: 12),
-                LoadingWidget(size: 16),
-              ],
-            ),
-          );
-        }
-        
-        final user = userSnapshot.data;
-        if (user == null) {
-          print('Debug - User not found for: $otherUserId');
-          return Container(
-            margin: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            padding: EdgeInsets.all(12),
-            child: Row(
-              children: [
-                CircleAvatar(radius: 25, backgroundColor: Colors.red),
-                SizedBox(width: 12),
-                Text('User: $otherUserId'),
-              ],
-            ),
-          );
-        }
-        
-        final unreadCount = chat['unreadCount'] as int;
-        final lastMessage = chat['lastMessage'] as String;
-        
-        return GestureDetector(
-          onTap: () {
-            ChatService.markAsRead(chat['chatId']);
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ChatWindowScreen(
-                  match: {'name': '${user.firstName} ${user.lastName}'},
-                  otherUserId: otherUserId,
-                ),
-              ),
-            );
-          },
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8F9FA),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              children: [
-                Stack(
-                  children: [
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: avatarColors[otherUserId.hashCode % avatarColors.length],
-                        shape: BoxShape.circle,
-                        image: user.profileImageUrl != null || user.photoUrls?.isNotEmpty == true
-                            ? DecorationImage(
-                                image: NetworkImage(user.profileImageUrl ?? user.photoUrls!.first),
-                                fit: BoxFit.cover,
-                              )
-                            : DecorationImage(
-                                image: NetworkImage('https://picsum.photos/100/100?random=${otherUserId.hashCode % 100}'),
-                                fit: BoxFit.cover,
-                              ),
-                      ),
-                      child: user.profileImageUrl == null 
-                          ? Center(
-                              child: Text(
-                                user.firstName[0].toUpperCase(),
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            )
-                          : null,
-                    ),
-                    if (unreadCount > 0)
-                      Positioned(
-                        right: 0,
-                        top: 0,
-                        child: Container(
-                          padding: EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
-                          ),
-                          child: Text(
-                            unreadCount > 9 ? '9+' : unreadCount.toString(),
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${user.firstName} ${user.lastName}',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        lastMessage.isEmpty ? 'Start a conversation' : lastMessage,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                          fontWeight: unreadCount > 0 ? FontWeight.w600 : FontWeight.normal,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ),
-                ),
-                Text(
-                  _formatTime(chat['lastMessageTime']),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[500],
-                  ),
-                ),
-              ],
+    final unreadCount = chat['unreadCount'] as int;
+    final lastMessage = chat['lastMessage'] as String;
+    final userName = chat['otherUserName'] ?? 'User';
+    final userPhoto = chat['otherUserPhoto'];
+    
+    return GestureDetector(
+      onTap: () {
+        ChatService.markAsRead(chat['chatId']);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatWindowScreen(
+              match: {'name': userName},
+              otherUserId: otherUserId,
             ),
           ),
         );
       },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8F9FA),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          children: [
+            Stack(
+              children: [
+                CircleAvatar(
+                  radius: 28,
+                  backgroundColor: avatarColors[otherUserId.hashCode % avatarColors.length],
+                  backgroundImage: userPhoto != null ? NetworkImage(userPhoto) : null,
+                  child: userPhoto == null ? Text(
+                    userName[0].toUpperCase(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ) : null,
+                ),
+                if (unreadCount > 0)
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      padding: EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        unreadCount > 9 ? '9+' : unreadCount.toString(),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    userName,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    lastMessage.isEmpty ? 'Start a conversation' : lastMessage,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                      fontWeight: unreadCount > 0 ? FontWeight.w600 : FontWeight.normal,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              _formatTime(chat['lastMessageTime']),
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[500],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -386,7 +323,7 @@ class _ChatScreenState extends State<ChatScreen> {
               context,
               MaterialPageRoute(
                 builder: (context) => ChatWindowScreen(
-                  match: {'name': '${user.firstName} ${user.lastName}'},
+                  match: {'name': user.firstName},
                   otherUserId: otherUserId,
                 ),
               ),
@@ -436,7 +373,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${user.firstName} ${user.lastName}',
+                        user.firstName,
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,

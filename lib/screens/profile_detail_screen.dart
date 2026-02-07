@@ -195,41 +195,15 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                                         Builder(
                                           builder: (context) {
                                             final firstName = widget.user['firstName'] ?? '';
-                                            final lastName = widget.user['lastName'] ?? '';
-                                            final fullName = '$firstName $lastName'.trim();
                                             
-                                            if (fullName.length > 20 && lastName.isNotEmpty) {
-                                              return Column(
-                                                crossAxisAlignment: CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    firstName,
-                                                    style: TextStyle(
-                                                      fontSize: 24,
-                                                      fontWeight: FontWeight.bold,
-                                                      color: AppTheme.textPrimary,
-                                                    ),
-                                                  ),
-                                                  Text(
-                                                    lastName,
-                                                    style: TextStyle(
-                                                      fontSize: 24,
-                                                      fontWeight: FontWeight.bold,
-                                                      color: AppTheme.textPrimary,
-                                                    ),
-                                                  ),
-                                                ],
-                                              );
-                                            } else {
-                                              return Text(
-                                                fullName,
-                                                style: TextStyle(
-                                                  fontSize: 24,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: AppTheme.textPrimary,
-                                                ),
-                                              );
-                                            }
+                                            return Text(
+                                              firstName,
+                                              style: TextStyle(
+                                                fontSize: 24,
+                                                fontWeight: FontWeight.bold,
+                                                color: AppTheme.textPrimary,
+                                              ),
+                                            );
                                           },
                                         ),
                                             if (widget.user['age'] != null)
