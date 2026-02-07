@@ -71,7 +71,7 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
                 children: [
                   // Coffee cups image from assets
                   Image.asset(
-                    'assets/images/mug.jpeg',
+                    'assets/images/mug_transp.png',
                     width: 320,
                     height: 320,
                     fit: BoxFit.contain,

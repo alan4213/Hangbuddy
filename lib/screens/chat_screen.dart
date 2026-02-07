@@ -124,7 +124,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               children: [
                                 // Chat empty image from assets
                                 Image.asset(
-                                  'assets/images/chat_empty.jpeg',
+                                  'assets/images/chat_empty_transp.png',
                                   width: 320,
                                   height: 320,
                                   fit: BoxFit.contain,

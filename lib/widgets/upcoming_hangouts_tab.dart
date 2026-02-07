@@ -68,7 +68,7 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
                 children: [
                   // Matches empty image from assets
                   Image.asset(
-                    'assets/images/matches_empty.jpeg',
+                    'assets/images/matches_empty_transp.png',
                     width: 320,
                     height: 320,
                     fit: BoxFit.contain,
