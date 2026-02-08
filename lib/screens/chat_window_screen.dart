@@ -37,6 +37,7 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
   String? _uploadedPhotoUrl;
   bool _isUploading = false;
   bool _matchExists = true;
+  bool _otherUserLeftChat = false;
   final List<Color> avatarColors = [
     Color(0xFF8B5CF6),
     Color(0xFF3B82F6),
@@ -81,6 +82,24 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
       if (currentUser != null) {
         final chatId = ChatService.getChatId(currentUser.uid, _otherUserId!);
         ChatService.markAsRead(chatId);
+        
+        // Listen for chat deletion by other user
+        FirebaseFirestore.instance
+            .collection('chats')
+            .doc(chatId)
+            .snapshots()
+            .listen((snapshot) {
+          if (snapshot.exists && mounted) {
+            final deletedBy = snapshot.data()?['deletedBy'] as Map<String, dynamic>?;
+            final otherUserDeleted = deletedBy?.containsKey(_otherUserId!) ?? false;
+            if (_otherUserLeftChat != otherUserDeleted) {
+              setState(() {
+                _otherUserLeftChat = otherUserDeleted;
+                _matchExists = !otherUserDeleted;
+              });
+            }
+          }
+        });
       }
     }
     
@@ -419,10 +438,21 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
     
     try {
       // Check if other user deleted the chat
-      final otherUserDeleted = await ChatService.checkIfOtherUserDeleted(_otherUserId!);
+      final chatId = ChatService.getChatId(currentUser.uid, _otherUserId!);
+      final chatDoc = await FirebaseFirestore.instance
+          .collection('chats')
+          .doc(chatId)
+          .get();
+      
+      bool otherUserDeleted = false;
+      if (chatDoc.exists) {
+        final deletedBy = chatDoc.data()?['deletedBy'] as Map<String, dynamic>?;
+        otherUserDeleted = deletedBy?.containsKey(_otherUserId!) ?? false;
+      }
       
       if (mounted) {
         setState(() {
+          _otherUserLeftChat = otherUserDeleted;
           _matchExists = !otherUserDeleted;
         });
       }
@@ -663,6 +693,39 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
   }
 
   Widget _buildMessageInput() {
+    if (_otherUserLeftChat) {
+      return SafeArea(
+        child: Container(
+          padding: EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 4,
+                offset: Offset(0, -2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.info_outline, color: Colors.grey[600], size: 20),
+              SizedBox(width: 8),
+              Text(
+                'User left the chat',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    
     return SafeArea(
       child: Container(
         padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.of(context).viewInsets.bottom > 0 ? 16 : 16),

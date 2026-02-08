@@ -375,9 +375,10 @@ class ChatService {
           for (final doc in snapshot.docs) {
             final data = doc.data();
             final deletedForCurrentUser = data['deletedFor_${currentUser.uid}'];
-            print('Debug - Chat ${doc.id}: deletedFor_${currentUser.uid} = $deletedForCurrentUser');
+            final deletedByCurrentUser = data['deletedBy']?[currentUser.uid];
+            print('Debug - Chat ${doc.id}: deletedFor_${currentUser.uid} = $deletedForCurrentUser, deletedBy = $deletedByCurrentUser');
             
-            if (deletedForCurrentUser == true) continue;
+            if (deletedForCurrentUser == true || deletedByCurrentUser != null) continue;
             
             final participants = List<String>.from(data['participants'] ?? []);
             final otherUserId = participants.firstWhere((id) => id != currentUser.uid, orElse: () => '');

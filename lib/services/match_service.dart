@@ -127,9 +127,7 @@ class MatchService {
   }
 
   static Future<void> deleteMatch(String matchId) async {
-    await _firestore.collection('matches').doc(matchId).update({
-      'status': 'deleted'
-    });
+    await _firestore.collection('matches').doc(matchId).delete();
   }
 
   static Future<void> deleteMatchBetweenUsers(String user1Id, String user2Id) async {

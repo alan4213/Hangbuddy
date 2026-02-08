@@ -499,7 +499,37 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
                         onPressed: () async {
                           Navigator.of(context).pop();
                           try {
+                            final currentUser = FirebaseAuth.instance.currentUser;
+                            if (currentUser == null) return;
+                            
+                            // Get match data to find other user
+                            final matchDoc = await FirebaseFirestore.instance
+                                .collection('matches')
+                                .doc(matchId)
+                                .get();
+                            
+                            if (matchDoc.exists) {
+                              final matchData = matchDoc.data()!;
+                              final otherUserId = matchData['user1Id'] == currentUser.uid 
+                                  ? matchData['user2Id'] 
+                                  : matchData['user1Id'];
+                              
+                              // Mark chat as deleted for current user
+                              final sortedIds = [currentUser.uid, otherUserId]..sort();
+                              final chatId = '${sortedIds[0]}_${sortedIds[1]}';
+                              await FirebaseFirestore.instance
+                                  .collection('chats')
+                                  .doc(chatId)
+                                  .set({
+                                'deletedBy': {
+                                  currentUser.uid: FieldValue.serverTimestamp(),
+                                },
+                              }, SetOptions(merge: true));
+                            }
+                            
+                            // Delete match
                             await MatchService.deleteMatch(matchId);
+                            
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: const Text('Match deleted successfully'),
