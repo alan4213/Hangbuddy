@@ -180,24 +180,23 @@ class _NotificationWidgetState extends State<_NotificationWidget>
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: _getGradientColors(),
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
+                            color: Colors.white,
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: _getIconColor().withOpacity(0.3),
+                                color: AppTheme.primaryColor.withOpacity(0.3),
                                 blurRadius: 12,
                                 offset: const Offset(0, 4),
                               ),
                             ],
                           ),
-                          child: Icon(
-                            _getIcon(),
-                            color: Colors.white,
-                            size: 24,
+                          child: ClipOval(
+                            child: Image.asset(
+                              'assets/images/haule_logo_button.png',
+                              width: 48,
+                              height: 48,
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 12),

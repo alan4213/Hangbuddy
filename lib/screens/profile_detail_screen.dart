@@ -106,7 +106,77 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
           child: Column(
             children: [
               const SizedBox(height: 60),
-                        Container(
+              // Username, verified badge, gender and age at top
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Builder(
+                          builder: (context) {
+                            final firstName = widget.user['firstName'] ?? '';
+                            
+                            return Text(
+                              firstName,
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: AppTheme.textPrimary,
+                              ),
+                            );
+                          },
+                        ),
+                        if (widget.user['age'] != null)
+                          FutureBuilder<bool>(
+                            future: _isUserVerified(widget.user['userId'] ?? widget.user['uid'] ?? ''),
+                            builder: (context, snapshot) {
+                              return Padding(
+                                padding: EdgeInsets.only(left: 6),
+                                child: VerifiedBadge(
+                                  size: 20,
+                                  isVerified: snapshot.data == true,
+                                ),
+                              );
+                            },
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        if (widget.user['gender'] != null)
+                          Text(
+                            widget.user['gender']!,
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: AppTheme.textSecondary,
+                            ),
+                          ),
+                        if (widget.user['gender'] != null && widget.user['age'] != null)
+                          Text(
+                            ', ',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: AppTheme.textSecondary,
+                            ),
+                          ),
+                        if (widget.user['age'] != null)
+                          Text(
+                            '${widget.user['age']}',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: AppTheme.textSecondary,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
                           width: double.infinity,
                           height: 400,
                           margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -186,73 +256,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          children: [
-                                        Builder(
-                                          builder: (context) {
-                                            final firstName = widget.user['firstName'] ?? '';
-                                            
-                                            return Text(
-                                              firstName,
-                                              style: TextStyle(
-                                                fontSize: 24,
-                                                fontWeight: FontWeight.bold,
-                                                color: AppTheme.textPrimary,
-                                              ),
-                                            );
-                                          },
-                                        ),
-                                            if (widget.user['age'] != null)
-                                              FutureBuilder<bool>(
-                                                future: _isUserVerified(widget.user['userId'] ?? widget.user['uid'] ?? ''),
-                                                builder: (context, snapshot) {
-                                                  return Padding(
-                                                    padding: EdgeInsets.only(left: 6),
-                                                    child: VerifiedBadge(
-                                                      size: 20,
-                                                      isVerified: snapshot.data == true,
-                                                    ),
-                                                  );
-                                                },
-                                              ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Row(
-                                          children: [
-                                            if (widget.user['gender'] != null)
-                                              Text(
-                                                widget.user['gender']!,
-                                                style: TextStyle(
-                                                  fontSize: 16,
-                                                  color: AppTheme.textSecondary,
-                                                ),
-                                              ),
-                                            if (widget.user['gender'] != null && widget.user['age'] != null)
-                                              Text(
-                                                ', ',
-                                                style: TextStyle(
-                                                  fontSize: 16,
-                                                  color: AppTheme.textSecondary,
-                                                ),
-                                              ),
-                                            if (widget.user['age'] != null)
-                                              Text(
-                                                '${widget.user['age']}',
-                                                style: TextStyle(
-                                                  fontSize: 16,
-                                                  color: AppTheme.textSecondary,
-                                                ),
-                                              ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
+                                  const Spacer(),
                                   if (widget.hangout != null && widget.hangoutId != null && !widget.showChatButton)
                                     GestureDetector(
                                       onTap: _isProcessingAccept ? null : () async {

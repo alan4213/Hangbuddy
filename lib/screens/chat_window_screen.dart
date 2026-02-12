@@ -497,15 +497,19 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
                   ? _buildPhotoMessage(message, isMe)
                   : message.messageType == 'location'
                   ? _buildLocationMessage(message, isMe)
-                  : Container(
-                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
+                  : IntrinsicWidth(
+                      child: Container(
+                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        constraints: BoxConstraints(
+                          maxWidth: MediaQuery.of(context).size.width * 0.75,
+                        ),
+                        decoration: BoxDecoration(
                         color: isMe ? AppTheme.primaryColor : Colors.white,
                         borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(20),
-                          topRight: Radius.circular(20),
-                          bottomLeft: Radius.circular(isMe ? 20 : 5),
-                          bottomRight: Radius.circular(isMe ? 5 : 20),
+                          topLeft: Radius.circular(16),
+                          topRight: Radius.circular(16),
+                          bottomLeft: Radius.circular(isMe ? 16 : 4),
+                          bottomRight: Radius.circular(isMe ? 4 : 16),
                         ),
                         boxShadow: [
                           BoxShadow(
@@ -546,44 +550,51 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
                                 ],
                               ),
                             ),
-                          message.messageType == 'gif'
-                              ? _buildGifMessage(message, isMe)
-                              : Text(
-                                  message.message,
-                                  style: TextStyle(
-                                    color: isMe ? Colors.white : Colors.black87,
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w400,
-                                    fontStyle: FontStyle.normal,
-                                  ),
-                                ),
-                          SizedBox(height: 4),
                           Row(
-                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              Text(
-                                _formatTime(message.timestamp),
-                                style: TextStyle(
-                                  color: isMe ? Colors.white70 : Colors.grey[600],
-                                  fontSize: 12,
-                                ),
+                              Flexible(
+                                child: message.messageType == 'gif'
+                                    ? _buildGifMessage(message, isMe)
+                                    : Text(
+                                        message.message,
+                                        style: TextStyle(
+                                          color: isMe ? Colors.white : Colors.black87,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                      ),
                               ),
-                              if (isMe) ...[
-                                SizedBox(width: 4),
-                                Icon(
-                                  message.photoUrl == 'uploading' ? Icons.access_time :
-                                  message.status == 'read' ? Icons.done_all : 
-                                  message.status == 'delivered' ? Icons.done_all : Icons.done,
-                                  size: 16,
-                                  color: message.photoUrl == 'uploading' ? Colors.white70 :
-                                         message.status == 'read' ? Colors.blue : Colors.white70,
-                                ),
-                              ],
+                              SizedBox(width: 8),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    _formatTime(message.timestamp),
+                                    style: TextStyle(
+                                      color: isMe ? Colors.white70 : Colors.grey[600],
+                                      fontSize: 11,
+                                    ),
+                                  ),
+                                  if (isMe) ...[
+                                    SizedBox(width: 4),
+                                    Icon(
+                                      message.photoUrl == 'uploading' ? Icons.access_time :
+                                      message.status == 'read' ? Icons.done_all : 
+                                      message.status == 'delivered' ? Icons.done_all : Icons.done,
+                                      size: 14,
+                                      color: message.photoUrl == 'uploading' ? Colors.white70 :
+                                             message.status == 'read' ? Colors.blue : Colors.white70,
+                                    ),
+                                  ],
+                                ],
+                              ),
                             ],
                           ),
                         ],
                       ),
                     ),
+                  ),
               // Reactions
               if (message.reactions.isNotEmpty)
                 Container(

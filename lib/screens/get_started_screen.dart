@@ -88,7 +88,7 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Gather',
+                      'Haule',
                       style: TextStyle(
                         fontSize: (MediaQuery.of(context).size.width * 0.12).clamp(32.0, 48.0),
                         fontWeight: FontWeight.bold,

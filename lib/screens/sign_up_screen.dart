@@ -128,7 +128,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Gather',
+                        'Haule',
                         style: TextStyle(
                           fontSize: MediaQuery.of(context).size.width * 0.06,
                           fontWeight: FontWeight.bold,

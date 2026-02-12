@@ -79,7 +79,7 @@ class BannedUserScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     const Text(
-                      'support@gatherapp.com',
+                      'support@hauleapp.com',
                       style: TextStyle(
                         fontSize: 16,
                         color: AppTheme.primaryColor,

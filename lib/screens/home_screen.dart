@@ -18,6 +18,7 @@ import 'hangout_interested_users_screen.dart';
 import 'package:geolocator/geolocator.dart';
 import '../theme/app_theme.dart';
 import '../widgets/loading_widget.dart';
+import '../widgets/skeleton_loading.dart';
 import '../utils/responsive.dart';
 import 'dart:math' as math;
 import '../widgets/tutorial_overlay.dart';
@@ -344,6 +345,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
         decoration: BoxDecoration(
           color: isActive ? AppTheme.primaryColor : Colors.white,
           borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isActive ? AppTheme.primaryColor : Colors.grey[300]!,
+            width: 1,
+          ),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
@@ -379,13 +384,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     print('DEBUG: _buildHangoutsList - _isLoading: $_isLoading, _hangouts.length: ${_hangouts.length}');
     // Only show loading if we're actually loading AND don't have hangouts yet
     if (_isLoading && _hangouts.isEmpty) {
-      print('DEBUG: Showing loading widget');
-      return const Center(
-        child: LoadingWidget(
-          message: 'Loading hangouts...',
-          size: 32,
-        ),
-      );
+      print('DEBUG: Showing skeleton loading');
+      return const SkeletonLoading();
     }
     
     if (_hangouts.isEmpty) {
@@ -508,7 +508,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                 decoration: BoxDecoration(
                   borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                   image: DecorationImage(
-                    image: NetworkImage(_getCategoryImageUrl(hangout.category)),
+                    image: AssetImage(_getCategoryImagePath(hangout.category)),
                     fit: BoxFit.cover,
                     colorFilter: _isViewed(hangout) ? ColorFilter.mode(
                       Colors.grey.withOpacity(0.3),
@@ -579,7 +579,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                     Text(
                       hangout.title,
                       style: const TextStyle(
-                        fontSize: 18,
+                        fontSize: 20,
                         fontWeight: FontWeight.w600,
                         color: Colors.black87,
                       ),
@@ -591,8 +591,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                         GestureDetector(
                           onTap: () => _showProfile(user, hangout),
                           child: Container(
-                            width: 32,
-                            height: 32,
+                            width: 40,
+                            height: 40,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               image: user.profileImageUrl != null
@@ -604,7 +604,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                               color: user.profileImageUrl == null ? Colors.grey[300] : null,
                             ),
                             child: user.profileImageUrl == null
-                                ? Icon(Icons.person, size: 16, color: Colors.grey[600])
+                                ? Icon(Icons.person, size: 20, color: Colors.grey[600])
                                 : null,
                           ),
                         ),
@@ -612,9 +612,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                         Expanded(
                           child: Text(
                             'Hosted by ${user.firstName} ${user.lastName}',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.black87,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -630,7 +630,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                         Text(
                           _formatDate(hangout.dateTime),
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 16,
                             color: AppTheme.primaryColor,
                             fontWeight: FontWeight.w500,
                           ),
@@ -641,7 +641,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                         Text(
                           _formatTime(hangout.dateTime),
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 16,
                             color: AppTheme.primaryColor,
                             fontWeight: FontWeight.w500,
                           ),
@@ -657,9 +657,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                         Expanded(
                           child: Text(
                             hangout.location,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.black87,
                             ),
                           ),
                         ),
@@ -684,7 +684,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                           child: Text(
                             _isLiked(hangout) ? 'Interested' : 'Join',
                             style: const TextStyle(
-                              fontSize: 14,
+                              fontSize: 16,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -755,20 +755,47 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     );
   }
 
-  String _getCategoryImageUrl(String category) {
+  String _getCategoryImagePath(String category) {
     switch (category.toLowerCase()) {
       case 'food & drink':
-        return 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=600&fit=crop';
+      case 'food and drinks':
+        return 'assets/images/hangout_categories/food and drinks.png';
       case 'coffee & tea':
-        return 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800&h=600&fit=crop';
+      case 'coffee and tea':
+        return 'assets/images/hangout_categories/coffee and tea.png';
       case 'movies & cinema':
-        return 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=800&h=600&fit=crop';
+      case 'movies and cinema':
+        return 'assets/images/hangout_categories/movies  and cinema.png';
       case 'sports & fitness':
-        return 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=600&fit=crop';
+      case 'sports and fitness':
+        return 'assets/images/hangout_categories/sports and fitness.png';
       case 'music & concerts':
-        return 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=600&fit=crop';
+      case 'music and concert':
+        return 'assets/images/hangout_categories/music and concert.png';
+      case 'books & reading':
+      case 'books and reading':
+        return 'assets/images/hangout_categories/books and reading.png';
+      case 'cooking':
+        return 'assets/images/hangout_categories/cooking.png';
+      case 'gaming':
+        return 'assets/images/hangout_categories/gaming.png';
+      case 'party & nightlife':
+      case 'paty and nighlife':
+        return 'assets/images/hangout_categories/paty and nighlife.png';
+      case 'photography':
+        return 'assets/images/hangout_categories/photography.png';
+      case 'shopping':
+        return 'assets/images/hangout_categories/shopping.png';
+      case 'study & work':
+      case 'study and work':
+        return 'assets/images/hangout_categories/study and work.png';
+      case 'travel & adventure':
+      case 'travel and adventure':
+        return 'assets/images/hangout_categories/travel and adventure.png';
+      case 'volunteering':
+        return 'assets/images/hangout_categories/volunteering.png';
       default:
-        return 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=600&fit=crop';
+        return 'assets/images/hangout_categories/food and drinks.png';
     }
   }
 

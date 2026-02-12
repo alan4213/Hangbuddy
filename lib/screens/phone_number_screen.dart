@@ -155,11 +155,11 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       SizedBox(height: MediaQuery.of(context).size.height * 0.1),
-                    // Gather logo
+                    // Haule logo
                     Container(
                       margin: EdgeInsets.only(bottom: 60),
                       child: Text(
-                        'Gather',
+                        'Haule',
                         style: TextStyle(
                           fontSize: 32,
                           fontWeight: FontWeight.bold,

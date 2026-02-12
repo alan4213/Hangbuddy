@@ -237,7 +237,14 @@ class _MainNavigationState extends State<MainNavigation> {
               fontWeight: FontWeight.w400,
             ),
             items: [
-              const BottomNavigationBarItem(icon: Icon(Icons.home), label: ''),
+              BottomNavigationBarItem(
+                icon: Image.asset(
+                  'assets/images/haule_logo_button.png',
+                  width: 56,
+                  height: 56,
+                ),
+                label: '',
+              ),
               BottomNavigationBarItem(
                 icon: Stack(
                   children: [
@@ -305,8 +312,36 @@ class _MainNavigationState extends State<MainNavigation> {
                 label: '',
               ),
               BottomNavigationBarItem(
-                icon: NotificationBadge(
-                  child: const Icon(Icons.person),
+                icon: FutureBuilder(
+                  future: UserService.getUserProfile(),
+                  builder: (context, snapshot) {
+                    final user = snapshot.data;
+                    return Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: _selectedIndex == 3 ? AppTheme.primaryColor : Colors.grey,
+                          width: 2,
+                        ),
+                        image: user?.profileImageUrl != null
+                            ? DecorationImage(
+                                image: NetworkImage(user!.profileImageUrl!),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
+                        color: user?.profileImageUrl == null ? Colors.grey[300] : null,
+                      ),
+                      child: user?.profileImageUrl == null
+                          ? Icon(
+                              Icons.person,
+                              size: 16,
+                              color: _selectedIndex == 3 ? AppTheme.primaryColor : Colors.grey,
+                            )
+                          : null,
+                    );
+                  },
                 ),
                 label: '',
               ),
@@ -395,7 +430,7 @@ class SignupPage extends StatelessWidget {
                   const SizedBox(height: 24),
                   
                   Text(
-                    "Gather",
+                    "Haule",
                     style: GoogleFonts.poppins(
                       fontSize: 36,
                       fontWeight: FontWeight.w700,

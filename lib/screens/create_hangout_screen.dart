@@ -33,6 +33,8 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
   bool _isGettingLocation = false;
   List<String> _locationSuggestions = [];
   bool _showCategoryDropdown = false;
+  Timer? _debounceTimer;
+  bool _isSearchingLocation = false;
   bool _showSuggestions = false;
   
   // Tutorial keys
@@ -54,16 +56,11 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
     {'name': 'Travel & Adventure', 'icon': Icons.explore, 'color': Color(0xFF06B6D4)},
     {'name': 'Party & Nightlife', 'icon': Icons.celebration, 'color': Color(0xFF8B5CF6)},
     {'name': 'Study & Work', 'icon': Icons.school, 'color': Color(0xFF64748B)},
-    {'name': 'Outdoor & Nature', 'icon': Icons.nature, 'color': Color(0xFF22C55E)},
     {'name': 'Gaming', 'icon': Icons.sports_esports, 'color': Color(0xFF3B82F6)},
-    {'name': 'Arts & Culture', 'icon': Icons.palette, 'color': Color(0xFFEC4899)},
     {'name': 'Books & Reading', 'icon': Icons.menu_book, 'color': Color(0xFF7C3AED)},
     {'name': 'Photography', 'icon': Icons.camera_alt, 'color': Color(0xFF059669)},
     {'name': 'Cooking', 'icon': Icons.kitchen, 'color': Color(0xFFDC2626)},
-    {'name': 'Dancing', 'icon': Icons.music_video, 'color': Color(0xFFDB2777)},
     {'name': 'Volunteering', 'icon': Icons.volunteer_activism, 'color': Color(0xFF0891B2)},
-    {'name': 'Networking', 'icon': Icons.people, 'color': Color(0xFF7C2D12)},
-    {'name': 'Other', 'icon': Icons.more_horiz, 'color': Color(0xFF6B7280)},
   ];
 
   @override
@@ -667,6 +664,16 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
                     fontSize: 14,
                   ),
                   prefixIcon: Icon(Icons.location_on, color: AppTheme.primaryColor, size: 20),
+                  suffixIcon: _isSearchingLocation 
+                      ? const Padding(
+                          padding: EdgeInsets.all(12.0),
+                          child: SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        )
+                      : null,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide(color: Colors.grey[300]!),
@@ -861,27 +868,38 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
   }
 
   void _updateLocationSuggestions(String query) async {
-    if (query.length < 2) {
+    _debounceTimer?.cancel();
+    
+    if (query.isEmpty) {
       setState(() {
         _showSuggestions = false;
         _locationSuggestions = [];
+        _isSearchingLocation = false;
       });
       return;
     }
     
-    try {
-      final suggestions = await LocationService.getLocationSuggestions(query);
-      setState(() {
-        _locationSuggestions = suggestions;
-        _showSuggestions = suggestions.isNotEmpty;
-      });
-    } catch (e) {
-      print('Error getting location suggestions: $e');
-      setState(() {
-        _locationSuggestions = [];
-        _showSuggestions = false;
-      });
-    }
+    setState(() {
+      _isSearchingLocation = true;
+    });
+    
+    _debounceTimer = Timer(const Duration(milliseconds: 100), () async {
+      try {
+        final suggestions = await LocationService.getLocationSuggestions(query);
+        if (mounted && _locationController.text == query) {
+          setState(() {
+            _locationSuggestions = suggestions;
+            _showSuggestions = suggestions.isNotEmpty;
+            _isSearchingLocation = false;
+          });
+        }
+      } catch (e) {
+        print('Error getting location suggestions: $e');
+        setState(() {
+          _isSearchingLocation = false;
+        });
+      }
+    });
   }
   
   void _selectLocation(String location) async {
@@ -948,6 +966,7 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _titleController.dispose();
     _locationController.dispose();
     super.dispose();

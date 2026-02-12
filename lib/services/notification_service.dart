@@ -129,7 +129,8 @@ class NotificationService {
               'icon': 'ic_notification',
               'color': '#6366F1',
               'sound': 'default',
-              'channel_id': 'hangbuddy_notifications'
+              'channel_id': 'hangbuddy_notifications',
+              'image': 'https://firebasestorage.googleapis.com/v0/b/your-project/o/haule_logo.png?alt=media'
             }
           },
           'apns': {

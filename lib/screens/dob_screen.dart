@@ -194,7 +194,7 @@ class _DobScreenState extends State<DobScreen> {
                                 ),
                                 if (DateTime.now().difference(_selectedDate!).inDays < 6570)
                                   Text(
-                                    'You must be at least 18 years old to use Gather',
+                                    'You must be at least 18 years old to use Haule',
                                     style: TextStyle(
                                       fontSize: 14,
                                       color: Colors.red.shade700,

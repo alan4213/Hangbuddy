@@ -146,7 +146,7 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
               width: double.infinity,
               decoration: BoxDecoration(
                 image: DecorationImage(
-                  image: NetworkImage(_getCategoryImage(hangout.category)),
+                  image: AssetImage(_getCategoryImagePath(hangout.category)),
                   fit: BoxFit.cover,
                 ),
               ),
@@ -628,64 +628,47 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
     }
   }
 
-  String _getCategoryImage(String category) {
+  String _getCategoryImagePath(String category) {
     switch (category.toLowerCase()) {
       case 'food & drink':
-      case 'food':
-      case 'dinner':
-      case 'lunch':
-        return 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=600&fit=crop';
+      case 'food and drinks':
+        return 'assets/images/hangout_categories/food and drinks.png';
       case 'coffee & tea':
-      case 'coffee':
-        return 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800&h=600&fit=crop';
+      case 'coffee and tea':
+        return 'assets/images/hangout_categories/coffee and tea.png';
       case 'movies & cinema':
-      case 'movie':
-      case 'cinema':
-        return 'https://images.unsplash.com/photo-1440404653325-ab127d49abc1?w=800&h=600&fit=crop';
+      case 'movies and cinema':
+        return 'assets/images/hangout_categories/movies  and cinema.png';
       case 'sports & fitness':
-      case 'sports':
-      case 'gym':
-        return 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&h=600&fit=crop';
+      case 'sports and fitness':
+        return 'assets/images/hangout_categories/sports and fitness.png';
       case 'music & concerts':
-      case 'music':
-      case 'concert':
-        return 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=600&fit=crop';
-      case 'shopping':
-        return 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=600&fit=crop';
-      case 'travel & adventure':
-      case 'travel':
-      case 'adventure':
-        return 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&h=600&fit=crop';
-      case 'party & nightlife':
-      case 'party':
-      case 'nightlife':
-        return 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&h=600&fit=crop';
-      case 'study & work':
-      case 'study':
-      case 'work':
-        return 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&h=600&fit=crop';
-      case 'outdoor & nature':
-      case 'outdoor':
-      case 'nature':
-        return 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=800&h=600&fit=crop';
-      case 'gaming':
-        return 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=800&h=600&fit=crop';
-      case 'arts & culture':
-        return 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop';
+      case 'music and concert':
+        return 'assets/images/hangout_categories/music and concert.png';
       case 'books & reading':
-        return 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=800&h=600&fit=crop';
-      case 'photography':
-        return 'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=800&h=600&fit=crop';
+      case 'books and reading':
+        return 'assets/images/hangout_categories/books and reading.png';
       case 'cooking':
-        return 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=800&h=600&fit=crop';
-      case 'dancing':
-        return 'https://images.unsplash.com/photo-1547036967-23d11aacaee0?w=800&h=600&fit=crop';
+        return 'assets/images/hangout_categories/cooking.png';
+      case 'gaming':
+        return 'assets/images/hangout_categories/gaming.png';
+      case 'party & nightlife':
+      case 'paty and nighlife':
+        return 'assets/images/hangout_categories/paty and nighlife.png';
+      case 'photography':
+        return 'assets/images/hangout_categories/photography.png';
+      case 'shopping':
+        return 'assets/images/hangout_categories/shopping.png';
+      case 'study & work':
+      case 'study and work':
+        return 'assets/images/hangout_categories/study and work.png';
+      case 'travel & adventure':
+      case 'travel and adventure':
+        return 'assets/images/hangout_categories/travel and adventure.png';
       case 'volunteering':
-        return 'https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=800&h=600&fit=crop';
-      case 'networking':
-        return 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=800&h=600&fit=crop';
+        return 'assets/images/hangout_categories/volunteering.png';
       default:
-        return 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&h=600&fit=crop';
+        return 'assets/images/hangout_categories/food and drinks.png';
     }
   }
 

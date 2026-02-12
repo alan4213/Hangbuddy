@@ -73,7 +73,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Gather',
+                    'Haule',
                     style: TextStyle(
                       fontSize: (MediaQuery.of(context).size.width * 0.07).clamp(20.0, 28.0),
                       fontWeight: FontWeight.bold,

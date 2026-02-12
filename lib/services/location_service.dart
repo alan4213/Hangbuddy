@@ -167,42 +167,82 @@ class LocationService {
   static Future<List<String>> getLocationSuggestions(String query) async {
     try {
       String? countryCode;
+      String? stateCode;
+      Position? userPosition;
       
-      // Get user's current country
-      final position = await getCurrentPosition();
-      if (position != null) {
-        final placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
-        if (placemarks.isNotEmpty && placemarks.first.isoCountryCode != null) {
-          countryCode = placemarks.first.isoCountryCode!.toLowerCase();
+      // Get user's current location for proximity-based sorting
+      userPosition = await getCurrentPosition();
+      if (userPosition != null) {
+        final placemarks = await placemarkFromCoordinates(userPosition.latitude, userPosition.longitude);
+        if (placemarks.isNotEmpty) {
+          if (placemarks.first.isoCountryCode != null) {
+            countryCode = placemarks.first.isoCountryCode!.toLowerCase();
+          }
+          if (placemarks.first.administrativeArea != null) {
+            stateCode = placemarks.first.administrativeArea!;
+          }
         }
       }
       
-      String url = 'https://nominatim.openstreetmap.org/search'
-          '?q=${Uri.encodeComponent(query)}'
-          '&format=json'
-          '&addressdetails=1'
-          '&limit=8';
+      List<String> allSuggestions = [];
+      Set<String> seen = {};
       
-      // Add country restriction if detected
-      if (countryCode != null) {
-        url += '&countrycodes=$countryCode';
-      }
+      // Try multiple search strategies for better spelling tolerance
+      List<String> searchQueries = [
+        stateCode != null ? '$query, $stateCode' : query, // Primary with state
+        query, // Fallback without state
+      ];
       
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {'User-Agent': 'HangBuddy App'},
-      );
-      
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body) as List;
+      for (String searchQuery in searchQueries) {
+        String url = 'https://nominatim.openstreetmap.org/search'
+            '?q=${Uri.encodeComponent(searchQuery)}'
+            '&format=json'
+            '&addressdetails=1'
+            '&limit=10';
         
-        return data
-            .map((item) => item['display_name'] as String)
-            .where((name) => !_isUnwantedLocation(name))
-            .map((name) => _cleanLocationName(name))
-            .take(8)
-            .toList();
+        if (countryCode != null) {
+          url += '&countrycodes=$countryCode';
+        }
+        
+        final response = await http.get(
+          Uri.parse(url),
+          headers: {'User-Agent': 'HangBuddy App'},
+        );
+        
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body) as List;
+          List<Map<String, dynamic>> results = data.cast<Map<String, dynamic>>();
+          
+          // Sort by proximity if user location available
+          if (userPosition != null) {
+            results.sort((a, b) {
+              double distA = _calculateDistanceFromResult(userPosition!, a);
+              double distB = _calculateDistanceFromResult(userPosition, b);
+              return distA.compareTo(distB);
+            });
+          }
+          
+          // Add unique results
+          for (var item in results) {
+            String displayName = item['display_name'] as String;
+            
+            if (!_isUnwantedLocation(displayName)) {
+              String cleanName = _cleanLocationName(displayName);
+              String key = cleanName.toLowerCase();
+              
+              if (!seen.contains(key)) {
+                seen.add(key);
+                allSuggestions.add(cleanName);
+              }
+            }
+          }
+        }
+        
+        // If we have enough results, stop searching
+        if (allSuggestions.length >= 8) break;
       }
+      
+      return allSuggestions.take(8).toList();
     } catch (e) {
       print('Error getting location suggestions: $e');
     }
@@ -210,21 +250,58 @@ class LocationService {
     return [];
   }
   
+  static double _calculateDistanceFromResult(Position userPosition, Map<String, dynamic> result) {
+    try {
+      double lat = double.parse(result['lat'].toString());
+      double lon = double.parse(result['lon'].toString());
+      return calculateDistance(userPosition.latitude, userPosition.longitude, lat, lon);
+    } catch (e) {
+      return double.infinity; // Put invalid results at the end
+    }
+  }
+  
   static String _cleanLocationName(String name) {
     final parts = name.split(', ');
-    if (parts.length > 3) {
-      return '${parts[0]}, ${parts[1]}, ${parts[2]}';
+    List<String> cleanParts = [];
+    
+    for (String part in parts) {
+      String cleanPart = part.trim();
+      // Skip Plus Codes and postal codes
+      bool isPlusCode = cleanPart.contains('+') && 
+          RegExp(r'^[A-Z0-9+]+$').hasMatch(cleanPart.toUpperCase());
+      bool isPostalCode = RegExp(r'^\d{5,6}$').hasMatch(cleanPart);
+      
+      if (!isPlusCode && !isPostalCode && cleanPart.isNotEmpty) {
+        cleanParts.add(cleanPart);
+      }
     }
-    return name;
+    
+    if (cleanParts.isEmpty) {
+      return name; // Fallback to original if nothing clean found
+    }
+    
+    // For location suggestions, show specific location + area + city (max 3 parts)
+    // This gives better context while keeping it readable
+    if (cleanParts.length >= 3) {
+      return '${cleanParts[0]}, ${cleanParts[1]}, ${cleanParts[2]}';
+    } else if (cleanParts.length >= 2) {
+      return '${cleanParts[0]}, ${cleanParts[1]}';
+    } else {
+      return cleanParts[0];
+    }
   }
   
   static bool _isUnwantedLocation(String description) {
     final unwantedKeywords = [
       'ground floor', 'room', 'floor', 'apartment', 'flat',
-      'building', 'tower', 'block', 'wing', 'unit'
+      'building', 'tower', 'block', 'wing', 'unit',
+      'parking', 'garage', 'basement', 'atm', 'toilet',
+      'restroom', 'washroom', 'elevator', 'lift'
     ];
     
+    final lowercaseDesc = description.toLowerCase();
+    
     return unwantedKeywords.any((keyword) => 
-        description.toLowerCase().contains(keyword));
+        lowercaseDesc.contains(keyword));
   }
 }
