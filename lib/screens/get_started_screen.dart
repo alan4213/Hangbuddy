@@ -58,7 +58,7 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                   height: double.infinity,
                   decoration: BoxDecoration(
                     image: DecorationImage(
-                      image: AssetImage('assets/images/coffee_hangout.png'),
+                      image: AssetImage('assets/images/loginm1.png'),
                       fit: BoxFit.cover,
                     ),
                   ),

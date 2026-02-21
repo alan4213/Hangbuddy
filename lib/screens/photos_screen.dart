@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/app_theme.dart';
 import '../widgets/loading_widget.dart';
 import '../services/user_service.dart';
+import '../services/system_chat_service.dart';
 import '../models/signup_data.dart';
 
 class PhotosScreen extends StatefulWidget {
@@ -256,6 +258,12 @@ class _PhotosScreenState extends State<PhotosScreen> {
                       race: widget.signupData.race,
                       religion: widget.signupData.religion,
                     );
+                    
+                    // Create system chat for new user
+                    final currentUser = FirebaseAuth.instance.currentUser;
+                    if (currentUser != null) {
+                      await SystemChatService.createSystemChatForUser(currentUser.uid);
+                    }
                     
                     if (mounted) {
                       Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);

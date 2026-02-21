@@ -6,8 +6,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MatchNotificationScreen extends StatefulWidget {
   final Map<String, dynamic> user;
+  final String otherUserId;
   
-  const MatchNotificationScreen({super.key, required this.user});
+  const MatchNotificationScreen({super.key, required this.user, required this.otherUserId});
 
   @override
   State<MatchNotificationScreen> createState() => _MatchNotificationScreenState();
@@ -236,6 +237,7 @@ class _MatchNotificationScreenState extends State<MatchNotificationScreen> with 
                                     'name': widget.user['name'] ?? 'User',
                                     'image': widget.user['image'],
                                   },
+                                  otherUserId: widget.otherUserId,
                                 ),
                               ),
                             );

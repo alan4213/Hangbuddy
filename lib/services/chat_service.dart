@@ -387,19 +387,26 @@ class ChatService {
             String? userPhoto;
             
             if (otherUserId.isNotEmpty) {
-              try {
-                final userDoc = await FirebaseFirestore.instance
-                    .collection('users')
-                    .doc(otherUserId)
-                    .get();
-                
-                if (userDoc.exists) {
-                  final userData = userDoc.data()!;
-                  userName = userData['firstName'] ?? '';
-                  userPhoto = userData['profileImageUrl'] ?? (userData['photoUrls'] as List?)?.first;
+              if (otherUserId == 'haule_official') {
+                // Handle system chat
+                userName = 'Haule';
+                userPhoto = 'assets/images/haule_logo.png';
+              } else {
+                // Handle regular user chat
+                try {
+                  final userDoc = await FirebaseFirestore.instance
+                      .collection('users')
+                      .doc(otherUserId)
+                      .get();
+                  
+                  if (userDoc.exists) {
+                    final userData = userDoc.data()!;
+                    userName = userData['firstName'] ?? '';
+                    userPhoto = userData['profileImageUrl'] ?? (userData['photoUrls'] as List?)?.first;
+                  }
+                } catch (e) {
+                  print('Error fetching user data: $e');
                 }
-              } catch (e) {
-                print('Error fetching user data: $e');
               }
             }
             
@@ -407,10 +414,13 @@ class ChatService {
               'chatId': doc.id,
               'participants': participants,
               'lastMessage': data['lastMessage'] ?? '',
-              'lastMessageTime': data['lastMessageTime'] ?? 0,
+              'lastMessageTime': (data['lastMessageTime'] is int) 
+                  ? data['lastMessageTime'] 
+                  : (data['lastMessageTime'] as Timestamp?)?.millisecondsSinceEpoch ?? 0,
               'unreadCount': data['unreadCount_${currentUser.uid}'] ?? 0,
               'otherUserName': userName ?? 'User',
-              'otherUserPhoto': userPhoto,
+              'otherUserPhoto': data['isSystemChat'] == true ? 'assets/images/haule_logo.png' : userPhoto,
+              'isSystemChat': data['isSystemChat'] ?? false,
             });
           }
           

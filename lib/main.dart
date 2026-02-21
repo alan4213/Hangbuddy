@@ -206,42 +206,44 @@ class _MainNavigationState extends State<MainNavigation> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: _screens[_selectedIndex],
-      bottomNavigationBar: StreamBuilder<int>(
-        stream: ChatService.getUnreadMessageCount(),
-        builder: (context, snapshot) {
-          final unreadCount = snapshot.data ?? 0;
-          
-          return BottomNavigationBar(
-            currentIndex: _selectedIndex,
-            onTap: (index) {
-              HapticFeedback.selectionClick();
-              setState(() {
-                _selectedIndex = index;
-                // Reset matches tab index when manually navigating
-                if (index == 1) {
-                  _matchesTabIndex = 0;
-                }
-              });
-            },
-            type: BottomNavigationBarType.fixed,
-            selectedItemColor: AppTheme.primaryColor,
-            unselectedItemColor: Colors.grey,
-            backgroundColor: AppTheme.bottomNavColor,
-            elevation: 20,
-            selectedLabelStyle: GoogleFonts.poppins(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
-            unselectedLabelStyle: GoogleFonts.poppins(
-              fontSize: 12,
-              fontWeight: FontWeight.w400,
-            ),
-            items: [
+      bottomNavigationBar: SizedBox(
+        height: 102,
+        child: StreamBuilder<int>(
+          stream: ChatService.getUnreadMessageCount(),
+          builder: (context, snapshot) {
+            final unreadCount = snapshot.data ?? 0;
+            
+            return BottomNavigationBar(
+              currentIndex: _selectedIndex,
+              onTap: (index) {
+                HapticFeedback.selectionClick();
+                setState(() {
+                  _selectedIndex = index;
+                  // Reset matches tab index when manually navigating
+                  if (index == 1) {
+                    _matchesTabIndex = 0;
+                  }
+                });
+              },
+              type: BottomNavigationBarType.fixed,
+              selectedItemColor: AppTheme.primaryColor,
+              unselectedItemColor: Colors.grey,
+              backgroundColor: AppTheme.bottomNavColor,
+              elevation: 20,
+              selectedLabelStyle: GoogleFonts.poppins(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+              unselectedLabelStyle: GoogleFonts.poppins(
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+              ),
+              items: [
               BottomNavigationBarItem(
                 icon: Image.asset(
                   'assets/images/haule_logo_button.png',
-                  width: 56,
-                  height: 56,
+                  width: 48,
+                  height: 48,
                 ),
                 label: '',
               ),
@@ -346,8 +348,9 @@ class _MainNavigationState extends State<MainNavigation> {
                 label: '',
               ),
             ],
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }
@@ -372,7 +375,7 @@ class SignupPage extends StatelessWidget {
                   // Logo
                   Container(
                     width: 100,
-                    height: 100,
+                    height: 85,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topLeft,

@@ -583,6 +583,7 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
                 'name': userName.isEmpty ? 'User' : userName,
                 'image': userData['profileImageUrl'],
               },
+              otherUserId: userId,
             ),
           ),
         );

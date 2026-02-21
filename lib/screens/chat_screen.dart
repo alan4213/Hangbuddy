@@ -180,6 +180,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final lastMessage = chat['lastMessage'] as String;
     final userName = chat['otherUserName'] ?? 'User';
     final userPhoto = chat['otherUserPhoto'];
+    final isSystemChat = chat['isSystemChat'] ?? false;
     
     return GestureDetector(
       onTap: () {
@@ -207,9 +208,11 @@ class _ChatScreenState extends State<ChatScreen> {
               children: [
                 CircleAvatar(
                   radius: 28,
-                  backgroundColor: avatarColors[otherUserId.hashCode % avatarColors.length],
-                  backgroundImage: userPhoto != null ? NetworkImage(userPhoto) : null,
-                  child: userPhoto == null ? Text(
+                  backgroundColor: isSystemChat ? Colors.white : avatarColors[otherUserId.hashCode % avatarColors.length],
+                  backgroundImage: isSystemChat 
+                      ? AssetImage('assets/images/haule_logo.png') as ImageProvider
+                      : (userPhoto != null ? NetworkImage(userPhoto) : null),
+                  child: !isSystemChat && userPhoto == null ? Text(
                     userName[0].toUpperCase(),
                     style: const TextStyle(
                       color: Colors.white,
@@ -245,13 +248,25 @@ class _ChatScreenState extends State<ChatScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    userName,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        userName,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black,
+                        ),
+                      ),
+                      if (isSystemChat) ...[
+                        SizedBox(width: 4),
+                        Icon(
+                          Icons.verified,
+                          color: Color(0xFFFFD700),
+                          size: 18,
+                        ),
+                      ],
+                    ],
                   ),
                   const SizedBox(height: 6),
                   Text(

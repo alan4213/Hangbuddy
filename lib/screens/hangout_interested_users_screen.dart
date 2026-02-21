@@ -283,6 +283,7 @@ class _HangoutInterestedUsersScreenState extends State<HangoutInterestedUsersScr
               'name': '${user.firstName} ${user.lastName}',
               'image': user.profileImageUrl,
             },
+            otherUserId: user.uid,
           ),
         ),
       );

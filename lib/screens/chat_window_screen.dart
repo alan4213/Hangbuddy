@@ -184,25 +184,43 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
           children: [
             CircleAvatar(
               radius: 20,
-              backgroundImage: _otherUser?.profileImageUrl != null || _otherUser?.photoUrls?.isNotEmpty == true
-                  ? NetworkImage(_otherUser!.profileImageUrl ?? _otherUser!.photoUrls!.first)
-                  : widget.match['image'] != null
-                  ? NetworkImage(widget.match['image'])
-                  : NetworkImage('https://picsum.photos/100/100?random=1'),
-              backgroundColor: _otherUserId != null 
-                  ? avatarColors[_otherUserId!.hashCode % avatarColors.length]
-                  : Color(0xFF8B5CF6),
+              backgroundImage: _otherUserId == 'haule_official'
+                  ? AssetImage('assets/images/haule_logo.png') as ImageProvider
+                  : (_otherUser?.profileImageUrl != null || _otherUser?.photoUrls?.isNotEmpty == true
+                      ? NetworkImage(_otherUser!.profileImageUrl ?? _otherUser!.photoUrls!.first)
+                      : widget.match['image'] != null
+                      ? NetworkImage(widget.match['image'])
+                      : NetworkImage('https://picsum.photos/100/100?random=1')),
+              backgroundColor: _otherUserId == 'haule_official'
+                  ? Colors.white
+                  : (_otherUserId != null 
+                      ? avatarColors[_otherUserId!.hashCode % avatarColors.length]
+                      : Color(0xFF8B5CF6)),
             ),
             SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    widget.match['name'] ?? widget.match['firstName'] ?? 'User',
-                    style: TextStyle(color: Colors.white, fontSize: 18),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          widget.match['name'] ?? widget.match['firstName'] ?? 'User',
+                          style: TextStyle(color: Colors.white, fontSize: 18),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ),
+                      if (_otherUserId == 'haule_official') ...[
+                        SizedBox(width: 4),
+                        Icon(
+                          Icons.verified,
+                          color: Color(0xFFFFD700),
+                          size: 18,
+                        ),
+                      ],
+                    ],
                   ),
                   StreamBuilder<bool>(
                     stream: _otherUserId != null ? _getOnlineStatus(_otherUserId!) : Stream.value(false),
