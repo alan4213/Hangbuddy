@@ -68,6 +68,15 @@ class MyApp extends StatelessWidget {
 
   static final RouteObserver<PageRoute> routeObserver = RouteObserver<PageRoute>();
 
+  Future<String> _checkUserProfileAndReactivation() async {
+    final userProfile = await UserService.getUserProfile();
+    if (userProfile != null && userProfile.firstName.isNotEmpty) {
+      return 'complete_profile';
+    }
+    
+    return 'incomplete_profile';
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -85,14 +94,14 @@ class MyApp extends StatelessWidget {
           if (snapshot.hasData) {
             // User is signed in
             return FutureBuilder(
-              future: UserService.getUserProfile(),
+              future: _checkUserProfileAndReactivation(),
               builder: (context, profileSnapshot) {
                 if (profileSnapshot.connectionState == ConnectionState.waiting) {
                   return SplashScreen();
                 }
                 
-                final userProfile = profileSnapshot.data;
-                if (userProfile != null && userProfile.firstName.isNotEmpty) {
+                final result = profileSnapshot.data;
+                if (result == 'complete_profile') {
                   return const MainNavigation();
                 } else {
                   return SplashScreen();

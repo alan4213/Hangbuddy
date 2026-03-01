@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:video_player/video_player.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import '../services/video_service.dart';
@@ -399,67 +400,68 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                               print('Phone exists result: $phoneExists');
                               
                               if (phoneExists) {
+                                // Phone number already exists - show error
                                 print('Phone exists - showing error');
                                 await showDialog(
-                                  context: context,
-                                  barrierDismissible: false,
-                                  builder: (context) => AlertDialog(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    title: Row(
-                                      children: [
-                                        Container(
-                                          width: 40,
-                                          height: 40,
-                                          decoration: BoxDecoration(
-                                            gradient: AppTheme.primaryGradient,
-                                            borderRadius: BorderRadius.circular(20),
-                                          ),
-                                          child: Icon(Icons.phone_locked, color: Colors.white, size: 24),
+                                context: context,
+                                barrierDismissible: false,
+                                builder: (context) => AlertDialog(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  title: Row(
+                                    children: [
+                                      Container(
+                                        width: 40,
+                                        height: 40,
+                                        decoration: BoxDecoration(
+                                          gradient: AppTheme.primaryGradient,
+                                          borderRadius: BorderRadius.circular(20),
                                         ),
-                                        SizedBox(width: 12),
-                                        Expanded(
-                                          child: Text(
-                                            'Phone Already Registered',
-                                            style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                              color: AppTheme.textPrimary,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    content: Text(
-                                      'This phone number is already registered. Please use a different number or sign in with your existing account.',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: AppTheme.textSecondary,
-                                        height: 1.4,
+                                        child: Icon(Icons.phone_locked, color: Colors.white, size: 24),
                                       ),
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.pop(context),
-                                        style: TextButton.styleFrom(
-                                          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                        ),
+                                      SizedBox(width: 12),
+                                      Expanded(
                                         child: Text(
-                                          'OK',
+                                          'Phone Already Registered',
                                           style: TextStyle(
-                                            color: AppTheme.primaryColor,
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 16,
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppTheme.textPrimary,
                                           ),
                                         ),
                                       ),
                                     ],
                                   ),
-                                );
+                                  content: Text(
+                                    'This phone number is already registered. Please use a different number or sign in with your existing account.',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: AppTheme.textSecondary,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context),
+                                      style: TextButton.styleFrom(
+                                        padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        'OK',
+                                        style: TextStyle(
+                                          color: AppTheme.primaryColor,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
                                 setState(() => _isLoading = false);
                                 return;
                               }

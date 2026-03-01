@@ -123,6 +123,7 @@ class UserService {
       }
       
       final data = doc.data()!;
+      
       // Check if this is a complete profile (has required fields)
       if (data['firstName'] == null || data['lastName'] == null) {
         print('User profile incomplete - missing required fields');
@@ -242,23 +243,49 @@ class UserService {
     if (user == null) throw Exception('No authenticated user');
 
     try {
-      // Soft delete - mark user as deleted but keep data for 30 days
+      // Get user's phone number before deletion
+      final userDoc = await _firestore.collection('users').doc(user.uid).get();
+      final phoneNumber = userDoc.data()?['phoneNumber'] as String?;
+      
+      // Soft delete user document in Firestore
       await _firestore.collection('users').doc(user.uid).update({
         'deleted': true,
         'deletedAt': DateTime.now().millisecondsSinceEpoch,
         'updatedAt': DateTime.now().millisecondsSinceEpoch,
       });
       
-      // Keep phone number blocked during grace period
-      // Phone number will be freed after permanent deletion (30 days)
+      // Soft delete phone number (mark as deleted for admin management)
+      if (phoneNumber != null && phoneNumber.isNotEmpty) {
+        final encodedPhone = _encodePhoneNumber(phoneNumber);
+        await _firestore.collection('phone_numbers').doc(encodedPhone).update({
+          'deleted': true,
+          'deletedAt': DateTime.now().millisecondsSinceEpoch,
+          'deletedByUserId': user.uid,
+        });
+      }
       
-      // Delete Firebase Auth account (user can't sign in anymore)
+      // Hard delete from Firebase Authentication (no recovery)
       await user.delete();
-      print('User account soft-deleted (30 day grace period)');
+      print('User account permanently deleted from authentication and soft-deleted from database');
     } catch (e) {
+      if (e.toString().contains('requires-recent-login')) {
+        throw Exception('REAUTH_REQUIRED');
+      }
       print('Error deleting user account: $e');
       rethrow;
     }
+  }
+
+  static Future<void> reauthenticateWithPhone(String verificationId, String smsCode) async {
+    final user = _auth.currentUser;
+    if (user == null) throw Exception('No authenticated user');
+
+    final credential = PhoneAuthProvider.credential(
+      verificationId: verificationId,
+      smsCode: smsCode,
+    );
+    
+    await user.reauthenticateWithCredential(credential);
   }
 
   // Method to permanently delete user data (run by admin/cron job after 30 days)
@@ -400,6 +427,32 @@ class UserService {
       }
     } catch (e) {
       print('Error checking collection: $e');
+    }
+  }
+
+  // Method to clean up expired phone numbers (run by scheduled function/cron job)
+  static Future<void> cleanupExpiredPhoneNumbers() async {
+    try {
+      print('=== STARTING PHONE NUMBER CLEANUP ===');
+      final now = DateTime.now().millisecondsSinceEpoch;
+      
+      final snapshot = await _firestore
+          .collection('phone_numbers')
+          .where('markedForDeletion', isEqualTo: true)
+          .where('deletionScheduledAt', isLessThanOrEqualTo: now)
+          .get();
+      
+      print('Found ${snapshot.docs.length} expired phone numbers to clean up');
+      
+      for (final doc in snapshot.docs) {
+        await doc.reference.delete();
+        print('Cleaned up phone number: ${doc.data()['originalPhone']}');
+      }
+      
+      print('=== PHONE NUMBER CLEANUP COMPLETED ===');
+    } catch (e) {
+      print('Error during phone number cleanup: $e');
+      rethrow;
     }
   }
 }

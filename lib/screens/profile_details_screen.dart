@@ -2,11 +2,14 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:crop_your_image/crop_your_image.dart';
+import 'dart:typed_data';
 import '../services/user_service.dart';
 import '../services/photo_service.dart';
 import '../models/user_model.dart';
 import '../theme/app_theme.dart';
-import 'edit_photos_screen.dart';
+import '../screens/simple_crop_screen.dart';
+import 'simple_crop_screen.dart';
 import 'religion_screen.dart';
 import 'occupation_screen.dart';
 import 'education_screen.dart';
@@ -113,11 +116,59 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
   }
 
   Future<void> _pickImage(int index) async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      setState(() {
-        _photos[index] = File(image.path);
-      });
+    try {
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        final imageBytes = await image.readAsBytes();
+        if (mounted) {
+          final result = await Navigator.push<dynamic>(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SimpleCropScreen(
+                imageBytes: imageBytes,
+                onCropped: (croppedData) {
+                  _saveCroppedImage(index, croppedData);
+                },
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('Error picking image: $e');
+    }
+  }
+
+  void _saveCroppedImage(int index, dynamic croppedData) async {
+    try {
+      print('Saving cropped image for index $index');
+      print('Cropped data type: ${croppedData.runtimeType}');
+      
+      final tempDir = Directory.systemTemp;
+      final file = File('${tempDir.path}/cropped_${DateTime.now().millisecondsSinceEpoch}.jpg');
+      
+      // Extract bytes from CropSuccess object
+      Uint8List bytes;
+      if (croppedData.runtimeType.toString() == 'CropSuccess') {
+        // Access the cropped image bytes from CropSuccess
+        bytes = croppedData.croppedImage;
+      } else if (croppedData is Uint8List) {
+        bytes = croppedData;
+      } else {
+        bytes = Uint8List.fromList(croppedData);
+      }
+      
+      await file.writeAsBytes(bytes);
+      print('File saved: ${file.path}');
+      
+      if (mounted) {
+        setState(() {
+          _photos[index] = file;
+        });
+        print('Photo updated in UI');
+      }
+    } catch (e) {
+      print('Error saving cropped image: $e');
     }
   }
 
@@ -1419,6 +1470,68 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                 }).toList(),
                 onChanged: onChanged,
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CropScreen extends StatefulWidget {
+  final Uint8List imageBytes;
+  final Function(dynamic) onCropped;
+
+  const _CropScreen({
+    required this.imageBytes,
+    required this.onCropped,
+  });
+
+  @override
+  State<_CropScreen> createState() => _CropScreenState();
+}
+
+class _CropScreenState extends State<_CropScreen> {
+  final CropController _cropController = CropController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          Crop(
+            image: widget.imageBytes,
+            controller: _cropController,
+            onCropped: (cropResult) {
+              widget.onCropped(cropResult);
+              Navigator.pop(context);
+            },
+            aspectRatio: 1.0,
+            maskColor: Colors.black.withOpacity(0.7),
+            baseColor: Colors.white,
+            cornerDotBuilder: (size, edgeAlignment) => Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: Colors.blue, width: 3),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.5),
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+            ),
+            interactive: true,
+          ),
+          // Grid overlay
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Container(),
             ),
           ),
         ],

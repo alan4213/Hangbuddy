@@ -62,14 +62,17 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  const Text(
-                    'Everything is better with company.\nPost a hangout to find a partner.',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Color(0xFF6B7280),
-                      height: 1.5,
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20),
+                    child: Text(
+                      'Everything is better with company.\nPost a hangout to find a partner.',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Color(0xFF6B7280),
+                        height: 1.5,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
-                    textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton(

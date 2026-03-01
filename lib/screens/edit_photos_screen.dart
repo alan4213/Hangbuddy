@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:crop_your_image/crop_your_image.dart';
 import 'dart:io';
+import 'dart:typed_data';
 import '../theme/app_theme.dart';
 import '../widgets/loading_widget.dart';
 import '../services/user_service.dart';
@@ -35,12 +37,43 @@ class _EditPhotosScreenState extends State<EditPhotosScreen> {
   }
 
   Future<void> _pickImage(int index) async {
-    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
-      setState(() {
-        _photos[index] = File(image.path);
-      });
+    try {
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        print('Image selected: ${image.path}');
+        final imageBytes = await image.readAsBytes();
+        print('Image bytes loaded: ${imageBytes.length}');
+        if (mounted) {
+          print('Navigating to crop screen...');
+          final result = await Navigator.push<dynamic>(
+            context,
+            MaterialPageRoute(
+              builder: (context) => _CropScreen(
+                imageBytes: imageBytes,
+                onCropped: (croppedData) {
+                  print('Image cropped');
+                  _saveCroppedImage(index, croppedData);
+                },
+              ),
+            ),
+          );
+          print('Returned from crop screen');
+        }
+      } else {
+        print('No image selected');
+      }
+    } catch (e) {
+      print('Error picking image: $e');
     }
+  }
+
+  void _saveCroppedImage(int index, dynamic croppedData) async {
+    final tempDir = Directory.systemTemp;
+    final file = File('${tempDir.path}/cropped_${DateTime.now().millisecondsSinceEpoch}.jpg');
+    await file.writeAsBytes(croppedData);
+    setState(() {
+      _photos[index] = file;
+    });
   }
 
   void _removePhoto(int index) {
@@ -94,6 +127,25 @@ class _EditPhotosScreenState extends State<EditPhotosScreen> {
               ),
               const SizedBox(height: 24),
               
+              // Test button
+              ElevatedButton(
+                onPressed: () {
+                  // Test with a simple image
+                  final testBytes = Uint8List.fromList([137, 80, 78, 71]); // PNG header
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => _CropScreen(
+                        imageBytes: testBytes,
+                        onCropped: (data) => print('Test crop done'),
+                      ),
+                    ),
+                  );
+                },
+                child: Text('Test Crop Screen'),
+              ),
+              const SizedBox(height: 16),
+              
               Expanded(
                 child: GridView.builder(
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -107,7 +159,10 @@ class _EditPhotosScreenState extends State<EditPhotosScreen> {
                     final photo = _photos[index];
                     
                     return GestureDetector(
-                      onTap: () => _pickImage(index),
+                      onTap: () {
+                        print('Photo slot $index tapped');
+                        _pickImage(index);
+                      },
                       child: Container(
                         decoration: BoxDecoration(
                           color: Colors.grey.shade100,
@@ -294,6 +349,59 @@ class _EditPhotosScreenState extends State<EditPhotosScreen> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CropScreen extends StatefulWidget {
+  final Uint8List imageBytes;
+  final Function(dynamic) onCropped;
+
+  const _CropScreen({
+    required this.imageBytes,
+    required this.onCropped,
+  });
+
+  @override
+  State<_CropScreen> createState() => _CropScreenState();
+}
+
+class _CropScreenState extends State<_CropScreen> {
+  final CropController _cropController = CropController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        title: const Text('Crop Photo'),
+        backgroundColor: AppTheme.primaryColor,
+        foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.check),
+            onPressed: () => _cropController.crop(),
+          ),
+        ],
+      ),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        child: Crop(
+          image: widget.imageBytes,
+          controller: _cropController,
+          onCropped: (cropResult) {
+            widget.onCropped(cropResult);
+            Navigator.pop(context);
+          },
+          aspectRatio: 1.0,
+          withCircleUi: false,
+          maskColor: Colors.black.withOpacity(0.8),
+          baseColor: Colors.black,
+          radius: 20,
+          interactive: true,
         ),
       ),
     );

@@ -24,49 +24,10 @@ class _EmailScreenState extends State<EmailScreen> {
   @override
   void initState() {
     super.initState();
-    _checkEmailVerification();
+    // Remove email verification check - not needed
   }
 
-  void _checkEmailVerification() async {
-    setState(() => _isLoading = true);
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        await user.reload();
-        final updatedUser = FirebaseAuth.instance.currentUser;
-        
-        if (updatedUser != null && updatedUser.emailVerified) {
-          // Email is verified, store email and proceed
-          await UserService.updateUserProfile(email: _emailController.text);
-          
-          if (mounted) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => NameScreen(signupData: SignupData()),
-              ),
-            );
-          }
-        } else {
-          // Email not verified yet
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Email not verified yet. Please check your email and click the verification link.'),
-              backgroundColor: Colors.orange,
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error checking verification: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-    setState(() => _isLoading = false);
-  }
+
 
   // Check if there's a phone-verified account that should be merged
   Future<User?> _checkForPhoneAccount(String? email) async {

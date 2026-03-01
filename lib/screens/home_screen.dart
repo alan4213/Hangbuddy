@@ -591,10 +591,21 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                         GestureDetector(
                           onTap: () => _showProfile(user, hangout),
                           child: Container(
-                            width: 40,
-                            height: 40,
+                            width: 64,
+                            height: 64,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
+                              border: Border.all(
+                                color: AppTheme.primaryColor,
+                                width: 3,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
                               image: user.profileImageUrl != null
                                   ? DecorationImage(
                                       image: NetworkImage(user.profileImageUrl!),
@@ -604,7 +615,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                               color: user.profileImageUrl == null ? Colors.grey[300] : null,
                             ),
                             child: user.profileImageUrl == null
-                                ? Icon(Icons.person, size: 20, color: Colors.grey[600])
+                                ? Icon(Icons.person, size: 32, color: Colors.grey[600])
                                 : null,
                           ),
                         ),

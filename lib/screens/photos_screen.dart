@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/app_theme.dart';
 import '../widgets/loading_widget.dart';
 import '../services/user_service.dart';
 import '../services/system_chat_service.dart';
 import '../models/signup_data.dart';
+import 'simple_crop_screen.dart';
 
 class PhotosScreen extends StatefulWidget {
   final SignupData signupData;
@@ -24,9 +26,45 @@ class _PhotosScreenState extends State<PhotosScreen> {
   Future<void> _pickImage(int index) async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
     if (image != null) {
-      setState(() {
-        _photos[index] = File(image.path);
-      });
+      final imageBytes = await image.readAsBytes();
+      if (mounted) {
+        final result = await Navigator.push<dynamic>(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SimpleCropScreen(
+              imageBytes: imageBytes,
+              onCropped: (croppedData) {
+                _saveCroppedImage(index, croppedData);
+              },
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  void _saveCroppedImage(int index, dynamic croppedData) async {
+    try {
+      Uint8List bytes;
+      if (croppedData.runtimeType.toString() == 'CropSuccess') {
+        bytes = croppedData.croppedImage;
+      } else if (croppedData is Uint8List) {
+        bytes = croppedData;
+      } else {
+        bytes = Uint8List.fromList(croppedData);
+      }
+      
+      final tempDir = Directory.systemTemp;
+      final file = File('${tempDir.path}/cropped_${DateTime.now().millisecondsSinceEpoch}.jpg');
+      await file.writeAsBytes(bytes);
+      
+      if (mounted) {
+        setState(() {
+          _photos[index] = file;
+        });
+      }
+    } catch (e) {
+      print('Error saving cropped image: $e');
     }
   }
 
