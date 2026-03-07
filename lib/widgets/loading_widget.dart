@@ -47,6 +47,7 @@ class LoadingButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
   final Color? backgroundColor;
+  final double fontSize;
   
   const LoadingButton({
     super.key,
@@ -54,13 +55,14 @@ class LoadingButton extends StatelessWidget {
     required this.text,
     this.onPressed,
     this.backgroundColor,
+    this.fontSize = 18,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      height: 48,
+      height: 40,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -98,7 +100,7 @@ class LoadingButton extends StatelessWidget {
                 : Text(
                     text,
                     style: GoogleFonts.inter(
-                      fontSize: 18,
+                      fontSize: fontSize,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
                       letterSpacing: 0.5,
