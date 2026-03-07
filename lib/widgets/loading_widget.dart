@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 
 class LoadingWidget extends StatelessWidget {
@@ -59,7 +60,7 @@ class LoadingButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      height: 56,
+      height: 48,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -96,7 +97,7 @@ class LoadingButton extends StatelessWidget {
                   )
                 : Text(
                     text,
-                    style: const TextStyle(
+                    style: GoogleFonts.inter(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,

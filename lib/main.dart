@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -215,150 +214,157 @@ class _MainNavigationState extends State<MainNavigation> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: _screens[_selectedIndex],
-      bottomNavigationBar: SizedBox(
-        height: 102,
-        child: StreamBuilder<int>(
-          stream: ChatService.getUnreadMessageCount(),
-          builder: (context, snapshot) {
-            final unreadCount = snapshot.data ?? 0;
-            
-            return BottomNavigationBar(
-              currentIndex: _selectedIndex,
-              onTap: (index) {
-                HapticFeedback.selectionClick();
-                setState(() {
-                  _selectedIndex = index;
-                  // Reset matches tab index when manually navigating
-                  if (index == 1) {
-                    _matchesTabIndex = 0;
-                  }
-                });
-              },
-              type: BottomNavigationBarType.fixed,
-              selectedItemColor: AppTheme.primaryColor,
-              unselectedItemColor: Colors.grey,
-              backgroundColor: AppTheme.bottomNavColor,
-              elevation: 20,
-              selectedLabelStyle: GoogleFonts.poppins(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-              unselectedLabelStyle: GoogleFonts.poppins(
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-              ),
-              items: [
-              BottomNavigationBarItem(
-                icon: Image.asset(
-                  'assets/images/haule_logo_button.png',
-                  width: 48,
-                  height: 48,
+      bottomNavigationBar: Container(
+        height: 73,
+        padding: EdgeInsets.only(bottom: 15),
+        child: OverflowBox(
+          maxHeight: double.infinity,
+          child: StreamBuilder<int>(
+            stream: ChatService.getUnreadMessageCount(),
+            builder: (context, snapshot) {
+              final unreadCount = snapshot.data ?? 0;
+              
+              return BottomNavigationBar(
+                currentIndex: _selectedIndex,
+                onTap: (index) {
+                  HapticFeedback.selectionClick();
+                  setState(() {
+                    _selectedIndex = index;
+                    // Reset matches tab index when manually navigating
+                    if (index == 1) {
+                      _matchesTabIndex = 0;
+                    }
+                  });
+                },
+                type: BottomNavigationBarType.fixed,
+                selectedItemColor: AppTheme.primaryColor,
+                unselectedItemColor: Colors.grey,
+                backgroundColor: AppTheme.bottomNavColor,
+                elevation: 20,
+                selectedLabelStyle: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
                 ),
-                label: '',
-              ),
-              BottomNavigationBarItem(
-                icon: Stack(
-                  children: [
-                    const Icon(Icons.favorite),
-                    if (_interestCount > 0)
-                      Positioned(
-                        right: 0,
-                        top: 0,
-                        child: Container(
-                          padding: const EdgeInsets.all(2),
-                          decoration: const BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
-                          ),
-                          constraints: const BoxConstraints(
-                            minWidth: 16,
-                            minHeight: 16,
-                          ),
-                          child: Text(
-                            _interestCount > 99 ? '99+' : _interestCount.toString(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
+                unselectedLabelStyle: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                ),
+                items: [
+                BottomNavigationBarItem(
+                  icon: Container(
+                    alignment: Alignment.center,
+                    child: Image.asset(
+                      'assets/images/haule_logo_button.png',
+                      width: 24,
+                      height: 24,
+                    ),
+                  ),
+                  label: '',
+                ),
+                BottomNavigationBarItem(
+                  icon: Stack(
+                    children: [
+                      const Icon(Icons.favorite),
+                      if (_interestCount > 0)
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
                             ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                label: '',
-              ),
-              BottomNavigationBarItem(
-                icon: Stack(
-                  children: [
-                    const Icon(Icons.chat),
-                    if (unreadCount > 0)
-                      Positioned(
-                        right: 0,
-                        top: 0,
-                        child: Container(
-                          padding: const EdgeInsets.all(2),
-                          decoration: const BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
-                          ),
-                          constraints: const BoxConstraints(
-                            minWidth: 16,
-                            minHeight: 16,
-                          ),
-                          child: Text(
-                            unreadCount > 99 ? '99+' : unreadCount.toString(),
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
+                            constraints: const BoxConstraints(
+                              minWidth: 16,
+                              minHeight: 16,
                             ),
-                            textAlign: TextAlign.center,
+                            child: Text(
+                              _interestCount > 99 ? '99+' : _interestCount.toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
                           ),
                         ),
-                      ),
-                  ],
+                    ],
+                  ),
+                  label: '',
                 ),
-                label: '',
-              ),
-              BottomNavigationBarItem(
-                icon: FutureBuilder(
-                  future: UserService.getUserProfile(),
-                  builder: (context, snapshot) {
-                    final user = snapshot.data;
-                    return Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: _selectedIndex == 3 ? AppTheme.primaryColor : Colors.grey,
-                          width: 2,
+                BottomNavigationBarItem(
+                  icon: Stack(
+                    children: [
+                      const Icon(Icons.chat),
+                      if (unreadCount > 0)
+                        Positioned(
+                          right: 0,
+                          top: 0,
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 16,
+                              minHeight: 16,
+                            ),
+                            child: Text(
+                              unreadCount > 99 ? '99+' : unreadCount.toString(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
                         ),
-                        image: user?.profileImageUrl != null
-                            ? DecorationImage(
-                                image: NetworkImage(user!.profileImageUrl!),
-                                fit: BoxFit.cover,
+                    ],
+                  ),
+                  label: '',
+                ),
+                BottomNavigationBarItem(
+                  icon: FutureBuilder(
+                    future: UserService.getUserProfile(),
+                    builder: (context, snapshot) {
+                      final user = snapshot.data;
+                      return Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: _selectedIndex == 3 ? AppTheme.primaryColor : Colors.grey,
+                            width: 2,
+                          ),
+                          image: user?.profileImageUrl != null
+                              ? DecorationImage(
+                                  image: NetworkImage(user!.profileImageUrl!),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
+                          color: user?.profileImageUrl == null ? Colors.grey[300] : null,
+                        ),
+                        child: user?.profileImageUrl == null
+                            ? Icon(
+                                Icons.person,
+                                size: 16,
+                                color: _selectedIndex == 3 ? AppTheme.primaryColor : Colors.grey,
                               )
                             : null,
-                        color: user?.profileImageUrl == null ? Colors.grey[300] : null,
-                      ),
-                      child: user?.profileImageUrl == null
-                          ? Icon(
-                              Icons.person,
-                              size: 16,
-                              color: _selectedIndex == 3 ? AppTheme.primaryColor : Colors.grey,
-                            )
-                          : null,
-                    );
-                  },
+                      );
+                    },
+                  ),
+                  label: '',
                 ),
-                label: '',
-              ),
-            ],
-            );
-          },
+              ],
+              );
+            },
+          ),
         ),
       ),
     );

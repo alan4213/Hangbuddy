@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:video_player/video_player.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
 import '../widgets/loading_widget.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import '../services/video_service.dart';
 import 'phone_number_screen.dart';
+import 'terms_of_service_screen.dart';
+import 'privacy_policy_screen.dart';
 
 class GetStartedScreen extends StatefulWidget {
   const GetStartedScreen({super.key});
@@ -89,19 +93,10 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                   children: [
                     Text(
                       'Haule',
-                      style: TextStyle(
-                        fontSize: (MediaQuery.of(context).size.width * 0.12).clamp(32.0, 48.0),
+                      style: GoogleFonts.inter(
+                        fontSize: (MediaQuery.of(context).size.width * 0.24).clamp(70.0, 90.0),
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    SizedBox(height: (MediaQuery.of(context).size.height * 0.02).clamp(12.0, 16.0)),
-                    Text(
-                      'Your people are closer than you think',
-                      style: TextStyle(
-                        fontSize: (MediaQuery.of(context).size.width * 0.045).clamp(16.0, 20.0),
-                        color: Colors.white70,
                       ),
                       textAlign: TextAlign.center,
                     ),
@@ -147,17 +142,37 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                             TextSpan(
                               text: 'Terms of Service',
                               style: TextStyle(
+                                fontSize: 12,
                                 decoration: TextDecoration.underline,
                                 color: Colors.white,
                               ),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const TermsOfServiceScreen(),
+                                    ),
+                                  );
+                                },
                             ),
                             TextSpan(text: ' and '),
                             TextSpan(
                               text: 'Privacy Policy',
                               style: TextStyle(
+                                fontSize: 12,
                                 decoration: TextDecoration.underline,
                                 color: Colors.white,
                               ),
+                              recognizer: TapGestureRecognizer()
+                                ..onTap = () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => const PrivacyPolicyScreen(),
+                                    ),
+                                  );
+                                },
                             ),
                             TextSpan(text: '.'),
                           ],
@@ -192,7 +207,7 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                     // I have an account button
                     Container(
                       width: double.infinity,
-                      height: 56,
+                      height: 48,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(28),
                         border: Border.all(
@@ -232,7 +247,7 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                             alignment: Alignment.center,
                             child: Text(
                               'I have an account',
-                              style: TextStyle(
+                              style: GoogleFonts.inter(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w600,
                                 color: Colors.white,
