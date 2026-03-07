@@ -41,11 +41,11 @@ class AppTheme {
     primarySwatch: Colors.purple,
     primaryColor: primaryColor,
     scaffoldBackgroundColor: Colors.white,
-    textTheme: GoogleFonts.interTextTheme(),
+    textTheme: GoogleFonts.poppinsTextTheme(),
     appBarTheme: AppBarTheme(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      titleTextStyle: GoogleFonts.inter(
+      titleTextStyle: GoogleFonts.poppins(
         fontSize: 20,
         fontWeight: FontWeight.w600,
         color: textPrimary,
@@ -57,6 +57,9 @@ class AppTheme {
         shadowColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
+        ),
+        textStyle: GoogleFonts.poppins(
+          fontWeight: FontWeight.w600,
         ),
       ),
     ),

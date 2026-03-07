@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../models/hangout_request_model.dart';
 import '../services/hangout_service.dart';
 import '../services/match_service.dart';
@@ -53,20 +54,20 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
                     height: 280,
                     fit: BoxFit.contain,
                   ),
-                  const Text(
+                  Text(
                     'Need a plus one?',
-                    style: TextStyle(
+                    style: GoogleFonts.poppins(
                       fontSize: 24,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w500,
                       color: Color(0xFF1F2937),
                     ),
                   ),
                   const SizedBox(height: 12),
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.symmetric(horizontal: 20),
                     child: Text(
                       'Everything is better with company.\nPost a hangout to find a partner.',
-                      style: TextStyle(
+                      style: GoogleFonts.poppins(
                         fontSize: 16,
                         color: Color(0xFF6B7280),
                         height: 1.5,

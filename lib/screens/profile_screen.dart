@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'dart:io';
 import '../services/user_service.dart';
 import '../models/user_model.dart';
@@ -142,7 +143,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _isLoading 
                         ? 'Loading...' 
                         : '${_userProfile?.firstName ?? 'User'} ${_userProfile?.lastName ?? ''}',
-                    style: TextStyle(
+                    style: GoogleFonts.poppins(
                       fontSize: (MediaQuery.of(context).size.width * 0.08).clamp(20.0, 32.0),
                       fontWeight: FontWeight.w600,
                       color: Colors.black,
@@ -554,9 +555,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   Text(
                     title,
-                    style: TextStyle(
+                    style: GoogleFonts.poppins(
                       fontSize: (MediaQuery.of(context).size.width * 0.045).clamp(16.0, 18.0),
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w500,
                       color: const Color(0xFF1F2937),
                       letterSpacing: -0.2,
                     ),
@@ -565,7 +566,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   SizedBox(height: (MediaQuery.of(context).size.height * 0.008).clamp(3.0, 5.0)),
                   Text(
                     subtitle,
-                    style: TextStyle(
+                    style: GoogleFonts.poppins(
                       fontSize: (MediaQuery.of(context).size.width * 0.035).clamp(13.0, 15.0),
                       color: const Color(0xFF6B7280),
                       fontWeight: FontWeight.w500,

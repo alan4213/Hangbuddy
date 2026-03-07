@@ -100,10 +100,10 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                         textAlign: TextAlign.center,
                       ),
                       Text(
-                        'Where hangouts begin',
+                        'Where hangouts begin.',
                         style: GoogleFonts.inter(
-                          fontSize: (MediaQuery.of(context).size.width * 0.08).clamp(24.0, 32.0),
-                          fontWeight: FontWeight.w400,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
                         textAlign: TextAlign.center,
@@ -213,7 +213,7 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                       // I have an account button
                       Container(
                         width: double.infinity,
-                        height: 40,
+                        height: 56,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(28),
                           border: Border.all(
@@ -253,7 +253,7 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                               alignment: Alignment.center,
                               child: Text(
                                 'I have an account',
-                                style: TextStyle(
+                                style: GoogleFonts.poppins(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.black,

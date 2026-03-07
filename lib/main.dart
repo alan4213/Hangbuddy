@@ -216,7 +216,6 @@ class _MainNavigationState extends State<MainNavigation> {
       body: _screens[_selectedIndex],
       bottomNavigationBar: Container(
         height: 73,
-        padding: EdgeInsets.only(bottom: 15),
         child: OverflowBox(
           maxHeight: double.infinity,
           child: StreamBuilder<int>(

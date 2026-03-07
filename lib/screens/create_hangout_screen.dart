@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../services/hangout_service.dart';
 import '../services/location_service.dart';
 import 'package:geolocator/geolocator.dart';
@@ -97,7 +98,7 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   'Create Hangout',
-                  style: TextStyle(
+                  style: GoogleFonts.poppins(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                     color: AppTheme.textPrimary,
@@ -382,13 +383,6 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
             bubblePosition: const Offset(20, 520),
             highlightAsRectangle: true,
           ),
-          TutorialStep(
-            title: 'Create & Share',
-            description: 'Tap here to create your hangout and make it visible to people nearby.',
-            targetKey: _createButtonKey,
-            bubblePosition: const Offset(20, 600),
-            highlightAsRectangle: true,
-          ),
         ],
         onComplete: () {
           setState(() {
@@ -408,7 +402,7 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
       padding: const EdgeInsets.only(bottom: 12),
       child: Text(
         title,
-        style: TextStyle(
+        style: GoogleFonts.poppins(
           fontSize: Responsive.fontSize(context, Responsive.bodyFontSize),
           fontWeight: FontWeight.w600,
           color: Colors.black87,
@@ -431,7 +425,7 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: GoogleFonts.poppins(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: Colors.black87,
@@ -756,9 +750,9 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Visibility Range',
-          style: TextStyle(
+          style: GoogleFonts.poppins(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: Colors.black87,
@@ -779,7 +773,7 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
                   Expanded(
                     child: Text(
                       'Who can see this hangout?',
-                      style: const TextStyle(
+                      style: GoogleFonts.poppins(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                         color: Colors.black87,
@@ -788,7 +782,7 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
                   ),
                   Text(
                     'Within ${_maxDistance.toInt()} km',
-                    style: TextStyle(
+                    style: GoogleFonts.poppins(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: AppTheme.primaryColor,
@@ -806,9 +800,9 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
                   setState(() => _maxDistance = value);
                 },
               ),
-              const Text(
+              Text(
                 'People within this range can see your hangout',
-                style: TextStyle(
+                style: GoogleFonts.poppins(
                   fontSize: 12,
                   color: Colors.grey,
                   fontWeight: FontWeight.w400,
@@ -1036,18 +1030,18 @@ class _SuccessDialogState extends State<SuccessDialog>
                     ),
                   ),
                   const SizedBox(height: 20),
-                  const Text(
+                  Text(
                     'Hangout Created!',
-                    style: TextStyle(
+                    style: GoogleFonts.poppins(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
+                  Text(
                     'Your hangout has been created successfully',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: GoogleFonts.poppins(
                       color: Colors.grey,
                       fontSize: 14,
                     ),

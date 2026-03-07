@@ -123,7 +123,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
-                                color: AppTheme.textPrimary,
+                                color: Colors.black,
                               ),
                             );
                           },
@@ -151,7 +151,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                             widget.user['gender']!,
                             style: TextStyle(
                               fontSize: 16,
-                              color: AppTheme.textSecondary,
+                              color: Colors.black87,
                             ),
                           ),
                         if (widget.user['gender'] != null && widget.user['age'] != null)
@@ -568,125 +568,195 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                                       ),
                                       const SizedBox(height: 16),
                                       Wrap(
-                                        spacing: 8,
-                                        runSpacing: 8,
+                                        spacing: 10,
+                                        runSpacing: 10,
                                         children: [
                                           if (widget.user['age'] != null)
                                             Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                                               decoration: BoxDecoration(
-                                                color: Colors.white,
-                                                borderRadius: BorderRadius.circular(12),
-                                                border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+                                                gradient: LinearGradient(
+                                                  colors: [Colors.grey[100]!, Colors.grey[50]!],
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
+                                                ),
+                                                borderRadius: BorderRadius.circular(16),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: AppTheme.primaryColor.withOpacity(0.15),
+                                                    blurRadius: 8,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ],
                                               ),
                                               child: Row(
                                                 mainAxisSize: MainAxisSize.min,
                                                 children: [
-                                                  Icon(Icons.cake, size: 16, color: AppTheme.primaryColor),
-                                                  const SizedBox(width: 6),
-                                                  Text('${widget.user['age']}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppTheme.primaryColor)),
+                                                  Icon(Icons.cake, size: 18, color: Colors.black87),
+                                                  const SizedBox(width: 8),
+                                                  Text('${widget.user['age']}', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87)),
                                                 ],
                                               ),
                                             ),
                                           if (widget.user['gender'] != null)
                                             Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                                               decoration: BoxDecoration(
-                                                color: Colors.white,
-                                                borderRadius: BorderRadius.circular(12),
-                                                border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+                                                gradient: LinearGradient(
+                                                  colors: [Colors.grey[100]!, Colors.grey[50]!],
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
+                                                ),
+                                                borderRadius: BorderRadius.circular(16),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: AppTheme.primaryColor.withOpacity(0.15),
+                                                    blurRadius: 8,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ],
                                               ),
                                               child: Row(
                                                 mainAxisSize: MainAxisSize.min,
                                                 children: [
-                                                  Icon(Icons.person, size: 16, color: AppTheme.primaryColor),
-                                                  const SizedBox(width: 6),
-                                                  Text(widget.user['gender']!, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppTheme.primaryColor)),
+                                                  Icon(Icons.person, size: 18, color: Colors.black87),
+                                                  const SizedBox(width: 8),
+                                                  Text(widget.user['gender']!, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87)),
                                                 ],
                                               ),
                                             ),
                                           if (widget.user['occupation'] != null)
                                             Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                                               decoration: BoxDecoration(
-                                                color: Colors.white,
-                                                borderRadius: BorderRadius.circular(12),
-                                                border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+                                                gradient: LinearGradient(
+                                                  colors: [Colors.grey[100]!, Colors.grey[50]!],
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
+                                                ),
+                                                borderRadius: BorderRadius.circular(16),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: AppTheme.primaryColor.withOpacity(0.15),
+                                                    blurRadius: 8,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ],
                                               ),
                                               child: Row(
                                                 mainAxisSize: MainAxisSize.min,
                                                 children: [
-                                                  Icon(Icons.work, size: 16, color: AppTheme.primaryColor),
-                                                  const SizedBox(width: 6),
-                                                  Text(widget.user['occupation']!, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppTheme.primaryColor)),
+                                                  Icon(Icons.work, size: 18, color: Colors.black87),
+                                                  const SizedBox(width: 8),
+                                                  Text(widget.user['occupation']!, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87)),
                                                 ],
                                               ),
                                             ),
                                           if (widget.user['education'] != null)
                                             Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                                               decoration: BoxDecoration(
-                                                color: Colors.white,
-                                                borderRadius: BorderRadius.circular(12),
-                                                border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+                                                gradient: LinearGradient(
+                                                  colors: [Colors.grey[100]!, Colors.grey[50]!],
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
+                                                ),
+                                                borderRadius: BorderRadius.circular(16),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: AppTheme.primaryColor.withOpacity(0.15),
+                                                    blurRadius: 8,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ],
                                               ),
                                               child: Row(
                                                 mainAxisSize: MainAxisSize.min,
                                                 children: [
-                                                  Icon(Icons.school, size: 16, color: AppTheme.primaryColor),
-                                                  const SizedBox(width: 6),
-                                                  Text(widget.user['education']!, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppTheme.primaryColor)),
+                                                  Icon(Icons.school, size: 18, color: Colors.black87),
+                                                  const SizedBox(width: 8),
+                                                  Text(widget.user['education']!, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87)),
                                                 ],
                                               ),
                                             ),
                                           if (widget.user['religion'] != null)
                                             Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                                               decoration: BoxDecoration(
-                                                color: Colors.white,
-                                                borderRadius: BorderRadius.circular(12),
-                                                border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+                                                gradient: LinearGradient(
+                                                  colors: [Colors.grey[100]!, Colors.grey[50]!],
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
+                                                ),
+                                                borderRadius: BorderRadius.circular(16),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: AppTheme.primaryColor.withOpacity(0.15),
+                                                    blurRadius: 8,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ],
                                               ),
                                               child: Row(
                                                 mainAxisSize: MainAxisSize.min,
                                                 children: [
-                                                  Icon(Icons.church, size: 16, color: AppTheme.primaryColor),
-                                                  const SizedBox(width: 6),
-                                                  Text(widget.user['religion']!, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppTheme.primaryColor)),
+                                                  Icon(Icons.church, size: 18, color: Colors.black87),
+                                                  const SizedBox(width: 8),
+                                                  Text(widget.user['religion']!, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87)),
                                                 ],
                                               ),
                                             ),
                                           if (widget.user['ethnicity'] != null)
                                             Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                                               decoration: BoxDecoration(
-                                                color: Colors.white,
-                                                borderRadius: BorderRadius.circular(12),
-                                                border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+                                                gradient: LinearGradient(
+                                                  colors: [Colors.grey[100]!, Colors.grey[50]!],
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
+                                                ),
+                                                borderRadius: BorderRadius.circular(16),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: AppTheme.primaryColor.withOpacity(0.15),
+                                                    blurRadius: 8,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ],
                                               ),
                                               child: Row(
                                                 mainAxisSize: MainAxisSize.min,
                                                 children: [
-                                                  Icon(Icons.public, size: 16, color: AppTheme.primaryColor),
-                                                  const SizedBox(width: 6),
-                                                  Text(widget.user['ethnicity']!, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppTheme.primaryColor)),
+                                                  Icon(Icons.public, size: 18, color: Colors.black87),
+                                                  const SizedBox(width: 8),
+                                                  Text(widget.user['ethnicity']!, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87)),
                                                 ],
                                               ),
                                             ),
                                           if (widget.user['height'] != null)
                                             Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                                               decoration: BoxDecoration(
-                                                color: Colors.white,
-                                                borderRadius: BorderRadius.circular(12),
-                                                border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+                                                gradient: LinearGradient(
+                                                  colors: [Colors.grey[100]!, Colors.grey[50]!],
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
+                                                ),
+                                                borderRadius: BorderRadius.circular(16),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: AppTheme.primaryColor.withOpacity(0.15),
+                                                    blurRadius: 8,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ],
                                               ),
                                               child: Row(
                                                 mainAxisSize: MainAxisSize.min,
                                                 children: [
-                                                  Icon(Icons.height, size: 16, color: AppTheme.primaryColor),
-                                                  const SizedBox(width: 6),
-                                                  Text(widget.user['height']!, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppTheme.primaryColor)),
+                                                  Icon(Icons.height, size: 18, color: Colors.black87),
+                                                  const SizedBox(width: 8),
+                                                  Text(widget.user['height']!, style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Colors.black87)),
                                                 ],
                                               ),
                                             ),
@@ -779,31 +849,41 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                                         ),
                                         const SizedBox(height: 16),
                                         Wrap(
-                                          spacing: 8,
-                                          runSpacing: 8,
+                                          spacing: 10,
+                                          runSpacing: 10,
                                           children: (currentUser['interests'] as List).map<Widget>((interest) {
                                             return Container(
-                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                                               decoration: BoxDecoration(
-                                                color: Colors.white,
+                                                gradient: LinearGradient(
+                                                  colors: [Colors.grey[100]!, Colors.grey[50]!],
+                                                  begin: Alignment.topLeft,
+                                                  end: Alignment.bottomRight,
+                                                ),
                                                 borderRadius: BorderRadius.circular(20),
-                                                border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: AppTheme.primaryColor.withOpacity(0.15),
+                                                    blurRadius: 8,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ],
                                               ),
                                               child: Row(
                                                 mainAxisSize: MainAxisSize.min,
                                                 children: [
                                                   Icon(
                                                     _getInterestIcon(interest.toString()),
-                                                    color: AppTheme.primaryColor,
-                                                    size: 16,
+                                                    color: Colors.black87,
+                                                    size: 18,
                                                   ),
-                                                  const SizedBox(width: 6),
+                                                  const SizedBox(width: 8),
                                                   Text(
                                                     interest.toString(),
                                                     style: TextStyle(
-                                                      color: AppTheme.primaryColor,
+                                                      color: Colors.black87,
                                                       fontSize: 14,
-                                                      fontWeight: FontWeight.w500,
+                                                      fontWeight: FontWeight.w600,
                                                     ),
                                                   ),
                                                 ],

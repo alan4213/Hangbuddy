@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../models/user_model.dart';
 import '../services/match_service.dart';
 import '../screens/profile_detail_screen.dart';
@@ -73,21 +74,21 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
                     height: 320,
                     fit: BoxFit.contain,
                   ),
-                  const Text(
+                  Text(
                     "No upcoming hangouts",
-                    style: TextStyle(
+                    style: GoogleFonts.poppins(
                       fontSize: 24,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w500,
                       color: Colors.black87,
                     ),
                   ),
                   const SizedBox(height: 12),
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.symmetric(horizontal: 40),
                     child: Text(
                       "Start connecting with people to plan exciting hangouts together!",
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: GoogleFonts.poppins(
                         fontSize: 16,
                         color: Color(0xFF6B7280),
                         height: 1.4,

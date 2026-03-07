@@ -109,28 +109,10 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
           //       )
           //     : 
           Container(
-                  width: double.infinity,
-                  height: double.infinity,
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: AssetImage('assets/images/coffee_hangout.png'),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-          // Overlay gradient - also ignores system insets
-          Container(
             width: double.infinity,
             height: double.infinity,
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Colors.black.withOpacity(0.3),
-                  Colors.black.withOpacity(0.6),
-                ],
-              ),
+              gradient: AppTheme.primaryGradient,
             ),
           ),
           // Foreground content - respects system insets

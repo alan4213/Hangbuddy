@@ -62,7 +62,7 @@ class LoadingButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      height: 40,
+      height: 56,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -99,7 +99,7 @@ class LoadingButton extends StatelessWidget {
                   )
                 : Text(
                     text,
-                    style: GoogleFonts.inter(
+                    style: GoogleFonts.poppins(
                       fontSize: fontSize,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,

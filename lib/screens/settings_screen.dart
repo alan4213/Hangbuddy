@@ -74,13 +74,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           SizedBox(height: 20),
           
           _buildSettingsCard([
-            _buildSettingsItem(Icons.language_outlined, 'Language', () {}),
-            _buildSettingsItem(Icons.dark_mode_outlined, 'Theme', () {}),
-          ]),
-          
-          SizedBox(height: 20),
-          
-          _buildSettingsCard([
             _buildSettingsItem(Icons.help_outline, 'Help & Support', () {}),
             _buildSettingsItem(Icons.info_outline, 'About', () {}),
           ]),
