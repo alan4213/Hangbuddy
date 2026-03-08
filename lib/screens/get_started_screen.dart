@@ -100,10 +100,10 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                         textAlign: TextAlign.center,
                       ),
                       Text(
-                        'Where hangouts begin.',
+                        'Where Hangouts Begin.',
                         style: GoogleFonts.inter(
                           fontSize: 20,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w700,
                           color: Colors.white,
                         ),
                         textAlign: TextAlign.center,
@@ -117,7 +117,7 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                 // Bottom sheet container
                 Container(
                   width: double.infinity,
-                  padding: EdgeInsets.fromLTRB(20, 16, 20, 0),
+                  padding: EdgeInsets.fromLTRB(20, 16, 20, 30),
                   decoration: BoxDecoration(
                     color: Colors.transparent,
                     borderRadius: BorderRadius.only(
@@ -164,7 +164,7 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                             children: [
                               TextSpan(text: 'By tapping "Create an account", you agree to our '),
                               TextSpan(
-                                text: 'Terms of Service',
+                                text: 'Terms',
                                 style: TextStyle(
                                   decoration: TextDecoration.underline,
                                   color: Colors.white,
@@ -213,7 +213,7 @@ class _GetStartedScreenState extends State<GetStartedScreen> {
                       // I have an account button
                       Container(
                         width: double.infinity,
-                        height: 56,
+                        height: 48,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(28),
                           border: Border.all(
