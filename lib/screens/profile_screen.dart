@@ -172,9 +172,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   padding: EdgeInsets.symmetric(horizontal: (MediaQuery.of(context).size.width * 0.05).clamp(12.0, 20.0)),
                   child: Column(
                     children: [
-
-
-
                     // Notifications
                     _buildMenuCard(
                       Icons.notifications_outlined,
@@ -189,7 +186,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     
                     const SizedBox(height: 16),
-                    
                     
                     // Verify Profile
                     _buildMenuCard(
@@ -251,89 +247,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _startPhotoVerification() async {
-    final ImagePicker picker = ImagePicker();
-    try {
-      final XFile? photo = await picker.pickImage(
-        source: ImageSource.camera,
-        preferredCameraDevice: CameraDevice.front,
-        imageQuality: 80,
-      );
-      
-      if (photo != null) {
-        await _uploadVerificationPhoto(File(photo.path));
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error taking photo: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-  
-  Future<void> _uploadVerificationPhoto(File photo) async {
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) return;
-      
-      // Show loading
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              CircularProgressIndicator(color: Colors.white),
-              SizedBox(width: 16),
-              Text('Uploading verification photo...'),
-            ],
-          ),
-          backgroundColor: AppTheme.primaryColor,
-          duration: Duration(seconds: 10),
-        ),
-      );
-      
-      // Upload to Firebase Storage
-      final ref = FirebaseStorage.instance
-          .ref()
-          .child('verification_photos')
-          .child('${user.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg');
-      
-      await ref.putFile(photo);
-      final photoUrl = await ref.getDownloadURL();
-      
-      // Update user document with verification photo and auto-verify
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .update({
-        'verificationPhotoUrl': photoUrl,
-        'verificationStatus': 'verified',
-        'verificationSubmittedAt': FieldValue.serverTimestamp(),
-        'verifiedAt': FieldValue.serverTimestamp(),
-      });
-      
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Profile verified successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      
-      // Refresh verification status
-      _loadVerificationStatus();
-    } catch (e) {
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error uploading photo: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
   void _showDeleteAccountDialog() {
     showDialog(
       context: context,
@@ -343,9 +256,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         child: Container(
           padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.8,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
               // Warning Icon
               Container(
                 width: 80,
@@ -462,7 +379,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ],
               ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -480,11 +398,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
             color: AppTheme.primaryColor,
           ),
           const SizedBox(width: 8),
-          Text(
-            text,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Colors.black87,
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.black87,
+              ),
             ),
           ),
         ],
@@ -503,13 +423,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error deleting account: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (e.toString().contains('REAUTH_REQUIRED')) {
+        _showReauthDialog();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error deleting account: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
+  }
+
+  void _showReauthDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => _ReauthDialog(
+        onSuccess: () async {
+          Navigator.pop(context);
+          await _deleteAccount();
+        },
+      ),
+    );
   }
 
   Widget _buildMenuCard(IconData icon, String title, String subtitle, VoidCallback onTap) {
@@ -583,6 +520,135 @@ class _ProfileScreenState extends State<ProfileScreen> {
               size: (MediaQuery.of(context).size.width * 0.04).clamp(14.0, 16.0),
               color: AppTheme.primaryColor.withOpacity(0.6),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ReauthDialog extends StatefulWidget {
+  final VoidCallback onSuccess;
+  
+  const _ReauthDialog({required this.onSuccess});
+  
+  @override
+  State<_ReauthDialog> createState() => _ReauthDialogState();
+}
+
+class _ReauthDialogState extends State<_ReauthDialog> {
+  String? _verificationId;
+  String _otpCode = '';
+  bool _isLoading = false;
+  bool _codeSent = false;
+  
+  @override
+  void initState() {
+    super.initState();
+    _sendOTP();
+  }
+  
+  Future<void> _sendOTP() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user?.phoneNumber == null) return;
+    
+    setState(() => _isLoading = true);
+    
+    try {
+      await FirebaseAuth.instance.verifyPhoneNumber(
+        phoneNumber: user!.phoneNumber!,
+        verificationCompleted: (credential) {},
+        verificationFailed: (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to send OTP: ${e.message}')),
+          );
+        },
+        codeSent: (verificationId, resendToken) {
+          setState(() {
+            _verificationId = verificationId;
+            _codeSent = true;
+            _isLoading = false;
+          });
+        },
+        codeAutoRetrievalTimeout: (verificationId) {
+          _verificationId = verificationId;
+        },
+      );
+    } catch (e) {
+      setState(() => _isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
+    }
+  }
+  
+  Future<void> _verifyOTP() async {
+    if (_verificationId == null || _otpCode.length != 6) return;
+    
+    setState(() => _isLoading = true);
+    
+    try {
+      await UserService.reauthenticateWithPhone(_verificationId!, _otpCode);
+      widget.onSuccess();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Invalid OTP: $e')),
+      );
+    }
+    
+    setState(() => _isLoading = false);
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Verify Identity',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 16),
+            Text(
+              _codeSent 
+                  ? 'Enter the OTP sent to your phone'
+                  : 'Sending OTP...',
+              textAlign: TextAlign.center,
+            ),
+            if (_codeSent) ...[
+              SizedBox(height: 20),
+              TextField(
+                onChanged: (value) => _otpCode = value,
+                keyboardType: TextInputType.number,
+                maxLength: 6,
+                decoration: InputDecoration(
+                  labelText: 'OTP Code',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text('Cancel'),
+                    ),
+                  ),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : _verifyOTP,
+                      child: _isLoading 
+                          ? CircularProgressIndicator()
+                          : Text('Verify'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),
