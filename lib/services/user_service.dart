@@ -124,6 +124,12 @@ class UserService {
       
       final data = doc.data()!;
       
+      // Check if account is deleted
+      if (data['isDeleted'] == true) {
+        print('User account is deleted');
+        return null;
+      }
+      
       // Check if this is a complete profile (has required fields)
       if (data['firstName'] == null || data['lastName'] == null) {
         print('User profile incomplete - missing required fields');
@@ -249,19 +255,16 @@ class UserService {
       
       // Soft delete user document in Firestore
       await _firestore.collection('users').doc(user.uid).update({
-        'deleted': true,
+        'isDeleted': true,
         'deletedAt': DateTime.now().millisecondsSinceEpoch,
         'updatedAt': DateTime.now().millisecondsSinceEpoch,
       });
       
-      // Soft delete phone number (mark as deleted for admin management)
+      // IMMEDIATELY free up the phone number for reuse
       if (phoneNumber != null && phoneNumber.isNotEmpty) {
         final encodedPhone = _encodePhoneNumber(phoneNumber);
-        await _firestore.collection('phone_numbers').doc(encodedPhone).update({
-          'deleted': true,
-          'deletedAt': DateTime.now().millisecondsSinceEpoch,
-          'deletedByUserId': user.uid,
-        });
+        await _firestore.collection('phone_numbers').doc(encodedPhone).delete();
+        print('Phone number freed for reuse: $phoneNumber');
       }
       
       // Hard delete from Firebase Authentication (no recovery)
@@ -393,14 +396,16 @@ class UserService {
       final querySnapshot = await _firestore
           .collection('users')
           .where('email', isEqualTo: cleanEmail)
-          .limit(1)
           .get();
       
-      final exists = querySnapshot.docs.isNotEmpty;
+      // Filter out deleted accounts in code instead of query
+      final activeUsers = querySnapshot.docs.where((doc) => doc.data()['isDeleted'] != true).toList();
+      final exists = activeUsers.isNotEmpty;
+      
       print('Email exists: $exists');
       
       if (exists) {
-        final existingUser = querySnapshot.docs.first.data();
+        final existingUser = activeUsers.first.data();
         print('Email linked to phone: ${existingUser['phoneNumber']}');
       }
       

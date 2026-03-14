@@ -71,10 +71,11 @@ class AuthService {
       // Refresh FCM token after successful login
       await NotificationService.refreshFCMToken();
       
-      // Store phone number in Firestore
+      // Store/update phone number in Firestore
       if (_phoneNumber != null) {
         final user = FirebaseAuth.instance.currentUser;
         if (user != null) {
+          // Create/update current user
           await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
             'phoneNumber': _phoneNumber,
             'uid': user.uid,
@@ -316,6 +317,37 @@ class AuthService {
       return result;
     } catch (e) {
       print('Error creating email account: $e');
+      throw e;
+    }
+  }
+  
+  // Delete account - soft delete to preserve data for security
+  static Future<void> deleteAccount() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) throw 'No user logged in';
+      
+      // Clear email from Firebase Auth before deletion (allows email reuse)
+      try {
+        if (user.email != null) {
+          await user.updateEmail('deleted_${user.uid}@temp.com');
+        }
+      } catch (e) {
+        print('Could not update email: $e');
+      }
+      
+      // Soft delete: Mark account as deleted
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+        'isDeleted': true,
+        'deletedAt': DateTime.now().millisecondsSinceEpoch,
+      });
+      
+      // Delete Firebase Auth account (frees up phone number)
+      await user.delete();
+      
+      print('Account soft deleted successfully');
+    } catch (e) {
+      print('Error deleting account: $e');
       throw e;
     }
   }

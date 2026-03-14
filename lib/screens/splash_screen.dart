@@ -71,20 +71,28 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: Center(
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Image.asset(
-                'assets/images/haule_logo.png',
-                width: 280,
-                height: 280,
-                fit: BoxFit.contain,
-              ),
-            ],
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          gradient: AppTheme.primaryGradient,
+        ),
+        child: Center(
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset(
+                  'assets/images/haule_splash_2.png',
+                  width: 280,
+                  height: 280,
+                  fit: BoxFit.contain,
+                  color: Colors.transparent,
+                  colorBlendMode: BlendMode.screen,
+                ),
+              ],
+            ),
           ),
         ),
       ),
