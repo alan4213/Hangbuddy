@@ -7,6 +7,8 @@ class ChatMessage {
   final String message;
   final DateTime timestamp;
   final String status; // sent, delivered, read
+  final DateTime? deliveredAt;
+  final DateTime? readAt;
   final Map<String, String> reactions; // userId: emoji
   final String? replyToId;
   final String? replyToMessage;
@@ -25,6 +27,8 @@ class ChatMessage {
     required this.message,
     required this.timestamp,
     this.status = 'sent',
+    this.deliveredAt,
+    this.readAt,
     this.reactions = const {},
     this.replyToId,
     this.replyToMessage,
@@ -44,6 +48,8 @@ class ChatMessage {
       'message': message,
       'timestamp': Timestamp.fromDate(timestamp),
       'status': status,
+      'deliveredAt': deliveredAt != null ? Timestamp.fromDate(deliveredAt!) : null,
+      'readAt': readAt != null ? Timestamp.fromDate(readAt!) : null,
       'reactions': reactions,
       'replyToId': replyToId,
       'replyToMessage': replyToMessage,
@@ -65,6 +71,8 @@ class ChatMessage {
       message: map['message'] ?? '',
       timestamp: (map['timestamp'] as Timestamp).toDate(),
       status: map['status'] ?? 'sent',
+      deliveredAt: map['deliveredAt'] != null ? (map['deliveredAt'] as Timestamp).toDate() : null,
+      readAt: map['readAt'] != null ? (map['readAt'] as Timestamp).toDate() : null,
       reactions: Map<String, String>.from(map['reactions'] ?? {}),
       replyToId: map['replyToId'],
       replyToMessage: map['replyToMessage'],

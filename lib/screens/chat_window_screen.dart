@@ -13,6 +13,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../services/photo_upload_service.dart';
+import 'profile_detail_screen.dart';
 
 class ChatWindowScreen extends StatefulWidget {
   final Map<String, dynamic> match;
@@ -81,7 +82,6 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser != null) {
         final chatId = ChatService.getChatId(currentUser.uid, _otherUserId!);
-        ChatService.markAsRead(chatId);
         
         // Listen for chat deletion by other user
         FirebaseFirestore.instance
@@ -123,6 +123,8 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _setOnlineStatus(true);
+      // Mark messages as read when app becomes active
+      _markVisibleMessagesAsRead();
     } else if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
       _setOnlineStatus(false);
     }
@@ -151,6 +153,22 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
     _typingTimer = Timer(Duration(seconds: 2), () {
       ChatService.setTyping(_otherUserId!, false);
     });
+  }
+  
+  void _markVisibleMessagesAsRead() async {
+    if (_otherUserId == null) return;
+    
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+    
+    final chatId = ChatService.getChatId(currentUser.uid, _otherUserId!);
+    
+    try {
+      await ChatService.markAsRead(chatId);
+      print('✅ Marked visible messages as read');
+    } catch (e) {
+      print('❌ Error marking messages as read: $e');
+    }
   }
   
 
@@ -182,59 +200,65 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
           },
         ) : Row(
           children: [
-            CircleAvatar(
-              radius: 20,
-              backgroundImage: _otherUserId == 'haule_official'
-                  ? AssetImage('assets/images/haule_logo.png') as ImageProvider
-                  : (_otherUser?.profileImageUrl != null || _otherUser?.photoUrls?.isNotEmpty == true
-                      ? NetworkImage(_otherUser!.profileImageUrl ?? _otherUser!.photoUrls!.first)
-                      : widget.match['image'] != null
-                      ? NetworkImage(widget.match['image'])
-                      : NetworkImage('https://picsum.photos/100/100?random=1')),
-              backgroundColor: _otherUserId == 'haule_official'
-                  ? Colors.white
-                  : (_otherUserId != null 
-                      ? avatarColors[_otherUserId!.hashCode % avatarColors.length]
-                      : Color(0xFF8B5CF6)),
+            GestureDetector(
+              onTap: () => _navigateToUserProfile(),
+              child: CircleAvatar(
+                radius: 20,
+                backgroundImage: _otherUserId == 'haule_official'
+                    ? AssetImage('assets/images/haule_logo.png') as ImageProvider
+                    : (_otherUser?.profileImageUrl != null || _otherUser?.photoUrls?.isNotEmpty == true
+                        ? NetworkImage(_otherUser!.profileImageUrl ?? _otherUser!.photoUrls!.first)
+                        : widget.match['image'] != null
+                        ? NetworkImage(widget.match['image'])
+                        : NetworkImage('https://picsum.photos/100/100?random=1')),
+                backgroundColor: _otherUserId == 'haule_official'
+                    ? Colors.white
+                    : (_otherUserId != null 
+                        ? avatarColors[_otherUserId!.hashCode % avatarColors.length]
+                        : Color(0xFF8B5CF6)),
+              ),
             ),
             SizedBox(width: 12),
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          widget.match['name'] ?? widget.match['firstName'] ?? 'User',
-                          style: TextStyle(color: Colors.white, fontSize: 18),
+              child: GestureDetector(
+                onTap: () => _navigateToUserProfile(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            widget.match['name'] ?? widget.match['firstName'] ?? 'User',
+                            style: TextStyle(color: Colors.white, fontSize: 18),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
+                        ),
+                        if (_otherUserId == 'haule_official') ...[
+                          SizedBox(width: 4),
+                          Icon(
+                            Icons.verified,
+                            color: Color(0xFFFFD700),
+                            size: 18,
+                          ),
+                        ],
+                      ],
+                    ),
+                    StreamBuilder<bool>(
+                      stream: _otherUserId != null ? _getOnlineStatus(_otherUserId!) : Stream.value(false),
+                      builder: (context, snapshot) {
+                        final isOnline = snapshot.data ?? false;
+                        return Text(
+                          isOnline ? 'Online' : 'Last seen recently',
+                          style: TextStyle(color: Colors.white70, fontSize: 12),
                           overflow: TextOverflow.ellipsis,
                           maxLines: 1,
-                        ),
-                      ),
-                      if (_otherUserId == 'haule_official') ...[
-                        SizedBox(width: 4),
-                        Icon(
-                          Icons.verified,
-                          color: Color(0xFFFFD700),
-                          size: 18,
-                        ),
-                      ],
-                    ],
-                  ),
-                  StreamBuilder<bool>(
-                    stream: _otherUserId != null ? _getOnlineStatus(_otherUserId!) : Stream.value(false),
-                    builder: (context, snapshot) {
-                      final isOnline = snapshot.data ?? false;
-                      return Text(
-                        isOnline ? 'Online' : 'Last seen recently',
-                        style: TextStyle(color: Colors.white70, fontSize: 12),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      );
-                    },
-                  ),
-                ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -357,15 +381,31 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
                   child: StreamBuilder<List<ChatMessage>>(
                     stream: _otherUserId != null ? ChatService.getMessages(_otherUserId!) : Stream.value([]),
                     builder: (context, snapshot) {
+                      print('📱 UI StreamBuilder state: ${snapshot.connectionState}');
+                      print('   Has data: ${snapshot.hasData}');
+                      print('   Data length: ${snapshot.data?.length ?? 0}');
+                      print('   Has error: ${snapshot.hasError}');
+                      if (snapshot.hasError) {
+                        print('   Error: ${snapshot.error}');
+                      }
+                      
                       if (snapshot.connectionState == ConnectionState.waiting) {
+                        print('🔄 Showing loading skeleton');
                         return _buildLoadingSkeleton();
                       }
                       
                       final messages = snapshot.data ?? [];
+                      print('💬 Final UI messages count: ${messages.length}');
                       
                       if (messages.isEmpty) {
+                        print('😭 Showing empty state');
                         return _buildEmptyState();
                       }
+                      
+                      // Mark messages as read when they become visible
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        _markVisibleMessagesAsRead();
+                      });
                       
                       final filteredMessages = _searchQuery.isEmpty 
                           ? messages 
@@ -373,12 +413,15 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
                               msg.message.toLowerCase().contains(_searchQuery.toLowerCase())
                             ).toList();
                       
+                      print('🔍 Filtered messages count: ${filteredMessages.length}');
+                      
                       return ListView.builder(
                         padding: EdgeInsets.all(16),
                         reverse: true,
                         itemCount: filteredMessages.length,
                         itemBuilder: (context, index) {
                           final message = filteredMessages[index];
+                          print('📝 Building message ${index}: ${message.message}');
                           return _buildSwipeableMessage(message);
                         },
                       );
@@ -781,9 +824,107 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
               if (value == 'camera') _pickPhoto(ImageSource.camera);
               if (value == 'gallery') _pickPhoto(ImageSource.gallery);
             },
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            color: Colors.white,
+            elevation: 8,
+            offset: Offset(0, -120),
             itemBuilder: (context) => [
-              PopupMenuItem(value: 'camera', child: Row(children: [Icon(Icons.camera_alt), SizedBox(width: 8), Text('Camera')])),
-              PopupMenuItem(value: 'gallery', child: Row(children: [Icon(Icons.photo), SizedBox(width: 8), Text('Gallery')])),
+              PopupMenuItem(
+                value: 'camera',
+                child: Container(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [AppTheme.primaryColor, AppTheme.primaryColor.withOpacity(0.8)],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.primaryColor.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Icon(Icons.camera_alt, color: Colors.white, size: 22),
+                      ),
+                      SizedBox(width: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Camera',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          Text(
+                            'Take a photo',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              PopupMenuItem(
+                value: 'gallery',
+                child: Container(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [AppTheme.primaryColor, AppTheme.primaryColor.withOpacity(0.8)],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.primaryColor.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Icon(Icons.photo_library, color: Colors.white, size: 22),
+                      ),
+                      SizedBox(width: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Gallery',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          Text(
+                            'Choose from gallery',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
           SizedBox(width: 12),
@@ -1086,20 +1227,35 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
     final chatId = ChatService.getChatId(currentUser.uid, _otherUserId!);
     final draft = _messageController.text.trim();
     
-    if (draft.isNotEmpty) {
-      await FirebaseFirestore.instance
-          .collection('chats')
-          .doc(chatId)
-          .set({
-        'draft_${currentUser.uid}': draft,
-      }, SetOptions(merge: true));
-    } else {
-      await FirebaseFirestore.instance
-          .collection('chats')
-          .doc(chatId)
-          .update({
-        'draft_${currentUser.uid}': FieldValue.delete(),
-      });
+    try {
+      if (draft.isNotEmpty) {
+        // Ensure chat document exists with participants before updating draft
+        await FirebaseFirestore.instance
+            .collection('chats')
+            .doc(chatId)
+            .set({
+          'participants': [currentUser.uid, _otherUserId!],
+          'draft_${currentUser.uid}': draft,
+        }, SetOptions(merge: true));
+      } else {
+        // Only try to delete draft if document exists
+        final chatDoc = await FirebaseFirestore.instance
+            .collection('chats')
+            .doc(chatId)
+            .get();
+        
+        if (chatDoc.exists) {
+          await FirebaseFirestore.instance
+              .collection('chats')
+              .doc(chatId)
+              .update({
+            'draft_${currentUser.uid}': FieldValue.delete(),
+          });
+        }
+      }
+    } catch (e) {
+      print('Error saving draft: $e');
+      // Don't rethrow as draft saving is not critical
     }
   }
   
@@ -1747,28 +1903,144 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
     
     if (shouldShare != true) return;
     
+    // Show loading snackbar immediately
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Container(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            ),
+            SizedBox(width: 12),
+            Text(
+              'Getting your location...',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: AppTheme.primaryColor,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        margin: EdgeInsets.all(16),
+        elevation: 8,
+        duration: Duration(seconds: 10),
+      ),
+    );
+    
+    // Process location sharing asynchronously
+    _processLocationSharing();
+  }
+  
+  void _navigateToUserProfile() {
+    if (_otherUserId == null || _otherUserId == 'haule_official') return;
+    
+    // Navigate to ProfileDetailScreen
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ProfileDetailScreen(
+          user: {
+            'uid': _otherUserId,
+            'userId': _otherUserId,
+            'firstName': widget.match['name'] ?? widget.match['firstName'] ?? 'User',
+            'lastName': widget.match['lastName'] ?? '',
+            'age': widget.match['age'],
+            'gender': widget.match['gender'],
+            'profileImageUrl': _otherUser?.profileImageUrl ?? widget.match['image'],
+            'photoUrls': _otherUser?.photoUrls ?? [],
+            'interests': _otherUser?.interests ?? [],
+            'occupation': _otherUser?.occupation,
+            'education': _otherUser?.education,
+            'religion': _otherUser?.religion,
+            'ethnicity': _otherUser?.ethnicity,
+            'height': _otherUser?.height,
+            ..._otherUser?.toMap() ?? {},
+            ...widget.match,
+          },
+          showChatButton: true,
+        ),
+      ),
+    );
+  }
+
+  void _processLocationSharing() async {
     try {
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Location permission denied')),
+            SnackBar(
+              content: Row(
+                children: [
+                  Icon(Icons.location_off, color: Colors.white, size: 20),
+                  SizedBox(width: 12),
+                  Text(
+                    'Location permission denied',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              margin: EdgeInsets.all(16),
+              elevation: 8,
+            ),
           );
           return;
         }
       }
       
       if (permission == LocationPermission.deniedForever) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Location permission permanently denied')),
+          SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.location_off, color: Colors.white, size: 20),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Location permission permanently denied',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            margin: EdgeInsets.all(16),
+            elevation: 8,
+          ),
         );
         return;
       }
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Getting location...')),
-      );
       
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
@@ -1789,6 +2061,10 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
         // Use default name if geocoding fails
       }
       
+      // Hide loading snackbar
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      
+      // Send location message
       await ChatService.sendMessage(
         receiverId: _otherUserId!,
         message: 'Shared location',
@@ -1798,11 +2074,63 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
         locationName: locationName,
       );
       
-    } catch (e) {
+      // Show success feedback
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error getting location: $e'),
+          content: Row(
+            children: [
+              Icon(Icons.location_on, color: Colors.white, size: 20),
+              SizedBox(width: 12),
+              Text(
+                'Location shared successfully',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          margin: EdgeInsets.all(16),
+          elevation: 8,
+          duration: Duration(seconds: 2),
+        ),
+      );
+      
+    } catch (e) {
+      // Hide loading snackbar
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.white, size: 20),
+              SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Error getting location: $e',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
           backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          margin: EdgeInsets.all(16),
+          elevation: 8,
         ),
       );
     }

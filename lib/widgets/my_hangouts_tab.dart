@@ -566,17 +566,22 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
     try {
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser == null) {
-        print('No current user found');
+        print('❌ No current user found');
         return;
       }
       
+      print('🔄 Starting accept user flow:');
+      print('   Current user: ${currentUser.uid}');
+      print('   Target user: $userId');
+      print('   Hangout: ${hangout.title}');
+      
       // Get user data for match notification first
       final userData = await _getUserData(userId);
-      print('User data for match notification: $userData');
+      print('✅ User data retrieved: ${userData != null}');
       
       if (userData != null && mounted) {
         final userName = '${userData['firstName'] ?? ''} ${userData['lastName'] ?? ''}'.trim();
-        print('Navigating to match notification with user: $userName');
+        print('🚀 Navigating to match notification with user: $userName');
         
         // Show match notification screen immediately
         Navigator.push(
@@ -591,33 +596,53 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
             ),
           ),
         );
-        print('Navigation to match notification completed');
+        print('✅ Navigation to match notification completed');
       }
       
-      print('Creating match between ${currentUser.uid} and $userId');
+      print('🔄 Creating match between ${currentUser.uid} and $userId');
       
       // Restore chat and clear old messages if it was deleted
-      await ChatService.restoreChatAndClearMessages(currentUser.uid, userId);
+      try {
+        await ChatService.restoreChatAndClearMessages(currentUser.uid, userId);
+        print('✅ Chat restored successfully');
+      } catch (e) {
+        print('⚠️ Chat restore error (may be normal): $e');
+      }
       
       // Create match in background
-      await MatchService.createMatch(
-        user1Id: currentUser.uid,
-        user2Id: userId,
-        hangoutTitle: hangout.title,
-        hangoutLocation: hangout.location,
-        hangoutDateTime: hangout.dateTime,
-        hangoutCategory: hangout.category,
-      );
-      
-      print('Match created successfully');
+      try {
+        await MatchService.createMatch(
+          user1Id: currentUser.uid,
+          user2Id: userId,
+          hangoutTitle: hangout.title,
+          hangoutLocation: hangout.location,
+          hangoutDateTime: hangout.dateTime,
+          hangoutCategory: hangout.category,
+        );
+        print('✅ Match created successfully');
+      } catch (e) {
+        print('❌ Match creation failed: $e');
+        // Continue with the flow even if match creation fails
+      }
       
       // Remove user from interested users list
-      await HangoutService.acceptUser(hangout.id, userId);
-      
-      print('User removed from interested list');
+      try {
+        await HangoutService.acceptUser(hangout.id, userId);
+        print('✅ User removed from interested list');
+      } catch (e) {
+        print('❌ Failed to remove user from interested list: $e');
+      }
       
     } catch (e) {
-      print('Error in _acceptUser: $e');
+      print('❌ Error in _acceptUser: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error accepting user: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -737,19 +762,23 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
                             Navigator.of(context).pop();
                             try {
                               await HangoutService.deleteHangout(hangoutId);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Hangout deleted successfully'),
-                                  backgroundColor: Colors.green,
-                                ),
-                              );
+                              if (mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Hangout deleted successfully'),
+                                    backgroundColor: Colors.green,
+                                  ),
+                                );
+                              }
                             } catch (e) {
-                              ErrorHandler.showErrorSnackBar(
-                                context,
-                                e,
-                                onRetry: () => _deleteHangout(context, hangoutId),
-                                retryLabel: 'Try Again',
-                              );
+                              if (mounted) {
+                                ErrorHandler.showErrorSnackBar(
+                                  context,
+                                  e,
+                                  onRetry: () => _deleteHangout(context, hangoutId),
+                                  retryLabel: 'Try Again',
+                                );
+                              }
                             }
                           },
                           child: const Text(

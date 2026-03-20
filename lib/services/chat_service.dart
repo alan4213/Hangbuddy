@@ -30,28 +30,38 @@ class ChatService {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
     
-    // Mark unread count as 0
-    await FirebaseFirestore.instance
-        .collection('chats')
-        .doc(chatId)
-        .update({
-      'unreadCount_${currentUser.uid}': 0,
-    });
-    
-    // Mark all messages from other user as read
-    final messagesSnapshot = await FirebaseFirestore.instance
-        .collection('chats')
-        .doc(chatId)
-        .collection('messages')
-        .where('receiverId', isEqualTo: currentUser.uid)
-        .where('status', whereIn: ['sent', 'delivered'])
-        .get();
-    
-    final batch = FirebaseFirestore.instance.batch();
-    for (final doc in messagesSnapshot.docs) {
-      batch.update(doc.reference, {'status': 'read'});
+    try {
+      // Mark unread count as 0
+      await FirebaseFirestore.instance
+          .collection('chats')
+          .doc(chatId)
+          .update({
+        'unreadCount_${currentUser.uid}': 0,
+      });
+      
+      // Mark all unread messages from other user as read
+      final messagesSnapshot = await FirebaseFirestore.instance
+          .collection('chats')
+          .doc(chatId)
+          .collection('messages')
+          .where('receiverId', isEqualTo: currentUser.uid)
+          .where('status', whereIn: ['sent', 'delivered'])
+          .get();
+      
+      if (messagesSnapshot.docs.isNotEmpty) {
+        final batch = FirebaseFirestore.instance.batch();
+        for (final doc in messagesSnapshot.docs) {
+          batch.update(doc.reference, {
+            'status': 'read',
+            'readAt': FieldValue.serverTimestamp(),
+          });
+        }
+        await batch.commit();
+        print('✅ Marked ${messagesSnapshot.docs.length} messages as read');
+      }
+    } catch (e) {
+      print('❌ Error marking messages as read: $e');
     }
-    await batch.commit();
   }
   
   static Future<String> sendMessageWithId({
@@ -165,9 +175,15 @@ class ChatService {
   
   static Stream<List<ChatMessage>> getMessages(String otherUserId) {
     final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) return Stream.value([]);
+    if (currentUser == null) {
+      print('❌ getMessages: No current user');
+      return Stream.value([]);
+    }
     
     final chatId = _getChatId(currentUser.uid, otherUserId);
+    print('🔄 getMessages: Fetching messages for chat $chatId');
+    print('   Current user: ${currentUser.uid}');
+    print('   Other user: $otherUserId');
     
     return FirebaseFirestore.instance
         .collection('chats')
@@ -176,6 +192,8 @@ class ChatService {
         .orderBy('timestamp', descending: true)
         .snapshots()
         .asyncMap((snapshot) async {
+      print('📨 Messages snapshot received: ${snapshot.docs.length} messages');
+      
       // Get chat metadata to check deletedBy timestamp
       final chatDoc = await FirebaseFirestore.instance
           .collection('chats')
@@ -186,22 +204,45 @@ class ChatService {
           ? (chatDoc.data()?['deletedBy']?[currentUser.uid] as Timestamp?)?.toDate()
           : null;
       
+      print('🗑️ DeletedBy timestamp: $deletedByTimestamp');
+      
       final messages = snapshot.docs
           .where((doc) {
             final data = doc.data();
+            print('📝 Processing message: ${doc.id}');
+            print('   Data: $data');
+            
             final deletedFor = data['deletedFor'] as Map<String, dynamic>?;
-            if (deletedFor?[currentUser.uid] == true) return false;
+            if (deletedFor?[currentUser.uid] == true) {
+              print('   ❌ Message deleted for current user');
+              return false;
+            }
             
             // Filter messages after deletedBy timestamp
             if (deletedByTimestamp != null) {
               final messageTime = (data['timestamp'] as Timestamp).toDate();
-              if (messageTime.isAfter(deletedByTimestamp)) return false;
+              if (messageTime.isAfter(deletedByTimestamp)) {
+                print('   ❌ Message after deletedBy timestamp');
+                return false;
+              }
             }
             
+            print('   ✅ Message included');
             return true;
           })
-          .map((doc) => ChatMessage.fromMap(doc.data(), doc.id))
+          .map((doc) {
+            try {
+              return ChatMessage.fromMap(doc.data(), doc.id);
+            } catch (e) {
+              print('❌ Error parsing message ${doc.id}: $e');
+              return null;
+            }
+          })
+          .where((message) => message != null)
+          .cast<ChatMessage>()
           .toList();
+      
+      print('✅ Final messages count: ${messages.length}');
       
       // Auto-update message status to delivered for received messages
       final batch = FirebaseFirestore.instance.batch();
@@ -210,13 +251,21 @@ class ChatService {
       for (final doc in snapshot.docs) {
         final data = doc.data();
         if (data['receiverId'] == currentUser.uid && data['status'] == 'sent') {
-          batch.update(doc.reference, {'status': 'delivered'});
+          batch.update(doc.reference, {
+            'status': 'delivered',
+            'deliveredAt': FieldValue.serverTimestamp(),
+          });
           hasUpdates = true;
         }
       }
       
       if (hasUpdates) {
-        await batch.commit();
+        try {
+          await batch.commit();
+          print('✅ Updated ${snapshot.docs.where((doc) => doc.data()['receiverId'] == currentUser.uid && doc.data()['status'] == 'sent').length} messages to delivered');
+        } catch (e) {
+          print('❌ Error updating message statuses: $e');
+        }
       }
       
       return messages;
@@ -299,12 +348,27 @@ class ChatService {
     
     final chatId = _getChatId(currentUser.uid, otherUserId);
     
-    await FirebaseFirestore.instance
-        .collection('chats')
-        .doc(chatId)
-        .collection('messages')
-        .doc(messageId)
-        .update({'status': status});
+    try {
+      final updateData = <String, dynamic>{'status': status};
+      
+      // Add timestamp based on status
+      if (status == 'delivered') {
+        updateData['deliveredAt'] = FieldValue.serverTimestamp();
+      } else if (status == 'read') {
+        updateData['readAt'] = FieldValue.serverTimestamp();
+      }
+      
+      await FirebaseFirestore.instance
+          .collection('chats')
+          .doc(chatId)
+          .collection('messages')
+          .doc(messageId)
+          .update(updateData);
+      
+      print('✅ Message $messageId status updated to $status');
+    } catch (e) {
+      print('❌ Error updating message status: $e');
+    }
   }
   
   static Future<void> addReaction(String otherUserId, String messageId, String emoji) async {
@@ -329,12 +393,29 @@ class ChatService {
     
     final chatId = _getChatId(currentUser.uid, otherUserId);
     
-    await FirebaseFirestore.instance
-        .collection('chats')
-        .doc(chatId)
-        .set({
-      'typing_${currentUser.uid}': isTyping ? DateTime.now().millisecondsSinceEpoch : null,
-    }, SetOptions(merge: true));
+    try {
+      // First ensure the chat document exists with participants
+      final chatRef = FirebaseFirestore.instance.collection('chats').doc(chatId);
+      final chatDoc = await chatRef.get();
+      
+      if (!chatDoc.exists) {
+        // Create the chat document first
+        await chatRef.set({
+          'participants': [currentUser.uid, otherUserId],
+          'lastMessage': '',
+          'lastMessageTime': 0,
+          'typing_${currentUser.uid}': isTyping ? DateTime.now().millisecondsSinceEpoch : null,
+        });
+      } else {
+        // Update existing document
+        await chatRef.update({
+          'typing_${currentUser.uid}': isTyping ? DateTime.now().millisecondsSinceEpoch : null,
+        });
+      }
+    } catch (e) {
+      print('Error setting typing status: $e');
+      // Don't rethrow as typing status is not critical
+    }
   }
   
   static Stream<bool> getTypingStatus(String otherUserId) {
@@ -476,19 +557,45 @@ class ChatService {
     final chatId = getChatId(user1Id, user2Id);
     final chatRef = FirebaseFirestore.instance.collection('chats').doc(chatId);
     
-    final chatDoc = await chatRef.get();
-    if (!chatDoc.exists) {
-      await chatRef.set({
-        'participants': [user1Id, user2Id],
-        'lastMessage': '',
-        'lastMessageTime': 0,
-      });
-    } else {
-      // Remove deletedBy flags when matching again
-      await chatRef.update({
-        'deletedBy.$user1Id': FieldValue.delete(),
-        'deletedBy.$user2Id': FieldValue.delete(),
-      });
+    print('🔄 Restoring chat: $chatId');
+    print('   User1: $user1Id');
+    print('   User2: $user2Id');
+    print('   Current user: ${FirebaseAuth.instance.currentUser?.uid}');
+    
+    try {
+      final chatDoc = await chatRef.get();
+      if (!chatDoc.exists) {
+        print('🆕 Creating new chat document');
+        final chatData = {
+          'participants': [user1Id, user2Id],
+          'lastMessage': '',
+          'lastMessageTime': 0,
+          'unreadCount_$user1Id': 0,
+          'unreadCount_$user2Id': 0,
+        };
+        print('   Chat data: $chatData');
+        
+        await chatRef.set(chatData);
+        print('✅ New chat document created successfully');
+      } else {
+        print('🔄 Updating existing chat document');
+        final existingData = chatDoc.data();
+        print('   Existing data: $existingData');
+        
+        // Ensure participants field exists and remove deletedBy flags
+        await chatRef.update({
+          'participants': [user1Id, user2Id],
+          'deletedBy.$user1Id': FieldValue.delete(),
+          'deletedBy.$user2Id': FieldValue.delete(),
+          'deletedFor_$user1Id': FieldValue.delete(),
+          'deletedFor_$user2Id': FieldValue.delete(),
+        });
+        print('✅ Existing chat document updated successfully');
+      }
+    } catch (e) {
+      print('❌ Error in restoreChatAndClearMessages: $e');
+      print('   Error type: ${e.runtimeType}');
+      rethrow;
     }
   }
   

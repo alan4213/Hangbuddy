@@ -15,77 +15,101 @@ class MatchService {
     required DateTime hangoutDateTime,
     String? hangoutCategory,
   }) async {
+    print('🔄 MatchService.createMatch called:');
+    print('   user1Id: $user1Id');
+    print('   user2Id: $user2Id');
+    print('   hangoutTitle: $hangoutTitle');
+    
     // Create unique key for this match request
     final matchKey = '${user1Id}_${user2Id}_$hangoutTitle';
     
     // Check if this exact match is already being processed
     if (_pendingMatches.contains(matchKey)) {
-      print('Match request already in progress for $matchKey');
+      print('⚠️ Match request already in progress for $matchKey');
       return;
     }
     
     // Add to pending set
     _pendingMatches.add(matchKey);
+    print('✅ Added to pending matches: $matchKey');
     
     try {
-    // If category is not provided, try to fetch it from the original hangout
-    if (hangoutCategory == null) {
-      try {
-        final hangoutQuery = await _firestore
-            .collection('hangout_requests')
-            .where('title', isEqualTo: hangoutTitle)
-            .where('status', isEqualTo: 'active')
-            .limit(1)
-            .get();
-        
-        if (hangoutQuery.docs.isNotEmpty) {
-          hangoutCategory = hangoutQuery.docs.first.data()['category'] ?? 'Other';
+      // If category is not provided, try to fetch it from the original hangout
+      if (hangoutCategory == null) {
+        print('🔍 Fetching hangout category...');
+        try {
+          final hangoutQuery = await _firestore
+              .collection('hangout_requests')
+              .where('title', isEqualTo: hangoutTitle)
+              .where('status', isEqualTo: 'active')
+              .limit(1)
+              .get();
+          
+          if (hangoutQuery.docs.isNotEmpty) {
+            hangoutCategory = hangoutQuery.docs.first.data()['category'] ?? 'Other';
+            print('✅ Found hangout category: $hangoutCategory');
+          } else {
+            print('⚠️ No hangout found with title: $hangoutTitle');
+          }
+        } catch (e) {
+          print('❌ Error fetching hangout category: $e');
+          hangoutCategory = 'Other';
         }
-      } catch (e) {
-        print('Error fetching hangout category: $e');
-        hangoutCategory = 'Other';
       }
-    }
-    // Check if match already exists for this specific hangout
-    final existingMatches = await _firestore
-        .collection('matches')
-        .where('status', isEqualTo: 'active')
-        .where('hangoutTitle', isEqualTo: hangoutTitle)
-        .get();
-    
-    for (final doc in existingMatches.docs) {
-      final data = doc.data();
-      if ((data['user1Id'] == user1Id && data['user2Id'] == user2Id) ||
-          (data['user1Id'] == user2Id && data['user2Id'] == user1Id)) {
-        return; // Match already exists for this hangout
-      }
-    }
-    
-    final matchId = '${user1Id}_${user2Id}_${DateTime.now().millisecondsSinceEpoch}';
-    
-    final matchData = {
-      'id': matchId,
-      'user1Id': user1Id,
-      'user2Id': user2Id,
-      'hangoutTitle': hangoutTitle,
-      'hangoutLocation': hangoutLocation,
-      'hangoutDateTime': Timestamp.fromDate(hangoutDateTime),
-      'hangoutCategory': hangoutCategory ?? 'Other',
-      'createdAt': Timestamp.fromDate(DateTime.now()),
-      'status': 'active',
-      'hangoutStatus': 'active',
-    };
+      
+      // Create deterministic match ID to prevent duplicates
+      final sortedIds = [user1Id, user2Id]..sort();
+      final matchId = '${sortedIds[0]}_${sortedIds[1]}_${hangoutTitle.replaceAll(' ', '_')}';
+      print('🎯 Generated match ID: $matchId');
+      
+      final matchData = {
+        'id': matchId,
+        'user1Id': user1Id,
+        'user2Id': user2Id,
+        'hangoutTitle': hangoutTitle,
+        'hangoutLocation': hangoutLocation,
+        'hangoutDateTime': Timestamp.fromDate(hangoutDateTime),
+        'hangoutCategory': hangoutCategory ?? 'Other',
+        'createdAt': Timestamp.fromDate(DateTime.now()),
+        'status': 'active',
+        'hangoutStatus': 'active',
+      };
+      
+      print('💾 Attempting to save match document...');
+      print('   Match data: $matchData');
 
-    await _firestore.collection('matches').doc(matchId).set(matchData);
-    
-    // Send match notifications to both users
-    await _sendMatchNotification(user2Id, user1Id, hangoutTitle);
-    await _sendMatchNotification(user1Id, user2Id, hangoutTitle);
+      // Use set() with merge: false to prevent duplicates
+      await _firestore.collection('matches').doc(matchId).set(matchData);
+      print('✅ MATCH DOCUMENT SAVED SUCCESSFULLY: $matchId');
+      
+      // Verify the document was created
+      final verifyDoc = await _firestore.collection('matches').doc(matchId).get();
+      if (verifyDoc.exists) {
+        print('✅ MATCH DOCUMENT VERIFIED IN FIRESTORE');
+      } else {
+        print('❌ MATCH DOCUMENT NOT FOUND AFTER CREATION!');
+      }
+      
+      print('📧 Sending match notifications...');
+      // Send match notifications to both users
+      await _sendMatchNotification(user2Id, user1Id, hangoutTitle);
+      await _sendMatchNotification(user1Id, user2Id, hangoutTitle);
+      print('✅ Match notifications sent');
+      
     } catch (e) {
-      print('Error creating match: $e');
-      rethrow;
+      print('❌ Error creating match: $e');
+      print('   Error type: ${e.runtimeType}');
+      print('   Error details: ${e.toString()}');
+      
+      // If it's a document already exists error, that's fine
+      if (!e.toString().contains('already exists')) {
+        rethrow;
+      } else {
+        print('✅ Match already exists, continuing...');
+      }
     } finally {
       _pendingMatches.remove(matchKey);
+      print('🗑️ Removed from pending matches: $matchKey');
     }
   }
   
@@ -127,7 +151,37 @@ class MatchService {
   }
 
   static Future<void> deleteMatch(String matchId) async {
-    await _firestore.collection('matches').doc(matchId).delete();
+    print('🔄 Attempting to delete match: $matchId');
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) {
+      print('❌ No current user found');
+      throw Exception('No authenticated user');
+    }
+    
+    print('   Current user: ${currentUser.uid}');
+    
+    try {
+      // First, get the match document to verify permissions
+      final matchDoc = await _firestore.collection('matches').doc(matchId).get();
+      if (!matchDoc.exists) {
+        print('❌ Match document does not exist: $matchId');
+        throw Exception('Match not found');
+      }
+      
+      final matchData = matchDoc.data()!;
+      print('   Match data: $matchData');
+      print('   User1Id: ${matchData['user1Id']}');
+      print('   User2Id: ${matchData['user2Id']}');
+      print('   Current user is participant: ${[matchData['user1Id'], matchData['user2Id']].contains(currentUser.uid)}');
+      
+      // Delete the match document
+      await _firestore.collection('matches').doc(matchId).delete();
+      print('✅ Match deleted successfully: $matchId');
+    } catch (e) {
+      print('❌ Error deleting match: $e');
+      print('   Error type: ${e.runtimeType}');
+      rethrow;
+    }
   }
 
   static Future<void> deleteMatchBetweenUsers(String user1Id, String user2Id) async {
