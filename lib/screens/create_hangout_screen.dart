@@ -28,7 +28,7 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _selectedTime = TimeOfDay.now();
   bool _isCreating = false;
-  double _maxDistance = 20.0;
+  double _maxDistance = 100.0;
   double? _latitude;
   double? _longitude;
   bool _isGettingLocation = false;
@@ -781,7 +781,9 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
                     ),
                   ),
                   Text(
-                    'Within ${_maxDistance.toInt()} km',
+                    _maxDistance >= 100.0 
+                        ? 'Anywhere'
+                        : 'Within ${_maxDistance.toInt()} km',
                     style: GoogleFonts.poppins(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
@@ -793,15 +795,17 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
               Slider(
                 value: _maxDistance,
                 min: 1.0,
-                max: 30.0,
-                divisions: 29,
+                max: 100.0,
+                divisions: 99,
                 activeColor: AppTheme.primaryColor,
                 onChanged: (value) {
                   setState(() => _maxDistance = value);
                 },
               ),
               Text(
-                'People within this range can see your hangout',
+                _maxDistance >= 100.0
+                    ? 'Your hangout will be visible to everyone, anywhere'
+                    : 'People within this range can see your hangout',
                 style: GoogleFonts.poppins(
                   fontSize: 12,
                   color: Colors.grey,

@@ -35,7 +35,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, WidgetsBindingObserver, RouteAware {
   static final Map<String, UserModel> _userCache = {};
-  double _distanceFilter = 40.0;
+  double _distanceFilter = 100.0;
   static double? _userLatitude;
   static double? _userLongitude;
   bool _isGettingLocation = false;
@@ -1194,15 +1194,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                 ),
                 const SizedBox(height: 20),
                 Text(
-                  'Show hangouts within ${_distanceFilter.toInt()} km',
+                  _distanceFilter >= 100.0 
+
+                      ? 'Show hangouts anywhere'
+                      : 'Show hangouts within ${_distanceFilter.toInt()} km',
                   style: const TextStyle(fontSize: 16),
                 ),
                 const SizedBox(height: 20),
                 Slider(
                   value: _distanceFilter,
                   min: 1.0,
-                  max: 40.0,
-                  divisions: 39,
+                  max: 100.0,
+                  divisions: 99,
                   activeColor: AppTheme.primaryColor,
                   onChanged: (value) {
                     setModalState(() => _distanceFilter = value);
@@ -1469,7 +1472,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   }
 
   String _getDistanceLabel() {
-    return _distanceFilter != 40.0 ? '${_distanceFilter.toInt()} km' : 'Distance';
+    if (_distanceFilter >= 100.0) return 'Anywhere';
+    return '${_distanceFilter.toInt()} km';
   }
 
   String _getAgeLabel() {
@@ -1488,7 +1492,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
         : 'Time';
   }
 
-  bool _isDistanceFilterActive() => _distanceFilter != 40.0;
+  bool _isDistanceFilterActive() => _distanceFilter != 100.0;
   bool _isAgeFilterActive() => _ageRange.start != 18 || _ageRange.end != 65;
   bool _isGenderFilterActive() => _genderFilter != null;
   bool _isTimeFilterActive() => _timeRange.start != 0 || _timeRange.end != 24;

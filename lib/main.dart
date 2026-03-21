@@ -31,7 +31,7 @@ import 'widgets/notification_badge.dart';
 import 'widgets/notification_overlay.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'services/auth_service.dart';
+import 'services/connection_monitor_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -48,10 +48,10 @@ void main() async {
   
   await Firebase.initializeApp();
   
-  // Configure Firebase Auth to enable reCAPTCHA
+  // Configure Firebase Auth to handle Samsung device issues
   await FirebaseAuth.instance.setSettings(
     appVerificationDisabledForTesting: false,
-    forceRecaptchaFlow: true,
+    forceRecaptchaFlow: false, // Better for Samsung devices
   );
   
   // Skip migration - phone validation already working
@@ -59,6 +59,10 @@ void main() async {
   print('=== SKIPPING MIGRATION - USING NATURAL MIGRATION ===');
   
   await NotificationService.initialize();
+  
+  // Start connection monitoring for Samsung devices
+  ConnectionMonitorService.startMonitoring();
+  
   runApp(const MyApp());
 }
 

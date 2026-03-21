@@ -51,7 +51,7 @@ class HangoutService {
     await docRef.set(hangoutRequest.toMap());
   }
 
-  static Stream<List<HangoutRequest>> getActiveHangoutRequests({double? userLatitude, double? userLongitude, double maxDistanceFilter = 40.0}) {
+  static Stream<List<HangoutRequest>> getActiveHangoutRequests({double? userLatitude, double? userLongitude, double maxDistanceFilter = 100.0}) {
     final user = _auth.currentUser;
     if (user == null || userLatitude == null || userLongitude == null) {
       return Stream.value([]);
@@ -89,14 +89,19 @@ class HangoutService {
         
         // Only include hangouts that have location data
         if (hangout.latitude != null && hangout.longitude != null) {
-          final distance = LocationService.calculateDistance(
-            userLatitude, userLongitude,
-            hangout.latitude!, hangout.longitude!
-          );
-          
-          // Only show if within BOTH the user's search range AND the hangout's visibility range
-          if (distance <= maxDistanceFilter && distance <= hangout.maxDistance) {
+          // If maxDistanceFilter is at maximum (100km), show all hangouts (unlimited)
+          if (maxDistanceFilter >= 100.0) {
             filteredHangouts.add(hangout);
+          } else {
+            // Otherwise, apply distance filtering
+            final distance = LocationService.calculateDistance(
+              userLatitude, userLongitude,
+              hangout.latitude!, hangout.longitude!
+            );
+            
+            if (distance <= maxDistanceFilter) {
+              filteredHangouts.add(hangout);
+            }
           }
         }
       }
