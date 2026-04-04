@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:940032181149:android:562c0ef2d0caec89576574",
         "android_client_info": {
-          "package_name": "com.example.hangbuddy_app"
+          "package_name": "com.hauleapp.haule"
         }
       },
       "oauth_client": [
@@ -17,7 +17,7 @@
           "client_id": "940032181149-i5v1hm5eqdm1bdsdvj5ouu6erg2mrm8d.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.hangbuddy_app",
+            "package_name": "com.hauleapp.haule",
             "certificate_hash": "17a479332576ecf37f1310dff9e58dc4b61be41e"
           }
         },
@@ -25,7 +25,7 @@
           "client_id": "940032181149-nu1733hciijhba86tfos4jhok99es97i.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.hangbuddy_app",
+            "package_name": "com.hauleapp.haule",
             "certificate_hash": "6f4cec55b0cdeaf2f6bd65663da638ba295f8ffd"
           }
         },
@@ -33,7 +33,7 @@
           "client_id": "940032181149-qj5nb62eab9311m3r14kt0bq7jdi2e75.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.hangbuddy_app",
+            "package_name": "com.hauleapp.haule",
             "certificate_hash": "589dc7bcea8f16559253877c391b787023f5b182"
           }
         },
