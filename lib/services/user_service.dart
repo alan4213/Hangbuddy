@@ -111,9 +111,20 @@ class UserService {
     }
   }
 
-  static Future<UserModel?> getUserProfile() async {
+  static UserModel? _cachedProfile;
+  static UserModel? get cachedProfile => _cachedProfile;
+
+  static void clearCache() {
+    _cachedProfile = null;
+  }
+
+  static Future<UserModel?> getUserProfile({bool forceRefresh = false}) async {
     final user = _auth.currentUser;
     if (user == null) return null;
+
+    if (!forceRefresh && _cachedProfile != null && _cachedProfile!.uid == user.uid) {
+      return _cachedProfile;
+    }
 
     try {
       final doc = await _firestore.collection('users').doc(user.uid).get();
@@ -138,7 +149,8 @@ class UserService {
       
       print('User profile found and complete');
       print('Phone number in profile: ${data['phoneNumber']}');
-      return UserModel.fromMap(data);
+      _cachedProfile = UserModel.fromMap(data);
+      return _cachedProfile;
     } catch (e) {
       print('Error getting user profile: $e');
       return null;
@@ -194,6 +206,7 @@ class UserService {
         .doc(user.uid)
         .update(updates);
         
+    _cachedProfile = null;
     print('Profile updated successfully');
     print('=== END UPDATE ===');
   }
@@ -259,6 +272,18 @@ class UserService {
         'deletedAt': DateTime.now().millisecondsSinceEpoch,
         'updatedAt': DateTime.now().millisecondsSinceEpoch,
       });
+      
+      // Delete all active hangout requests created by this user
+      final hangoutRequests = await _firestore
+          .collection('hangout_requests')
+          .where('creatorId', isEqualTo: user.uid)
+          .get();
+          
+      for (final doc in hangoutRequests.docs) {
+        await doc.reference.delete();
+      }
+      
+      print('Deleted ${hangoutRequests.docs.length} active hangout requests');
       
       // IMMEDIATELY free up the phone number for reuse
       if (phoneNumber != null && phoneNumber.isNotEmpty) {

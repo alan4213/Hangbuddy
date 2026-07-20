@@ -11,6 +11,7 @@ import '../screens/hangout_interested_users_screen.dart';
 import '../screens/profile_detail_screen.dart';
 import '../utils/error_handler.dart';
 import '../screens/match_notification_screen.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class MyHangoutsTab extends StatefulWidget {
   const MyHangoutsTab({super.key});
@@ -307,7 +308,7 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
                                         ),
                                         child: CircleAvatar(
                                           radius: 16,
-                                          backgroundImage: imageUrl != null ? NetworkImage(imageUrl) : null,
+                                          backgroundImage: imageUrl != null ? CachedNetworkImageProvider(imageUrl) : null,
                                           backgroundColor: AppTheme.primaryColor.withOpacity(0.2),
                                           child: imageUrl == null ? Text(
                                             (user['firstName'] ?? 'U')[0],
@@ -431,11 +432,11 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
                     decoration: BoxDecoration(
                       image: imageUrl != null
                           ? DecorationImage(
-                              image: NetworkImage(imageUrl),
+                              image: CachedNetworkImageProvider(imageUrl),
                               fit: BoxFit.cover,
                             )
                           : const DecorationImage(
-                              image: NetworkImage('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop&crop=face'),
+                              image: CachedNetworkImageProvider('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop&crop=face'),
                               fit: BoxFit.cover,
                             ),
                       gradient: imageUrl == null

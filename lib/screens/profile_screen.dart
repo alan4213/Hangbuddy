@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -25,8 +26,8 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  UserModel? _userProfile;
-  bool _isLoading = true;
+  UserModel? _userProfile = UserService.cachedProfile;
+  bool _isLoading = UserService.cachedProfile == null;
   String? _verificationStatus;
 
   @override
@@ -63,11 +64,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF4F6F8), // Light off-white background
       body: SafeArea(
-        child: Column(
-          children: [
-            // Header
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              // Header
             Padding(
               padding: EdgeInsets.all((MediaQuery.of(context).size.width * 0.05).clamp(12.0, 20.0)),
               child: Row(
@@ -166,33 +168,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
             SizedBox(height: (MediaQuery.of(context).size.height * 0.03).clamp(16.0, 24.0)),
             
             // Content
-            Expanded(
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: (MediaQuery.of(context).size.width * 0.05).clamp(12.0, 20.0)),
-                  child: Column(
-                    children: [
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: (MediaQuery.of(context).size.width * 0.05).clamp(12.0, 20.0)),
+              child: Column(
+                children: [
                     // Notifications
                     _buildMenuCard(
                       Icons.notifications_outlined,
                       'Notifications',
-                      'View your notifications',
+                      'See your latest activity',
                       () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(builder: (context) => const NotificationsScreen()),
                         );
                       },
+                      iconBgColor: AppTheme.primaryColor.withOpacity(0.1),
+                      iconColor: AppTheme.primaryColor,
                     ),
                     
                     const SizedBox(height: 16),
                     
                     // Verify Profile
                     _buildMenuCard(
-                      Icons.verified_user,
+                      Icons.verified_user_outlined,
                       'Verify Profile',
-                      'Verify your identity for trust',
+                      'Identity trust status',
                       () => _showVerificationSheet(),
+                      iconBgColor: AppTheme.primaryColor.withOpacity(0.1),
+                      iconColor: AppTheme.primaryColor,
                     ),
                     
                     const SizedBox(height: 16),
@@ -201,8 +205,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _buildMenuCard(
                       Icons.help_outline,
                       'Help Centre',
-                      'Support and FAQs',
-                      () {},
+                      'Support and common FAQs',
+                      () async {
+                        final url = Uri.parse('mailto:team@hauleapp.com');
+                        try {
+                          final launched = await launchUrl(url);
+                          if (!launched && context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Could not open email app. Reach us at team@hauleapp.com')),
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Could not open email app. Reach us at team@hauleapp.com')),
+                            );
+                          }
+                        }
+                      },
+                      iconBgColor: Colors.orange.withOpacity(0.15),
+                      iconColor: Colors.orange[800],
                     ),
                     
                     const SizedBox(height: 16),
@@ -211,28 +233,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _buildMenuCard(
                       Icons.logout,
                       'Logout',
-                      'Sign out of your account',
+                      'Sign out of session',
                       () async {
+                        UserService.clearCache();
                         await FirebaseAuth.instance.signOut();
                         Navigator.pushNamedAndRemoveUntil(context, '/', (route) => false);
                       },
+                      iconBgColor: Colors.grey.withOpacity(0.15),
+                      iconColor: Colors.grey[800],
                     ),
                     
                     const SizedBox(height: 16),
                     
                     // Delete Account
                     _buildMenuCard(
-                      Icons.delete_forever,
+                      Icons.delete_outline,
                       'Delete Account',
-                      'Permanently delete your account',
+                      'Permanently remove data',
                       () => _showDeleteAccountDialog(),
+                      isDestructive: true,
                     ),
                     ],
                   ),
                 ),
-              ),
-            ),
-          ],
+              // Bottom padding for scrolling
+              const SizedBox(height: 32),
+            ],
+          ),
         ),
       ),
     );
@@ -253,132 +280,141 @@ class _ProfileScreenState extends State<ProfileScreen> {
       barrierDismissible: false,
       builder: (context) => Dialog(
         backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        elevation: 0,
         child: Container(
           padding: const EdgeInsets.all(24),
           constraints: BoxConstraints(
             maxHeight: MediaQuery.of(context).size.height * 0.8,
+            maxWidth: 400,
           ),
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-              // Warning Icon
-              Container(
-                width: 80,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withOpacity(0.1),
-                  shape: BoxShape.circle,
+                // Warning Icon
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFEE2E2), // Light red bg
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.warning_amber_rounded,
+                    size: 40,
+                    color: Color(0xFFDC2626), // Strong red icon
+                  ),
                 ),
-                child: Icon(
-                  Icons.warning_rounded,
-                  size: 40,
-                  color: AppTheme.primaryColor,
+                const SizedBox(height: 24),
+                
+                // Title
+                Text(
+                  'Delete Account?',
+                  style: GoogleFonts.poppins(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF1F2937),
+                    letterSpacing: -0.5,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              
-              // Title
-              const Text(
-                'Delete Account?',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                const SizedBox(height: 12),
+                
+                // Description
+                Text(
+                  'This action cannot be undone. All your data, matches, and hangouts will be permanently removed from Haule.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    color: const Color(0xFF6B7280),
+                    height: 1.5,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              
-              // Description
-              const Text(
-                'This will permanently delete your account from authentication. Your data will be marked as deleted but retained for legal compliance.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                  height: 1.4,
+                const SizedBox(height: 24),
+                
+                // What will be deleted
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'What happens next:',
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF4B5563),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      _buildDeleteItem('Authentication access revoked immediately'),
+                      _buildDeleteItem('Profile & photos permanently deleted'),
+                      _buildDeleteItem('No account recovery possible'),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              
-              // What will be deleted
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                const SizedBox(height: 32),
+                
+                // Buttons
+                Row(
                   children: [
-                    Text(
-                      'This will delete:',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.primaryColor,
+                    Expanded(
+                      child: SizedBox(
+                        height: 54,
+                        child: TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          style: TextButton.styleFrom(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            backgroundColor: const Color(0xFFF3F4F6),
+                          ),
+                          child: Text(
+                            'Cancel',
+                            style: GoogleFonts.poppins(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF4B5563),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    _buildDeleteItem('Your authentication access'),
-                    _buildDeleteItem('Profile marked as deleted'),
-                    _buildDeleteItem('No account recovery possible'),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: SizedBox(
+                        height: 54,
+                        child: ElevatedButton(
+                          onPressed: () async {
+                            Navigator.pop(context);
+                            await _deleteAccount();
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFFDC2626), // Destructive Red
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            elevation: 0,
+                          ),
+                          child: Text(
+                            'Delete',
+                            style: GoogleFonts.poppins(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
-              ),
-              const SizedBox(height: 24),
-              
-              // Buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(color: Colors.grey.shade300),
-                        ),
-                      ),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        Navigator.pop(context);
-                        await _deleteAccount();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'Delete Account',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
               ],
             ),
           ),
@@ -389,21 +425,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
   
   Widget _buildDeleteItem(String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            Icons.close,
-            size: 16,
-            color: AppTheme.primaryColor,
+          const Padding(
+            padding: EdgeInsets.only(top: 2),
+            child: Icon(
+              Icons.close_rounded,
+              size: 16,
+              color: Color(0xFFEF4444),
+            ),
           ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               text,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Colors.black87,
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                color: const Color(0xFF374151),
+                height: 1.4,
               ),
             ),
           ),
@@ -523,43 +564,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildMenuCard(IconData icon, String title, String subtitle, VoidCallback onTap) {
+  Widget _buildMenuCard(IconData icon, String title, String subtitle, VoidCallback onTap, {bool isDestructive = false, Color? iconBgColor, Color? iconColor}) {
+    final finalIconColor = isDestructive ? const Color(0xFFDC2626) : (iconColor ?? AppTheme.primaryColor);
+    final finalIconBgColor = isDestructive ? const Color(0xFFFEE2E2) : (iconBgColor ?? AppTheme.primaryColor.withOpacity(0.1));
+    final textColor = isDestructive ? const Color(0xFFDC2626) : const Color(0xFF1F2937);
+    final subtextColor = isDestructive ? const Color(0xFFEF4444) : const Color(0xFF6B7280);
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding: EdgeInsets.all((MediaQuery.of(context).size.width * 0.05).clamp(16.0, 20.0)),
+        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular((MediaQuery.of(context).size.width * 0.04).clamp(16.0, 20.0)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-          border: Border.all(
-            color: Colors.grey.withOpacity(0.2),
-            width: 1,
-          ),
+          borderRadius: BorderRadius.circular(24.0),
         ),
         child: Row(
           children: [
             Container(
-              width: (MediaQuery.of(context).size.width * 0.12).clamp(40.0, 48.0),
-              height: (MediaQuery.of(context).size.width * 0.12).clamp(40.0, 48.0),
+              width: 48.0,
+              height: 48.0,
               decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular((MediaQuery.of(context).size.width * 0.03).clamp(10.0, 12.0)),
+                color: finalIconBgColor,
+                borderRadius: BorderRadius.circular(16.0),
               ),
               child: Icon(
                 icon,
-                size: (MediaQuery.of(context).size.width * 0.06).clamp(20.0, 24.0),
-                color: AppTheme.primaryColor,
+                size: 24.0,
+                color: finalIconColor,
               ),
             ),
-            SizedBox(width: (MediaQuery.of(context).size.width * 0.04).clamp(16.0, 20.0)),
+            const SizedBox(width: 16.0),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -567,21 +602,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Text(
                     title,
                     style: GoogleFonts.poppins(
-                      fontSize: (MediaQuery.of(context).size.width * 0.045).clamp(16.0, 18.0),
+                      fontSize: 16.0,
                       fontWeight: FontWeight.w500,
-                      color: const Color(0xFF1F2937),
+                      color: textColor,
                       letterSpacing: -0.2,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
-                  SizedBox(height: (MediaQuery.of(context).size.height * 0.008).clamp(3.0, 5.0)),
+                  const SizedBox(height: 4.0),
                   Text(
                     subtitle,
                     style: GoogleFonts.poppins(
-                      fontSize: (MediaQuery.of(context).size.width * 0.035).clamp(13.0, 15.0),
-                      color: const Color(0xFF6B7280),
-                      fontWeight: FontWeight.w500,
-                      height: 1.3,
+                      fontSize: 14.0,
+                      color: subtextColor,
+                      fontWeight: FontWeight.w400,
+                      height: 1.2,
                     ),
                     overflow: TextOverflow.ellipsis,
                     maxLines: 2,
@@ -590,9 +625,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             Icon(
-              Icons.arrow_forward_ios,
-              size: (MediaQuery.of(context).size.width * 0.04).clamp(14.0, 16.0),
-              color: AppTheme.primaryColor.withOpacity(0.6),
+              Icons.chevron_right,
+              size: 20.0,
+              color: isDestructive ? const Color(0xFFEF4444).withOpacity(0.5) : const Color(0xFF9CA3AF),
             ),
           ],
         ),

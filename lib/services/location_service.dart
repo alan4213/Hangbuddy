@@ -2,8 +2,29 @@ import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:math';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class LocationService {
+  // Cache user position so we don't re-fetch GPS on every keystroke
+  static Position? _cachedPosition;
+  static DateTime? _positionCacheTime;
+  static const _positionCacheDuration = Duration(minutes: 5);
+
+  // Session token for Google Places — groups autocomplete calls into 1 billing unit
+  static String _sessionToken = _generateSessionToken();
+
+  /// Generate a random UUID-like session token
+  static String _generateSessionToken() {
+    final random = Random();
+    return List.generate(32, (_) => random.nextInt(16).toRadixString(16)).join();
+  }
+
+  /// Call this when user selects a location or clears the field to start a new billing session
+  static void resetSessionToken() {
+    _sessionToken = _generateSessionToken();
+  }
+
   static Future<bool> _handleLocationPermission() async {
     bool serviceEnabled;
     LocationPermission permission;
@@ -33,12 +54,26 @@ class LocationService {
     if (!hasPermission) return null;
 
     try {
-      return await Geolocator.getCurrentPosition(
+      final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
+      // Cache the position
+      _cachedPosition = position;
+      _positionCacheTime = DateTime.now();
+      return position;
     } catch (e) {
       return null;
     }
+  }
+
+  /// Returns cached position if fresh enough, otherwise fetches new one
+  static Future<Position?> _getCachedOrCurrentPosition() async {
+    if (_cachedPosition != null &&
+        _positionCacheTime != null &&
+        DateTime.now().difference(_positionCacheTime!) < _positionCacheDuration) {
+      return _cachedPosition;
+    }
+    return await getCurrentPosition();
   }
 
   static Future<Map<String, double>?> getCoordinatesFromAddress(String address) async {
@@ -65,24 +100,7 @@ class LocationService {
     try {
       List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
       
-      // Debug: Print all available placemark data
-      for (int i = 0; i < placemarks.length && i < 3; i++) {
-        final place = placemarks[i];
-        print('Placemark $i:');
-        print('  name: ${place.name}');
-        print('  street: ${place.street}');
-        print('  thoroughfare: ${place.thoroughfare}');
-        print('  subThoroughfare: ${place.subThoroughfare}');
-        print('  locality: ${place.locality}');
-        print('  subLocality: ${place.subLocality}');
-        print('  administrativeArea: ${place.administrativeArea}');
-        print('  subAdministrativeArea: ${place.subAdministrativeArea}');
-        print('  postalCode: ${place.postalCode}');
-        print('  country: ${place.country}');
-      }
-      
       if (placemarks.isNotEmpty) {
-        // Try to find the most detailed placemark
         Placemark? bestPlace;
         for (final place in placemarks) {
           if (place.thoroughfare != null && place.thoroughfare!.isNotEmpty) {
@@ -98,12 +116,10 @@ class LocationService {
         final place = bestPlace ?? placemarks.first;
         List<String> addressParts = [];
         
-        // Add street number
         if (place.subThoroughfare != null && place.subThoroughfare!.isNotEmpty) {
           addressParts.add(place.subThoroughfare!);
         }
         
-        // Get location name (prioritize name over thoroughfare)
         String? locationName;
         if (place.name != null && place.name!.isNotEmpty) {
           bool isNamePlusCode = place.name!.contains('+') && 
@@ -116,7 +132,6 @@ class LocationService {
           locationName = place.thoroughfare;
         }
         
-        // Get area (subLocality or locality)
         String? area;
         if (place.subLocality != null && place.subLocality!.isNotEmpty) {
           area = place.subLocality;
@@ -124,7 +139,6 @@ class LocationService {
           area = place.locality;
         }
         
-        // Format as "locationName, area"
         if (locationName != null && area != null) {
           addressParts = [locationName, area];
         } else if (locationName != null) {
@@ -134,7 +148,6 @@ class LocationService {
         }
         
         String result = addressParts.isNotEmpty ? addressParts.join(', ') : 'Unknown Location';
-        print('Final address: $result');
         return result;
       }
     } catch (e) {
@@ -149,7 +162,6 @@ class LocationService {
       if (placemarks.isNotEmpty) {
         final place = placemarks.first;
         
-        // Return just locality for short display
         if (place.locality != null && place.locality!.isNotEmpty) {
           return place.locality!;
         } else if (place.subAdministrativeArea != null && place.subAdministrativeArea!.isNotEmpty) {
@@ -164,144 +176,72 @@ class LocationService {
     return null;
   }
   
+  /// Uses Google Places Autocomplete API for fast, fuzzy location search.
+  /// Requires minimum 3 characters to avoid wasting API calls.
+  /// Uses session tokens to bundle multiple keystrokes into 1 billing unit.
   static Future<List<String>> getLocationSuggestions(String query) async {
+    // Don't search for very short queries — saves API calls
+    if (query.trim().length < 3) return [];
+
     try {
-      String? countryCode;
-      String? stateCode;
-      Position? userPosition;
-      
-      // Get user's current location for proximity-based sorting
-      userPosition = await getCurrentPosition();
-      if (userPosition != null) {
-        final placemarks = await placemarkFromCoordinates(userPosition.latitude, userPosition.longitude);
-        if (placemarks.isNotEmpty) {
-          if (placemarks.first.isoCountryCode != null) {
-            countryCode = placemarks.first.isoCountryCode!.toLowerCase();
-          }
-          if (placemarks.first.administrativeArea != null) {
-            stateCode = placemarks.first.administrativeArea!;
-          }
+      final apiKey = dotenv.env['GOOGLE_PLACES_API_KEY'];
+      if (apiKey == null || apiKey.isEmpty) {
+        print('Google Places API key not found in .env');
+        return [];
+      }
+
+      final position = _cachedPosition;
+
+      String url = 'https://maps.googleapis.com/maps/api/place/autocomplete/json'
+          '?input=${Uri.encodeComponent(query)}'
+          '&key=$apiKey'
+          '&types=establishment|geocode'
+          '&sessiontoken=$_sessionToken';
+
+      // Bias results toward user's location if available
+      if (position != null) {
+        url += '&location=${position.latitude},${position.longitude}'
+            '&radius=50000';
+      }
+
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+
+        if (data['status'] == 'OK') {
+          final predictions = data['predictions'] as List;
+          return predictions
+              .map<String>((p) => _cleanPlaceDescription(p['description'] as String))
+              .take(8)
+              .toList();
+        } else if (data['status'] == 'ZERO_RESULTS') {
+          return [];
+        } else {
+          print('Google Places API error: ${data['status']} - ${data['error_message'] ?? ''}');
         }
       }
-      
-      List<String> allSuggestions = [];
-      Set<String> seen = {};
-      
-      // Try multiple search strategies for better spelling tolerance
-      List<String> searchQueries = [
-        stateCode != null ? '$query, $stateCode' : query, // Primary with state
-        query, // Fallback without state
-      ];
-      
-      for (String searchQuery in searchQueries) {
-        String url = 'https://nominatim.openstreetmap.org/search'
-            '?q=${Uri.encodeComponent(searchQuery)}'
-            '&format=json'
-            '&addressdetails=1'
-            '&limit=10';
-        
-        if (countryCode != null) {
-          url += '&countrycodes=$countryCode';
-        }
-        
-        final response = await http.get(
-          Uri.parse(url),
-          headers: {'User-Agent': 'HangBuddy App'},
-        );
-        
-        if (response.statusCode == 200) {
-          final data = json.decode(response.body) as List;
-          List<Map<String, dynamic>> results = data.cast<Map<String, dynamic>>();
-          
-          // Sort by proximity if user location available
-          if (userPosition != null) {
-            results.sort((a, b) {
-              double distA = _calculateDistanceFromResult(userPosition!, a);
-              double distB = _calculateDistanceFromResult(userPosition, b);
-              return distA.compareTo(distB);
-            });
-          }
-          
-          // Add unique results
-          for (var item in results) {
-            String displayName = item['display_name'] as String;
-            
-            if (!_isUnwantedLocation(displayName)) {
-              String cleanName = _cleanLocationName(displayName);
-              String key = cleanName.toLowerCase();
-              
-              if (!seen.contains(key)) {
-                seen.add(key);
-                allSuggestions.add(cleanName);
-              }
-            }
-          }
-        }
-        
-        // If we have enough results, stop searching
-        if (allSuggestions.length >= 8) break;
-      }
-      
-      return allSuggestions.take(8).toList();
     } catch (e) {
       print('Error getting location suggestions: $e');
     }
     
     return [];
   }
-  
-  static double _calculateDistanceFromResult(Position userPosition, Map<String, dynamic> result) {
+
+  /// Strips state and country (e.g. "Kerala, India") from place descriptions
+  static String _cleanPlaceDescription(String description) {
+    final parts = description.split(', ');
+    if (parts.length <= 2) return description;
+    return parts.sublist(0, parts.length - 2).join(', ');
+  }
+
+  /// Get Place Details (lat/lng) from a Google Places prediction
+  static Future<Map<String, double>?> getPlaceCoordinates(String placeDescription) async {
     try {
-      double lat = double.parse(result['lat'].toString());
-      double lon = double.parse(result['lon'].toString());
-      return calculateDistance(userPosition.latitude, userPosition.longitude, lat, lon);
+      return await getCoordinatesFromAddress(placeDescription);
     } catch (e) {
-      return double.infinity; // Put invalid results at the end
+      print('Error getting place coordinates: $e');
+      return null;
     }
-  }
-  
-  static String _cleanLocationName(String name) {
-    final parts = name.split(', ');
-    List<String> cleanParts = [];
-    
-    for (String part in parts) {
-      String cleanPart = part.trim();
-      // Skip Plus Codes and postal codes
-      bool isPlusCode = cleanPart.contains('+') && 
-          RegExp(r'^[A-Z0-9+]+$').hasMatch(cleanPart.toUpperCase());
-      bool isPostalCode = RegExp(r'^\d{5,6}$').hasMatch(cleanPart);
-      
-      if (!isPlusCode && !isPostalCode && cleanPart.isNotEmpty) {
-        cleanParts.add(cleanPart);
-      }
-    }
-    
-    if (cleanParts.isEmpty) {
-      return name; // Fallback to original if nothing clean found
-    }
-    
-    // For location suggestions, show specific location + area + city (max 3 parts)
-    // This gives better context while keeping it readable
-    if (cleanParts.length >= 3) {
-      return '${cleanParts[0]}, ${cleanParts[1]}, ${cleanParts[2]}';
-    } else if (cleanParts.length >= 2) {
-      return '${cleanParts[0]}, ${cleanParts[1]}';
-    } else {
-      return cleanParts[0];
-    }
-  }
-  
-  static bool _isUnwantedLocation(String description) {
-    final unwantedKeywords = [
-      'ground floor', 'room', 'floor', 'apartment', 'flat',
-      'building', 'tower', 'block', 'wing', 'unit',
-      'parking', 'garage', 'basement', 'atm', 'toilet',
-      'restroom', 'washroom', 'elevator', 'lift'
-    ];
-    
-    final lowercaseDesc = description.toLowerCase();
-    
-    return unwantedKeywords.any((keyword) => 
-        lowercaseDesc.contains(keyword));
   }
 }

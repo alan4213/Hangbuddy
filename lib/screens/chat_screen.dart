@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../services/match_service.dart';
 import '../services/chat_service.dart';
 import '../models/user_model.dart';
@@ -22,6 +23,18 @@ class _ChatScreenState extends State<ChatScreen> {
     Color(0xFF10B981),
     Color(0xFFF59E0B),
   ];
+  
+  bool _showSkeleton = false;
+  Stream<List<Map<String, dynamic>>> _chatsStream = ChatService.getChatsWithLastMessage();
+  Stream<List<Map<String, dynamic>>> _matchesStream = MatchService.getUserMatches();
+
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(Duration(milliseconds: 150), () {
+      if (mounted) setState(() => _showSkeleton = true);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,13 +84,13 @@ class _ChatScreenState extends State<ChatScreen> {
               Expanded(
                 child: StreamBuilder<List<Map<String, dynamic>>>(
                 key: ValueKey('chats_stream'),
-                stream: ChatService.getChatsWithLastMessage(),
+                stream: _chatsStream,
                 builder: (context, chatSnapshot) {
-                  if (chatSnapshot.connectionState == ConnectionState.waiting) {
-                    return const LoadingWidget(
+                  if (chatSnapshot.connectionState == ConnectionState.waiting && !chatSnapshot.hasData) {
+                    return _showSkeleton ? const LoadingWidget(
                       message: 'Loading chats...',
                       size: 32,
-                    );
+                    ) : const SizedBox();
                   }
                   
                   final chats = chatSnapshot.data ?? [];
@@ -103,13 +116,13 @@ class _ChatScreenState extends State<ChatScreen> {
                   
                   // Show matches if no chats exist
                   return StreamBuilder<List<Map<String, dynamic>>>(
-                    stream: MatchService.getUserMatches(),
+                    stream: _matchesStream,
                     builder: (context, matchSnapshot) {
-                      if (matchSnapshot.connectionState == ConnectionState.waiting) {
-                        return const LoadingWidget(
+                      if (matchSnapshot.connectionState == ConnectionState.waiting && !matchSnapshot.hasData) {
+                        return _showSkeleton ? const LoadingWidget(
                           message: 'Loading matches...',
                           size: 32,
-                        );
+                        ) : const SizedBox();
                       }
                       
                       final matches = matchSnapshot.data ?? [];
@@ -189,7 +202,10 @@ class _ChatScreenState extends State<ChatScreen> {
           context,
           MaterialPageRoute(
             builder: (context) => ChatWindowScreen(
-              match: {'name': userName},
+              match: {
+                'name': userName, 
+                if (userPhoto != null) 'image': userPhoto
+              },
               otherUserId: otherUserId,
             ),
           ),
@@ -211,7 +227,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   backgroundColor: isSystemChat ? Colors.white : avatarColors[otherUserId.hashCode % avatarColors.length],
                   backgroundImage: isSystemChat 
                       ? AssetImage('assets/images/haule_logo.png') as ImageProvider
-                      : (userPhoto != null ? NetworkImage(userPhoto) : null),
+                      : (userPhoto != null ? CachedNetworkImageProvider(userPhoto) : null),
                   child: !isSystemChat && userPhoto == null ? Text(
                     userName[0].toUpperCase(),
                     style: const TextStyle(
@@ -332,13 +348,20 @@ class _ChatScreenState extends State<ChatScreen> {
         final user = userSnapshot.data;
         if (user == null) return const SizedBox();
         
+        // HIDE FROM MATCHES IF ACCOUNT IS DELETED
+        if (user.isDeleted) return const SizedBox();
+        
         return GestureDetector(
           onTap: () {
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => ChatWindowScreen(
-                  match: {'name': user.firstName},
+                  match: {
+                    'name': user.firstName,
+                    if (user.profileImageUrl != null || (user.photoUrls?.isNotEmpty == true))
+                      'image': user.profileImageUrl ?? user.photoUrls!.first
+                  },
                   otherUserId: otherUserId,
                 ),
               ),
@@ -361,11 +384,11 @@ class _ChatScreenState extends State<ChatScreen> {
                     shape: BoxShape.circle,
                     image: user.profileImageUrl != null || user.photoUrls?.isNotEmpty == true
                         ? DecorationImage(
-                            image: NetworkImage(user.profileImageUrl ?? user.photoUrls!.first),
+                            image: CachedNetworkImageProvider(user.profileImageUrl ?? user.photoUrls!.first),
                             fit: BoxFit.cover,
                           )
                         : DecorationImage(
-                            image: NetworkImage('https://picsum.photos/100/100?random=${otherUserId.hashCode % 100}'),
+                            image: CachedNetworkImageProvider('https://picsum.photos/100/100?random=${otherUserId.hashCode % 100}'),
                             fit: BoxFit.cover,
                           ),
                   ),

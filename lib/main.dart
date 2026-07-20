@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'services/notification_service.dart';
@@ -36,6 +37,10 @@ import 'services/connection_monitor_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+  ]);
+  
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   
   SystemChrome.setSystemUIOverlayStyle(
@@ -45,6 +50,8 @@ void main() async {
       systemNavigationBarDividerColor: Colors.transparent,
     ),
   );
+  
+  await dotenv.load(fileName: '.env');
   
   await Firebase.initializeApp();
   
@@ -87,36 +94,7 @@ class MyApp extends StatelessWidget {
       navigatorKey: NotificationService.navigatorKey,
       navigatorObservers: [routeObserver],
       theme: AppTheme.theme,
-      home: StreamBuilder<User?>(
-        stream: FirebaseAuth.instance.authStateChanges(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return SplashScreen();
-          }
-          
-          if (snapshot.hasData) {
-            // User is signed in
-            return FutureBuilder(
-              future: _checkUserProfileAndReactivation(),
-              builder: (context, profileSnapshot) {
-                if (profileSnapshot.connectionState == ConnectionState.waiting) {
-                  return SplashScreen();
-                }
-                
-                final result = profileSnapshot.data;
-                if (result == 'complete_profile') {
-                  return const MainNavigation();
-                } else {
-                  return SplashScreen();
-                }
-              },
-            );
-          } else {
-            // No user signed in
-            return SplashScreen();
-          }
-        },
-      ),
+      home: SplashScreen(),
       routes: {
         '/home': (context) => const MainNavigation(),
         '/create': (context) => const CreateHangoutScreen(),

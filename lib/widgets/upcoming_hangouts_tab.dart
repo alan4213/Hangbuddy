@@ -7,6 +7,7 @@ import '../services/match_service.dart';
 import '../screens/profile_detail_screen.dart';
 import '../screens/chat_window_screen.dart';
 import '../theme/app_theme.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class UpcomingHangoutsTab extends StatefulWidget {
   const UpcomingHangoutsTab({super.key});
@@ -134,6 +135,8 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
           return const Center(child: CircularProgressIndicator());
         }
         
+        final bool isMatchDeleted = user.isDeleted || match['hangoutStatus'] == 'deleted';
+        
         final hangoutDateTime = (match['hangoutDateTime'] as Timestamp).toDate();
         final matchData = {
           'firstName': user.firstName,
@@ -149,13 +152,14 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
           'hangout': match['hangoutTitle'],
           'venue': match['hangoutLocation'],
           'dateTime': hangoutDateTime,
-          'image': user.profileImageUrl ?? (user.photoUrls?.isNotEmpty == true ? user.photoUrls!.first : null),
+          'image': user.isDeleted ? null : (user.profileImageUrl ?? (user.photoUrls?.isNotEmpty == true ? user.photoUrls!.first : null)),
           'userId': otherUserId,
           'distance': '0 km away',
         };
         
         return GestureDetector(
           onTap: () async {
+            if (isMatchDeleted) return;
             // Fetch category from original hangout if missing
             String category = match['hangoutCategory'] ?? 'Other';
             if (category == 'Other') {
@@ -212,20 +216,20 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
               children: [
                 // Background Image
                 GestureDetector(
-                  onTap: () => _showFullImage(context, matchData['image'], user.firstName),
+                  onTap: () {
+                    if (isMatchDeleted) return;
+                    _showFullImage(context, matchData['image'], user.firstName);
+                  },
                   child: Container(
                     width: double.infinity,
                     height: double.infinity,
                     decoration: BoxDecoration(
                       image: matchData['image'] != null
                           ? DecorationImage(
-                              image: NetworkImage(matchData['image']),
+                              image: CachedNetworkImageProvider(matchData['image']),
                               fit: BoxFit.cover,
                             )
-                          : const DecorationImage(
-                              image: NetworkImage('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop&crop=face'),
-                              fit: BoxFit.cover,
-                            ),
+                          : null,
                       gradient: matchData['image'] == null
                           ? const LinearGradient(
                               begin: Alignment.topLeft,
@@ -256,7 +260,7 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
                 Positioned(
                   top: 12,
                   right: 12,
-                  child: match['hangoutStatus'] == 'deleted' || _isHangoutExpired(matchData['dateTime'])
+                  child: isMatchDeleted || _isHangoutExpired(matchData['dateTime'])
                       ? GestureDetector(
                           onTap: () => _deleteMatch(match['id']),
                           child: Container(
@@ -315,7 +319,7 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          '${matchData['firstName']} ${matchData['lastName']}, ${matchData['age']}',
+                          user.isDeleted ? 'Deleted User' : '${matchData['firstName']} ${matchData['lastName']}, ${matchData['age']}',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
@@ -333,35 +337,37 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: match['hangoutStatus'] == 'deleted' 
+                            color: isMatchDeleted 
                                 ? Colors.white
                                 : _isHangoutExpired(matchData['dateTime'])
                                 ? Colors.white
                                 : Colors.white.withOpacity(0.2),
                             borderRadius: BorderRadius.circular(16),
                           ),
-                          child: Text(
-                            match['hangoutStatus'] == 'deleted' 
-                                ? 'Hangout Cancelled'
-                                : _isHangoutExpired(matchData['dateTime'])
-                                ? 'Hangout Expired'
-                                : matchData['hangout'],
-                            style: TextStyle(
-                              color: match['hangoutStatus'] == 'deleted'
-                                  ? AppTheme.primaryColor
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              isMatchDeleted 
+                                  ? 'Hangout Cancelled'
                                   : _isHangoutExpired(matchData['dateTime'])
-                                  ? AppTheme.primaryColor
-                                  : Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
+                                  ? 'Hangout Expired'
+                                  : matchData['hangout'] as String,
+                              style: TextStyle(
+                                color: isMatchDeleted
+                                    ? AppTheme.primaryColor
+                                    : _isHangoutExpired(matchData['dateTime'])
+                                    ? AppTheme.primaryColor
+                                    : Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        if (match['hangoutStatus'] != 'deleted' && !_isHangoutExpired(matchData['dateTime']))
+                        if (!isMatchDeleted && !_isHangoutExpired(matchData['dateTime']))
                           const SizedBox(height: 4),
-                        if (match['hangoutStatus'] != 'deleted' && !_isHangoutExpired(matchData['dateTime']))
+                        if (!isMatchDeleted && !_isHangoutExpired(matchData['dateTime']))
                           Text(
                             matchData['venue'],
                             style: const TextStyle(
@@ -590,10 +596,10 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
               child: InteractiveViewer(
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(16),
-                  child: Image.network(
-                    imageUrl,
+                  child: CachedNetworkImage(
+                    imageUrl: imageUrl,
                     fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) {
+                    errorWidget: (context, url, error) {
                       return Container(
                         width: 200,
                         height: 200,

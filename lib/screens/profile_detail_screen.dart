@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'match_notification_screen.dart';
 import '../theme/app_theme.dart';
 import '../services/user_service.dart';
@@ -204,7 +205,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                                         height: double.infinity,
                                         decoration: BoxDecoration(
                                           image: DecorationImage(
-                                            image: NetworkImage(images[0]),
+                                            image: CachedNetworkImageProvider(images[0]),
                                             fit: BoxFit.cover,
                                           ),
                                         ),
@@ -783,10 +784,10 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                                   ),
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(16),
-                                    child: Image.network(
-                                      images[1],
+                                    child: CachedNetworkImage(
+                                      imageUrl: images[1],
                                       fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) => Container(
+                                      errorWidget: (context, url, error) => Container(
                                         color: Colors.grey[300],
                                         child: const Icon(Icons.image, size: 80, color: Colors.grey),
                                       ),
@@ -912,10 +913,10 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
                                   ),
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(16),
-                                    child: Image.network(
-                                      photoUrl,
+                                    child: CachedNetworkImage(
+                                      imageUrl: photoUrl,
                                       fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) => Container(
+                                      errorWidget: (context, url, error) => Container(
                                         color: Colors.grey[300],
                                         child: const Icon(Icons.image, size: 80, color: Colors.grey),
                                       ),

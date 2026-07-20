@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../theme/app_theme.dart';
 import '../widgets/loading_widget.dart';
@@ -42,193 +43,244 @@ class _NameScreenState extends State<NameScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFFAFAFA),
       resizeToAvoidBottomInset: false,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFFAFAFA),
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppTheme.textPrimary),
-          onPressed: () => Navigator.pop(context),
+        centerTitle: true,
+        title: Text(
+          'Create Profile',
+          style: GoogleFonts.poppins(
+            color: const Color(0xFF0F172A),
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 16.0),
+          child: Container(
+            margin: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back, color: AppTheme.primaryColor, size: 20),
+              padding: EdgeInsets.zero,
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
         ),
       ),
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            const ProgressBar(currentStep: 1, totalSteps: 8),
-            Expanded(
-              child: Stack(
-                children: [
-                  SingleChildScrollView(
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              padding: EdgeInsets.only(
-                left: MediaQuery.of(context).size.width * 0.08,
-                right: MediaQuery.of(context).size.width * 0.08,
-                top: MediaQuery.of(context).size.width * 0.08,
-                bottom: MediaQuery.of(context).viewInsets.bottom + MediaQuery.of(context).size.height * 0.15,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'What\'s your name?',
-                    style: TextStyle(
-                      fontSize: MediaQuery.of(context).size.width * 0.07,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.textPrimary,
-                    ),
-                  ),
-                  SizedBox(height: MediaQuery.of(context).size.height * 0.015),
-                  Text(
-                    'This is how you\'ll appear to other users. Use your real name to build trust.',
-                    style: TextStyle(
-                      fontSize: MediaQuery.of(context).size.width * 0.04,
-                      color: AppTheme.textSecondary,
-                    ),
-                  ),
-                  
-                  SizedBox(height: MediaQuery.of(context).size.height * 0.06),
-                  
-                  // First Name input
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const ProgressBar(currentStep: 1, totalSteps: 8),
+                
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 16),
+                        Text(
+                          'What\'s your name?',
+                          style: GoogleFonts.poppins(
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF0F172A),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'This is how you\'ll appear to your matches.',
+                          style: GoogleFonts.poppins(
+                            fontSize: 16,
+                            color: const Color(0xFF64748B),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 48),
+                        
+                        // First Name input
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                          ),
+                          child: TextField(
+                            controller: _firstNameController,
+                            style: GoogleFonts.poppins(
+                              color: const Color(0xFF1E293B),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'First Name',
+                              hintStyle: GoogleFonts.poppins(
+                                color: const Color(0xFF94A3B8),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              suffixIcon: const Icon(Icons.person_outline, color: Color(0xFF94A3B8)),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                            ),
+                          ),
+                        ),
+                        
+                        const SizedBox(height: 16),
+                        
+                        // Last Name input
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                          ),
+                          child: TextField(
+                            controller: _lastNameController,
+                            style: GoogleFonts.poppins(
+                              color: const Color(0xFF1E293B),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'Last Name (Optional)',
+                              hintStyle: GoogleFonts.poppins(
+                                color: const Color(0xFF94A3B8),
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              suffixIcon: const Icon(Icons.person_outline, color: Color(0xFF94A3B8)),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                    child: TextField(
-                      controller: _firstNameController,
-                      style: TextStyle(
-                        color: AppTheme.textPrimary,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: 'First Name',
-                        labelStyle: TextStyle(
-                          color: AppTheme.textSecondary,
-                          fontSize: 16,
-                        ),
-                        floatingLabelStyle: TextStyle(
-                          color: AppTheme.primaryColor,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                        filled: true,
-                        fillColor: Colors.white,
-                      ),
-                    ),
                   ),
-                  
-                  SizedBox(height: MediaQuery.of(context).size.height * 0.03),
-                  
-                  // Last Name input (optional)
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: TextField(
-                      controller: _lastNameController,
-                      style: TextStyle(
-                        color: AppTheme.textPrimary,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      decoration: InputDecoration(
-                        labelText: 'Last Name (Optional)',
-                        labelStyle: TextStyle(
-                          color: AppTheme.textSecondary,
-                          fontSize: 16,
-                        ),
-                        floatingLabelStyle: TextStyle(
-                          color: AppTheme.primaryColor,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                        filled: true,
-                        fillColor: Colors.white,
-                      ),
-                    ),
-                  ),
-                  
-                  SizedBox(height: MediaQuery.of(context).size.height * 0.125),
-                ],
-              ),
+                ),
+              ],
             ),
+            
+            // Bottom Bar
             Positioned(
-              bottom: MediaQuery.of(context).size.height * 0.025,
-              left: MediaQuery.of(context).size.width * 0.08,
-              right: MediaQuery.of(context).size.width * 0.08,
-              child: LoadingButton(
-                isLoading: _isLoading,
-                text: 'Continue',
-                onPressed: () async {
-                  if (_firstNameController.text.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Please enter your first name')),
-                    );
-                    return;
-                  }
-                  
-                  setState(() => _isLoading = true);
-                  
-                  signupData.firstName = _firstNameController.text;
-                  signupData.lastName = _lastNameController.text;
-                  
-                  await Future.delayed(const Duration(milliseconds: 300));
-                  if (mounted) {
-                    setState(() => _isLoading = false);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => DobScreen(signupData: signupData),
+              bottom: MediaQuery.of(context).viewInsets.bottom > 0 
+                  ? MediaQuery.of(context).viewInsets.bottom + 16
+                  : 32,
+              left: 24,
+              right: 24,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(40),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    )
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back, color: Color(0xFF64748B)),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    Row(
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppTheme.primaryColor,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: const Color(0xFFE2E8F0),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: const Color(0xFFE2E8F0),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: const Color(0xFFE2E8F0),
+                          ),
+                        ),
+                      ],
+                    ),
+                    GestureDetector(
+                      onTap: () async {
+                        if (_firstNameController.text.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please enter your first name')),
+                          );
+                          return;
+                        }
+                        
+                        setState(() => _isLoading = true);
+                        
+                        signupData.firstName = _firstNameController.text;
+                        signupData.lastName = _lastNameController.text;
+                        
+                        await Future.delayed(const Duration(milliseconds: 300));
+                        if (mounted) {
+                          setState(() => _isLoading = false);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => DobScreen(signupData: signupData),
+                            ),
+                          );
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppTheme.primaryColor,
+                        ),
+                        child: _isLoading 
+                            ? const SizedBox(
+                                width: 20, 
+                                height: 20, 
+                                child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                              )
+                            : const Icon(Icons.arrow_forward, color: Colors.white, size: 20),
                       ),
-                    );
-                  }
-                },
-              ),
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],

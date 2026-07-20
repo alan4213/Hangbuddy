@@ -46,22 +46,21 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
   final GlobalKey _createButtonKey = GlobalKey();
   bool _showTutorial = false;
 
-
   final List<Map<String, dynamic>> _categories = [
-    {'name': 'Food & Drink', 'icon': Icons.restaurant, 'color': Color(0xFFFF6B6B)},
-    {'name': 'Coffee & Tea', 'icon': Icons.local_cafe, 'color': Color(0xFF8B4513)},
-    {'name': 'Movies & Cinema', 'icon': Icons.movie, 'color': Color(0xFF6366F1)},
-    {'name': 'Sports & Fitness', 'icon': Icons.sports, 'color': Color(0xFF10B981)},
-    {'name': 'Music & Concerts', 'icon': Icons.music_note, 'color': Color(0xFFE91E63)},
-    {'name': 'Shopping', 'icon': Icons.shopping_bag, 'color': Color(0xFFF59E0B)},
-    {'name': 'Travel & Adventure', 'icon': Icons.explore, 'color': Color(0xFF06B6D4)},
-    {'name': 'Party & Nightlife', 'icon': Icons.celebration, 'color': Color(0xFF8B5CF6)},
-    {'name': 'Study & Work', 'icon': Icons.school, 'color': Color(0xFF64748B)},
-    {'name': 'Gaming', 'icon': Icons.sports_esports, 'color': Color(0xFF3B82F6)},
-    {'name': 'Books & Reading', 'icon': Icons.menu_book, 'color': Color(0xFF7C3AED)},
-    {'name': 'Photography', 'icon': Icons.camera_alt, 'color': Color(0xFF059669)},
-    {'name': 'Cooking', 'icon': Icons.kitchen, 'color': Color(0xFFDC2626)},
-    {'name': 'Volunteering', 'icon': Icons.volunteer_activism, 'color': Color(0xFF0891B2)},
+    {'name': 'Food & Drink', 'icon': Icons.restaurant, 'color': const Color(0xFFFF6B6B)},
+    {'name': 'Coffee & Tea', 'icon': Icons.local_cafe, 'color': const Color(0xFF8B4513)},
+    {'name': 'Movies & Cinema', 'icon': Icons.movie, 'color': const Color(0xFF6366F1)},
+    {'name': 'Sports & Fitness', 'icon': Icons.sports, 'color': const Color(0xFF10B981)},
+    {'name': 'Music & Concerts', 'icon': Icons.music_note, 'color': const Color(0xFFE91E63)},
+    {'name': 'Shopping', 'icon': Icons.shopping_bag, 'color': const Color(0xFFF59E0B)},
+    {'name': 'Travel & Adventure', 'icon': Icons.explore, 'color': const Color(0xFF06B6D4)},
+    {'name': 'Party & Nightlife', 'icon': Icons.celebration, 'color': const Color(0xFF8B5CF6)},
+    {'name': 'Study & Work', 'icon': Icons.school, 'color': const Color(0xFF64748B)},
+    {'name': 'Gaming', 'icon': Icons.sports_esports, 'color': const Color(0xFF3B82F6)},
+    {'name': 'Books & Reading', 'icon': Icons.menu_book, 'color': const Color(0xFF7C3AED)},
+    {'name': 'Photography', 'icon': Icons.camera_alt, 'color': const Color(0xFF059669)},
+    {'name': 'Cooking', 'icon': Icons.kitchen, 'color': const Color(0xFFDC2626)},
+    {'name': 'Volunteering', 'icon': Icons.volunteer_activism, 'color': const Color(0xFF0891B2)},
   ];
 
   @override
@@ -87,265 +86,168 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
   @override
   Widget build(BuildContext context) {
     final createContent = Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Header
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Create Hangout',
-                  style: GoogleFonts.poppins(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary,
-                  ),
+      backgroundColor: const Color(0xFFF8FAFC),
+      extendBodyBehindAppBar: false,
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFF8FAFC),
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: false,
+        title: Text(
+          'Create Hangout',
+          style: GoogleFonts.poppins(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 16.0),
+          child: Container(
+            margin: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
                 ),
-              ),
+              ],
             ),
-            
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 20),
-                    
-                    // Title Field
-                    _buildInputField(
-                      key: _titleKey,
-                      controller: _titleController,
-                      label: 'What\'s the plan?',
-                      hint: 'Enter hangout title...',
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Category Field
-                    _buildSectionTitle('Category'),
-                    GestureDetector(
-                      key: _categoryKey,
-                      onTap: () => setState(() => _showCategoryDropdown = !_showCategoryDropdown),
-                      child: Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.grey[300]!),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(8),
-                              decoration: BoxDecoration(
-                                color: _getCategoryColor(_selectedCategory).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Icon(
-                                _getCategoryIcon(_selectedCategory),
-                                color: _getCategoryColor(_selectedCategory),
-                                size: 20,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                _selectedCategory,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            ),
-                            Icon(
-                              _showCategoryDropdown ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                              color: Colors.grey[600],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    if (_showCategoryDropdown)
-                      Container(
-                        margin: const EdgeInsets.only(top: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        constraints: const BoxConstraints(maxHeight: 250),
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: _categories.length,
-                          itemBuilder: (context, index) {
-                            final category = _categories[index];
-                            final isSelected = _selectedCategory == category['name'];
-                            return ListTile(
-                              onTap: () {
-                                setState(() {
-                                  _selectedCategory = category['name'];
-                                  _showCategoryDropdown = false;
-                                });
-                              },
-                              leading: Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                                  color: category['color'].withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Icon(
-                                  category['icon'],
-                                  color: category['color'],
-                                  size: 20,
-                                ),
-                              ),
-                              title: Text(
-                                category['name'],
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                                  color: isSelected ? category['color'] : Colors.black87,
-                                ),
-                              ),
-                              trailing: isSelected
-                                  ? Icon(Icons.check, color: category['color'], size: 20)
-                                  : null,
-                              dense: true,
-                            );
-                          },
-                        ),
-                      ),
-
-                    const SizedBox(height: 24),
-
-                    // Location Field
-                    _buildLocationField(),
-
-                    const SizedBox(height: 24),
-
-                    // Distance Range
-                    _buildDistanceSlider(),
-
-                    const SizedBox(height: 24),
-
-                    // Date & Time
-                    _buildSectionTitle('When?'),
-                    Row(
-                      key: _dateTimeKey,
+            child: IconButton(
+              icon: Icon(Icons.arrow_back, color: AppTheme.primaryColor, size: 20),
+              padding: EdgeInsets.zero,
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+        ),
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.only(top: 24, left: 24, right: 24, bottom: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header
+                  SizedBox(
+                    width: double.infinity,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: _selectDate,
-                            child: Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.grey[300]!),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.calendar_today, color: AppTheme.primaryColor, size: 20),
-                                  const SizedBox(width: 8),
-                                  Flexible(
-                                    child: Text(
-                                      '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
-                                      style: const TextStyle(fontSize: 14),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                        Text(
+                          "What's the plan?",
+                          style: GoogleFonts.poppins(
+                            fontSize: 32,
+                            fontWeight: FontWeight.w900,
+                            color: AppTheme.primaryColor,
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: _selectTime,
-                            child: Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: Colors.grey[300]!),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(Icons.access_time, color: AppTheme.primaryColor, size: 20),
-                                  const SizedBox(width: 8),
-                                  Flexible(
-                                    child: Text(
-                                      _selectedTime.format(context),
-                                      style: const TextStyle(fontSize: 14),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                        const SizedBox(height: 4),
+                        Text(
+                          "DEFINE YOUR NEXT ADVENTURE",
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.primaryColor.withOpacity(0.6),
+                            letterSpacing: 1.5,
                           ),
                         ),
                       ],
                     ),
-
-                    const SizedBox(height: 40),
-                  ],
-                ),
-              ),
-            ),
-            
-            // Create Button
-            Container(
-              padding: const EdgeInsets.all(20),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  key: _createButtonKey,
-                  onPressed: _isCreating ? null : _createHangout,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.primaryColor,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
                   ),
-                  child: _isCreating
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Text(
-                          'Create Hangout',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
+                  const SizedBox(height: 40),
+                  _buildSectionLabel('HANGOUT TITLE'),
+                  _buildTitleField(),
+
+                  const SizedBox(height: 24),
+
+                  _buildSectionLabel('CATEGORY'),
+                  _buildCategoryField(),
+
+                  const SizedBox(height: 24),
+
+                  _buildSectionLabel('LOCATION'),
+                  _buildLocationField(),
+
+                  const SizedBox(height: 24),
+
+                  _buildDistanceSlider(),
+
+                  const SizedBox(height: 24),
+
+                  _buildSectionLabel('WHEN?'),
+                  Row(
+                    key: _dateTimeKey,
+                    children: [
+                      Expanded(
+                        child: _buildDateTimeBox(
+                          '${_selectedDate.month}/${_selectedDate.day}/${_selectedDate.year}',
+                          _selectDate,
                         ),
-                ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _buildDateTimeBox(
+                          _selectedTime.format(context),
+                          _selectTime,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 40),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+          
+          // Create Button
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF8FAFC),
+            ),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                key: _createButtonKey,
+                onPressed: _isCreating ? null : _createHangout,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  elevation: 0,
+                ),
+                child: _isCreating
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : Text(
+                        'Create Hangout',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
-    
+
     if (_showTutorial) {
       return TutorialOverlay(
         screenName: 'create_hangout_screen',
@@ -393,72 +295,444 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
         child: createContent,
       );
     }
-    
+
     return createContent;
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionLabel(String label) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Text(
-        title,
+        label,
         style: GoogleFonts.poppins(
-          fontSize: Responsive.fontSize(context, Responsive.bodyFontSize),
-          fontWeight: FontWeight.w600,
-          color: Colors.black87,
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+          color: const Color(0xFF475569),
+          letterSpacing: 1.0,
         ),
       ),
     );
   }
 
-  Widget _buildInputField({
-    Key? key,
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    int maxLines = 1,
-    IconData? prefixIcon,
-  }) {
+  Widget _buildTitleField() {
+    return Container(
+      key: _titleKey,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: _titleController,
+        style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w500, color: const Color(0xFF0F172A)),
+        decoration: InputDecoration(
+          hintText: 'What are we doing?',
+          hintStyle: GoogleFonts.poppins(color: const Color(0xFF94A3B8), fontSize: 16),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          suffixIcon: Icon(Icons.edit_note, color: AppTheme.primaryColor.withOpacity(0.5)),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryField() {
     return Column(
-      key: key,
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
+        GestureDetector(
+          key: _categoryKey,
+          onTap: () => setState(() => _showCategoryDropdown = !_showCategoryDropdown),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.02),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: _getCategoryColor(_selectedCategory).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Icon(
+                    _getCategoryIcon(_selectedCategory),
+                    color: _getCategoryColor(_selectedCategory),
+                    size: 28,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _selectedCategory,
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF0F172A),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    _showCategoryDropdown ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                    color: AppTheme.primaryColor,
+                    size: 20,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (_showCategoryDropdown)
+          Container(
+            margin: const EdgeInsets.only(top: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            constraints: const BoxConstraints(maxHeight: 250),
+            child: ListView.builder(
+              padding: EdgeInsets.zero,
+              shrinkWrap: true,
+              itemCount: _categories.length,
+              itemBuilder: (context, index) {
+                final category = _categories[index];
+                final isSelected = _selectedCategory == category['name'];
+                return ListTile(
+                  onTap: () {
+                    setState(() {
+                      _selectedCategory = category['name'];
+                      _showCategoryDropdown = false;
+                    });
+                  },
+                  leading: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: category['color'].withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      category['icon'],
+                      color: category['color'],
+                      size: 20,
+                    ),
+                  ),
+                  title: Text(
+                    category['name'],
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                      color: isSelected ? category['color'] : const Color(0xFF0F172A),
+                    ),
+                  ),
+                  trailing: isSelected
+                      ? Icon(Icons.check, color: category['color'], size: 20)
+                      : null,
+                  dense: true,
+                );
+              },
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildDateTimeBox(String text, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          text,
           style: GoogleFonts.poppins(
             fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF0F172A),
           ),
         ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          maxLines: maxLines,
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: const TextStyle(
-              color: Colors.grey,
-              fontSize: 14,
+      ),
+    );
+  }
+
+  Widget _buildLocationField() {
+    return Column(
+      key: _locationKey,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.02),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: TextField(
+                  controller: _locationController,
+                  maxLines: 3,
+                  minLines: 1,
+                  style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w500, color: const Color(0xFF0F172A)),
+                  decoration: InputDecoration(
+                    hintText: 'Where is it happening?',
+                    hintStyle: GoogleFonts.poppins(color: const Color(0xFF94A3B8), fontSize: 16),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                    suffixIcon: _isSearchingLocation 
+                        ? const Padding(
+                            padding: EdgeInsets.all(12.0),
+                            child: SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          )
+                        : null,
+                  ),
+                  onChanged: _updateLocationSuggestions,
+                ),
+              ),
             ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[300]!),
+            const SizedBox(width: 12),
+            GestureDetector(
+              onTap: _isGettingLocation ? null : _getCurrentLocation,
+              child: Container(
+                width: 62,
+                height: 62,
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppTheme.primaryColor.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: _isGettingLocation
+                    ? const Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        ),
+                      )
+                    : const Icon(Icons.my_location, color: Colors.white, size: 24),
+              ),
             ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Colors.grey[300]!),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppTheme.primaryColor),
-            ),
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding: const EdgeInsets.all(16),
-          ),
+          ],
         ),
+        if (_showSuggestions && _locationSuggestions.isNotEmpty)
+          Container(
+            margin: const EdgeInsets.only(top: 8),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            constraints: const BoxConstraints(maxHeight: 200),
+            child: ListView.builder(
+              padding: EdgeInsets.zero,
+              shrinkWrap: true,
+              itemCount: _locationSuggestions.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                  dense: true,
+                  leading: Icon(Icons.location_on, size: 20, color: AppTheme.primaryColor),
+                  title: Text(
+                    _locationSuggestions[index],
+                    style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w500, color: const Color(0xFF0F172A)),
+                  ),
+                  onTap: () => _selectLocation(_locationSuggestions[index]),
+                );
+              },
+            ),
+          ),
       ],
+    );
+  }
+
+  Widget _buildDistanceSlider() {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'VISIBILITY RANGE',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF475569),
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Audience reach',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF0F172A),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8), // Add a little spacing
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppTheme.primaryColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  _maxDistance >= 100.0 ? 'Anywhere' : '${_maxDistance.toInt()} km',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.primaryColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 32),
+          SliderTheme(
+            data: SliderThemeData(
+              activeTrackColor: AppTheme.primaryColor.withOpacity(0.2),
+              inactiveTrackColor: const Color(0xFFF1F5F9),
+              thumbColor: AppTheme.primaryColor,
+              overlayColor: AppTheme.primaryColor.withOpacity(0.1),
+              trackHeight: 4,
+            ),
+            child: Slider(
+              value: _maxDistance,
+              min: 1.0,
+              max: 100.0,
+              divisions: 99,
+              onChanged: (value) => setState(() => _maxDistance = value),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('LOCAL', style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: const Color(0xFF94A3B8))),
+                Text('WORLDWIDE', style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: const Color(0xFF94A3B8))),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.info_outline, color: AppTheme.primaryColor, size: 18),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    _maxDistance >= 100.0
+                        ? 'Your hangout will be visible to everyone, anywhere in the world.'
+                        : 'People within ${_maxDistance.toInt()} km can see your hangout.',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: const Color(0xFF475569),
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -468,6 +742,29 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
       initialDate: _selectedDate,
       firstDate: DateTime.now(),
       lastDate: DateTime.now().add(const Duration(days: 7)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: AppTheme.primaryColor,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black87,
+            ),
+            dialogBackgroundColor: Colors.white,
+            datePickerTheme: DatePickerThemeData(
+              backgroundColor: Colors.white,
+              headerBackgroundColor: AppTheme.primaryColor,
+              headerForegroundColor: Colors.white,
+              surfaceTintColor: Colors.transparent,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
     if (date != null) {
       setState(() => _selectedDate = date);
@@ -494,13 +791,13 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
                   color: AppTheme.primaryColor,
                   width: 2,
                 ),
-                dayPeriodColor: MaterialStateColor.resolveWith((states) {
-                  return states.contains(MaterialState.selected)
+                dayPeriodColor: WidgetStateColor.resolveWith((states) {
+                  return states.contains(WidgetState.selected)
                       ? AppTheme.primaryColor
                       : Colors.transparent;
                 }),
-                dayPeriodTextColor: MaterialStateColor.resolveWith((states) {
-                  return states.contains(MaterialState.selected)
+                dayPeriodTextColor: WidgetStateColor.resolveWith((states) {
+                  return states.contains(WidgetState.selected)
                       ? Colors.white
                       : Colors.grey[600]!;
                 }),
@@ -632,194 +929,6 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
     }
   }
 
-  Widget _buildLocationField() {
-    return Column(
-      key: _locationKey,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Location',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _locationController,
-                decoration: InputDecoration(
-                  hintText: 'Enter location or use GPS',
-                  hintStyle: const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 14,
-                  ),
-                  prefixIcon: Icon(Icons.location_on, color: AppTheme.primaryColor, size: 20),
-                  suffixIcon: _isSearchingLocation 
-                      ? const Padding(
-                          padding: EdgeInsets.all(12.0),
-                          child: SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        )
-                      : null,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.grey[300]!),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: AppTheme.primaryColor),
-                  ),
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.all(16),
-                ),
-                onChanged: (value) {
-                  _updateLocationSuggestions(value);
-                },
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              decoration: BoxDecoration(
-                color: AppTheme.primaryColor,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: IconButton(
-                onPressed: _isGettingLocation ? null : _getCurrentLocation,
-                icon: _isGettingLocation
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : const Icon(Icons.my_location, color: Colors.white),
-              ),
-            ),
-          ],
-        ),
-        if (_showSuggestions && _locationSuggestions.isNotEmpty)
-          Container(
-            margin: const EdgeInsets.only(top: 4),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            constraints: const BoxConstraints(maxHeight: 150),
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: _locationSuggestions.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  dense: true,
-                  leading: const Icon(Icons.location_on, size: 16),
-                  title: Text(
-                    _locationSuggestions[index],
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                  onTap: () => _selectLocation(_locationSuggestions[index]),
-                );
-              },
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildDistanceSlider() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Visibility Range',
-          style: GoogleFonts.poppins(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.grey[300]!),
-          ),
-          child: Column(
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'Who can see this hangout?',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.black87,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    _maxDistance >= 100.0 
-                        ? 'Anywhere'
-                        : 'Within ${_maxDistance.toInt()} km',
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
-                ],
-              ),
-              Slider(
-                value: _maxDistance,
-                min: 1.0,
-                max: 100.0,
-                divisions: 99,
-                activeColor: AppTheme.primaryColor,
-                onChanged: (value) {
-                  setState(() => _maxDistance = value);
-                },
-              ),
-              Text(
-                _maxDistance >= 100.0
-                    ? 'Your hangout will be visible to everyone, anywhere'
-                    : 'People within this range can see your hangout',
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  color: Colors.grey,
-                  fontWeight: FontWeight.w400,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
   void _getCurrentLocation() async {
     setState(() => _isGettingLocation = true);
     
@@ -881,7 +990,7 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
       _isSearchingLocation = true;
     });
     
-    _debounceTimer = Timer(const Duration(milliseconds: 100), () async {
+    _debounceTimer = Timer(const Duration(milliseconds: 400), () async {
       try {
         final suggestions = await LocationService.getLocationSuggestions(query);
         if (mounted && _locationController.text == query) {
@@ -914,6 +1023,9 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
         _longitude = coords['longitude'];
       });
     }
+    
+    // Reset session token for next search
+    LocationService.resetSessionToken();
   }
 
   String _cleanAddress(String address) {

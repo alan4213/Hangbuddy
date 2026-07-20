@@ -13,13 +13,16 @@ class ProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-      child: LinearProgressIndicator(
-        value: currentStep / totalSteps,
-        backgroundColor: Colors.grey[300],
-        valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
-        minHeight: 4,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(2),
+        child: LinearProgressIndicator(
+          value: currentStep / totalSteps,
+          backgroundColor: const Color(0xFFE2E8F0),
+          valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+          minHeight: 4,
+        ),
       ),
     );
   }

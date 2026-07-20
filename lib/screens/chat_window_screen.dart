@@ -11,6 +11,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:io';
 import '../services/photo_upload_service.dart';
 import 'profile_detail_screen.dart';
@@ -39,6 +40,10 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
   bool _isUploading = false;
   bool _matchExists = true;
   bool _otherUserLeftChat = false;
+  bool _otherUserAccountDeleted = false;
+  bool _showSkeleton = false;
+  Stream<List<ChatMessage>>? _messagesStream;
+  
   final List<Color> avatarColors = [
     Color(0xFF8B5CF6),
     Color(0xFF3B82F6),
@@ -78,7 +83,15 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
       _loadOtherUserData();
       _loadDraft();
       _checkIfMatchExists();
-      
+    }
+    
+    _messagesStream = _otherUserId != null 
+        ? ChatService.getMessages(_otherUserId!) 
+        : Stream.value([]);
+        
+    Future.delayed(Duration(milliseconds: 150), () {
+      if (mounted) setState(() => _showSkeleton = true);
+    });
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser != null) {
         final chatId = ChatService.getChatId(currentUser.uid, _otherUserId!);
@@ -101,7 +114,6 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
           }
         });
       }
-    }
     
     // Save draft when text changes
     _messageController.addListener(_saveDraft);
@@ -176,13 +188,13 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: Color(0xFFFAFAFA),
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         backgroundColor: AppTheme.primaryColor,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: _isSearching ? TextField(
@@ -202,20 +214,56 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
           children: [
             GestureDetector(
               onTap: () => _navigateToUserProfile(),
-              child: CircleAvatar(
-                radius: 20,
-                backgroundImage: _otherUserId == 'haule_official'
-                    ? AssetImage('assets/images/haule_logo.png') as ImageProvider
-                    : (_otherUser?.profileImageUrl != null || _otherUser?.photoUrls?.isNotEmpty == true
-                        ? NetworkImage(_otherUser!.profileImageUrl ?? _otherUser!.photoUrls!.first)
-                        : widget.match['image'] != null
-                        ? NetworkImage(widget.match['image'])
-                        : NetworkImage('https://picsum.photos/100/100?random=1')),
-                backgroundColor: _otherUserId == 'haule_official'
-                    ? Colors.white
-                    : (_otherUserId != null 
-                        ? avatarColors[_otherUserId!.hashCode % avatarColors.length]
-                        : Color(0xFF8B5CF6)),
+              child: Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: _otherUserId == 'haule_official'
+                        ? Colors.white
+                        : (_otherUserId != null 
+                            ? avatarColors[_otherUserId!.hashCode % avatarColors.length]
+                            : Colors.white24),
+                    backgroundImage: _otherUserId == 'haule_official'
+                        ? AssetImage('assets/images/haule_logo.png') as ImageProvider
+                        : _otherUserAccountDeleted
+                            ? null
+                            : (_otherUser?.profileImageUrl != null || _otherUser?.photoUrls?.isNotEmpty == true
+                            ? CachedNetworkImageProvider(_otherUser!.profileImageUrl ?? _otherUser!.photoUrls!.first)
+                            : widget.match['image'] != null
+                            ? CachedNetworkImageProvider(widget.match['image'])
+                            : null),
+                    child: _otherUserId != 'haule_official' && 
+                           (_otherUserAccountDeleted ||
+                           (_otherUser?.profileImageUrl == null && 
+                           _otherUser?.photoUrls?.isNotEmpty != true && 
+                           widget.match['image'] == null))
+                        ? Text(
+                            _otherUserAccountDeleted ? 'D' : (widget.match['name'] ?? widget.match['firstName'] ?? 'U')[0].toUpperCase(),
+                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          )
+                        : null,
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: StreamBuilder<bool>(
+                      stream: _otherUserId != null ? _getOnlineStatus(_otherUserId!) : Stream.value(false),
+                      builder: (context, snapshot) {
+                        final isOnline = snapshot.data ?? false;
+                        if (!isOnline || _otherUserAccountDeleted) return SizedBox.shrink();
+                        return Container(
+                          width: 12,
+                          height: 12,
+                          decoration: BoxDecoration(
+                            color: Color(0xFF10B981),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: AppTheme.primaryColor, width: 2),
+                          ),
+                        );
+                      }
+                    ),
+                  ),
+                ],
               ),
             ),
             SizedBox(width: 12),
@@ -229,8 +277,8 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
                       children: [
                         Flexible(
                           child: Text(
-                            widget.match['name'] ?? widget.match['firstName'] ?? 'User',
-                            style: TextStyle(color: Colors.white, fontSize: 18),
+                            _otherUserAccountDeleted ? 'Deleted User' : (widget.match['name'] ?? widget.match['firstName'] ?? 'User'),
+                            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
                             overflow: TextOverflow.ellipsis,
                             maxLines: 1,
                           ),
@@ -240,7 +288,7 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
                           Icon(
                             Icons.verified,
                             color: Color(0xFFFFD700),
-                            size: 18,
+                            size: 16,
                           ),
                         ],
                       ],
@@ -250,8 +298,8 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
                       builder: (context, snapshot) {
                         final isOnline = snapshot.data ?? false;
                         return Text(
-                          isOnline ? 'Online' : 'Last seen recently',
-                          style: TextStyle(color: Colors.white70, fontSize: 12),
+                          isOnline ? 'ONLINE' : 'LAST SEEN RECENTLY',
+                          style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 0.5),
                           overflow: TextOverflow.ellipsis,
                           maxLines: 1,
                         );
@@ -379,7 +427,7 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
                 // Messages
                 Expanded(
                   child: StreamBuilder<List<ChatMessage>>(
-                    stream: _otherUserId != null ? ChatService.getMessages(_otherUserId!) : Stream.value([]),
+                    stream: _messagesStream,
                     builder: (context, snapshot) {
                       print('📱 UI StreamBuilder state: ${snapshot.connectionState}');
                       print('   Has data: ${snapshot.hasData}');
@@ -389,9 +437,9 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
                         print('   Error: ${snapshot.error}');
                       }
                       
-                      if (snapshot.connectionState == ConnectionState.waiting) {
+                      if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
                         print('🔄 Showing loading skeleton');
-                        return _buildLoadingSkeleton();
+                        return _showSkeleton ? _buildLoadingSkeleton() : const SizedBox();
                       }
                       
                       final messages = snapshot.data ?? [];
@@ -407,11 +455,21 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
                         _markVisibleMessagesAsRead();
                       });
                       
-                      final filteredMessages = _searchQuery.isEmpty 
-                          ? messages 
-                          : messages.where((msg) => 
-                              msg.message.toLowerCase().contains(_searchQuery.toLowerCase())
-                            ).toList();
+                      final currentUser = FirebaseAuth.instance.currentUser;
+                      final filteredMessages = messages.where((msg) {
+                        // Hide photos that are still uploading if we are the receiver
+                        final isMe = msg.senderId == currentUser?.uid;
+                        if (!isMe && (msg.photoUrl == 'uploading' || msg.photoUrl == null) && msg.messageType == 'photo') {
+                          return false; // Don't show to receiver until upload finishes
+                        }
+                        
+                        // Apply search query filter if needed
+                        if (_searchQuery.isNotEmpty) {
+                          return msg.message.toLowerCase().contains(_searchQuery.toLowerCase());
+                        }
+                        
+                        return true;
+                      }).toList();
                       
                       print('🔍 Filtered messages count: ${filteredMessages.length}');
                       
@@ -421,8 +479,36 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
                         itemCount: filteredMessages.length,
                         itemBuilder: (context, index) {
                           final message = filteredMessages[index];
-                          print('📝 Building message ${index}: ${message.message}');
-                          return _buildSwipeableMessage(message);
+                          
+                          // Check if we need to show a date divider
+                          bool showDateDivider = false;
+                          if (index == filteredMessages.length - 1) {
+                            showDateDivider = true; // Oldest message gets a divider
+                          } else {
+                            final nextMessage = filteredMessages[index + 1];
+                            final currentDate = message.timestamp;
+                            final nextDate = nextMessage.timestamp;
+                            // Since reverse=true, nextMessage is older.
+                            // If they are on different days, show divider above current message.
+                            if (currentDate.day != nextDate.day || 
+                                currentDate.month != nextDate.month || 
+                                currentDate.year != nextDate.year) {
+                              showDateDivider = true;
+                            }
+                          }
+                          
+                          Widget messageWidget = _buildSwipeableMessage(message);
+                          
+                          if (showDateDivider) {
+                            return Column(
+                              children: [
+                                _buildDateDivider(message.timestamp),
+                                messageWidget,
+                              ],
+                            );
+                          }
+                          
+                          return messageWidget;
                         },
                       );
                     },
@@ -475,13 +561,15 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
               );
             },
           ),
-          if (_matchExists) _buildMessageInput(),
-          if (!_matchExists) Container(
+          if (_matchExists && !_otherUserAccountDeleted) _buildMessageInput(),
+          if (!_matchExists || _otherUserAccountDeleted) Container(
             padding: EdgeInsets.all(16),
             color: Colors.grey[200],
             child: Center(
               child: Text(
-                '${widget.match['name'] ?? 'User'} left the hangout',
+                _otherUserAccountDeleted 
+                    ? 'This user has deleted their account'
+                    : '${widget.match['name'] ?? 'User'} left the hangout',
                 style: TextStyle(color: Colors.grey[600], fontSize: 14),
               ),
             ),
@@ -522,6 +610,48 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
     }
   }
 
+  String _formatDateSeparator(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(Duration(days: 1));
+    final messageDate = DateTime(date.year, date.month, date.day);
+
+    if (messageDate == today) {
+      return 'TODAY';
+    } else if (messageDate == yesterday) {
+      return 'YESTERDAY';
+    } else {
+      return '${date.day}/${date.month}/${date.year}';
+    }
+  }
+
+  Widget _buildDateDivider(DateTime date) {
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: 24),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 4,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Text(
+        _formatDateSeparator(date),
+        style: TextStyle(
+          color: Colors.grey[500],
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
   Widget _buildSwipeableMessage(ChatMessage message) {
     return Dismissible(
       key: Key(message.id),
@@ -546,7 +676,7 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
     final isMe = message.senderId == currentUser?.uid;
     
     return GestureDetector(
-      onLongPress: () => _showMessageOptions(message, isMe),
+      onLongPress: message.messageType == 'deleted' ? null : () => _showMessageOptions(message, isMe),
       child: Align(
         alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
         child: Container(
@@ -558,123 +688,150 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
                   ? _buildPhotoMessage(message, isMe)
                   : message.messageType == 'location'
                   ? _buildLocationMessage(message, isMe)
-                  : IntrinsicWidth(
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        constraints: BoxConstraints(
-                          maxWidth: MediaQuery.of(context).size.width * 0.75,
-                        ),
-                        decoration: BoxDecoration(
-                        color: isMe ? AppTheme.primaryColor : Colors.white,
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(16),
-                          topRight: Radius.circular(16),
-                          bottomLeft: Radius.circular(isMe ? 16 : 4),
-                          bottomRight: Radius.circular(isMe ? 4 : 16),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 4,
-                            offset: Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // Reply preview
-                          if (message.replyToMessage != null)
-                            Padding(
-                              padding: EdgeInsets.only(bottom: 6),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Container(
-                                    width: 2,
-                                    height: 12,
-                                    color: isMe ? Colors.white.withOpacity(0.5) : AppTheme.primaryColor,
-                                  ),
-                                  SizedBox(width: 4),
-                                  Flexible(
-                                    child: Text(
-                                      message.replyToMessage!,
-                                      style: TextStyle(
-                                        color: isMe ? Colors.white.withOpacity(0.6) : Colors.grey[600],
-                                        fontSize: 14,
-                                      ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                  : Column(
+                      crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                      children: [
+                        IntrinsicWidth(
+                          child: Container(
+                            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                            constraints: BoxConstraints(
+                              maxWidth: MediaQuery.of(context).size.width * 0.75,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isMe ? AppTheme.primaryColor : Colors.white,
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(20),
+                                topRight: Radius.circular(20),
+                                bottomLeft: Radius.circular(isMe ? 20 : 4),
+                                bottomRight: Radius.circular(isMe ? 4 : 20),
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: isMe 
+                                      ? AppTheme.primaryColor.withOpacity(0.2)
+                                      : Colors.black.withOpacity(0.04),
+                                  blurRadius: 15,
+                                  offset: Offset(0, 5),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // Reply preview
+                                if (message.replyToMessage != null)
+                                  Padding(
+                                    padding: EdgeInsets.only(bottom: 8),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Container(
+                                          width: 3,
+                                          height: 14,
+                                          decoration: BoxDecoration(
+                                            color: isMe ? Colors.white.withOpacity(0.5) : AppTheme.primaryColor,
+                                            borderRadius: BorderRadius.circular(2),
+                                          ),
+                                        ),
+                                        SizedBox(width: 8),
+                                        Flexible(
+                                          child: Text(
+                                            message.replyToMessage!,
+                                            style: TextStyle(
+                                              color: isMe ? Colors.white.withOpacity(0.8) : Colors.grey[600],
+                                              fontSize: 14,
+                                              fontStyle: FontStyle.italic,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                ],
+                                message.messageType == 'gif'
+                                    ? _buildGifMessage(message, isMe)
+                                    : message.messageType == 'deleted'
+                                        ? Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                Icons.block,
+                                                size: 16,
+                                                color: isMe ? Colors.white70 : Colors.black54,
+                                              ),
+                                              SizedBox(width: 6),
+                                              Flexible(
+                                                child: Text(
+                                                  message.message,
+                                                  style: TextStyle(
+                                                    color: isMe ? Colors.white70 : Colors.black54,
+                                                    fontSize: 15,
+                                                    fontStyle: FontStyle.italic,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          )
+                                        : Text(
+                                            message.message,
+                                            style: TextStyle(
+                                              color: isMe ? Colors.white : Colors.black87,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w400,
+                                              height: 1.4,
+                                            ),
+                                          ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 6),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _formatTime(message.timestamp),
+                              style: TextStyle(
+                                color: Colors.grey[500],
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            children: [
-                              Flexible(
-                                child: message.messageType == 'gif'
-                                    ? _buildGifMessage(message, isMe)
-                                    : Text(
-                                        message.message,
-                                        style: TextStyle(
-                                          color: isMe ? Colors.white : Colors.black87,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w400,
-                                        ),
-                                      ),
-                              ),
-                              SizedBox(width: 8),
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    _formatTime(message.timestamp),
-                                    style: TextStyle(
-                                      color: isMe ? Colors.white70 : Colors.grey[600],
-                                      fontSize: 11,
-                                    ),
-                                  ),
-                                  if (isMe) ...[
-                                    SizedBox(width: 4),
-                                    Icon(
-                                      message.photoUrl == 'uploading' ? Icons.access_time :
-                                      message.status == 'read' ? Icons.done_all : 
-                                      message.status == 'delivered' ? Icons.done_all : Icons.done,
-                                      size: 14,
-                                      color: message.photoUrl == 'uploading' ? Colors.white70 :
-                                             message.status == 'read' ? Colors.blue : Colors.white70,
-                                    ),
-                                  ],
-                                ],
+                            if (isMe) ...[
+                              SizedBox(width: 4),
+                              Icon(
+                                message.photoUrl == 'uploading' ? Icons.access_time :
+                                message.status == 'read' ? Icons.done_all : 
+                                message.status == 'delivered' ? Icons.done_all : Icons.done,
+                                size: 14,
+                                color: message.photoUrl == 'uploading' ? Colors.grey[400] : AppTheme.primaryColor,
                               ),
                             ],
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
+                      ],
                     ),
-                  ),
-              // Reactions
-              if (message.reactions.isNotEmpty)
-                Container(
-                  margin: EdgeInsets.only(top: 4),
-                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: message.reactions.entries.map((entry) => 
-                      Padding(
-                        padding: EdgeInsets.only(right: 4),
-                        child: Text(entry.value, style: TextStyle(fontSize: 16)),
-                      )
-                    ).toList(),
-                  ),
-                ),
+              // Reactions - temporarily disabled for launch
+              // if (message.reactions.isNotEmpty)
+              //   Container(
+              //     margin: EdgeInsets.only(top: 4),
+              //     padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              //     decoration: BoxDecoration(
+              //       color: Colors.grey[200],
+              //       borderRadius: BorderRadius.circular(12),
+              //     ),
+              //     child: Row(
+              //       mainAxisSize: MainAxisSize.min,
+              //       children: message.reactions.entries.map((entry) => 
+              //         Padding(
+              //           padding: EdgeInsets.only(right: 4),
+              //           child: Text(entry.value, style: TextStyle(fontSize: 16)),
+              //         )
+              //       ).toList(),
+              //     ),
+              //   ),
             ],
           ),
         ),
@@ -685,57 +842,81 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
   void _showMessageOptions(ChatMessage message, bool isMe) {
     showModalBottomSheet(
       context: context,
-      builder: (context) => Container(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Reactions
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: ['❤️', '😂', '😮', '😢', '😡', '👍'].map((emoji) => 
-                GestureDetector(
-                  onTap: () {
-                    ChatService.addReaction(_otherUserId!, message.id, emoji);
-                    Navigator.pop(context);
-                  },
-                  child: Container(
-                    padding: EdgeInsets.all(12),
-                    child: Text(emoji, style: TextStyle(fontSize: 24)),
-                  ),
-                )
-              ).toList(),
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: SafeArea(
+            child: SingleChildScrollView(
+              child: Container(
+                padding: EdgeInsets.only(
+                  bottom: 48, // Massive padding to guarantee clearance
+                  top: 16, left: 16, right: 16,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Reactions - temporarily disabled for launch
+                    // FittedBox(
+                    //   fit: BoxFit.scaleDown,
+                    //   child: Row(
+                    //     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    //     children: ['❤️', '😂', '😮', '😢', '😡', '👍'].map((emoji) => 
+                    //       GestureDetector(
+                    //         onTap: () {
+                    //           ChatService.addReaction(_otherUserId!, message.id, emoji);
+                    //           Navigator.pop(context);
+                    //         },
+                    //         child: Container(
+                    //           padding: EdgeInsets.all(12),
+                    //           child: Text(emoji, style: TextStyle(fontSize: 24)),
+                    //         ),
+                    //       )
+                    //     ).toList(),
+                    //   ),
+                    // ),
+                    // Divider(),
+                    // Delete options
+                    if (isMe) ...[
+                      ListTile(
+                        leading: Icon(Icons.delete_outline, color: Colors.red),
+                        title: Text('Delete for me'),
+                        onTap: () {
+                          _deleteMessage(message.id, false);
+                          Navigator.pop(context);
+                        },
+                      ),
+                      ListTile(
+                        leading: Icon(Icons.delete_forever, color: Colors.red),
+                        title: Text('Delete for everyone'),
+                        onTap: () {
+                          _deleteMessage(message.id, true);
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ] else ...[
+                      ListTile(
+                        leading: Icon(Icons.delete_outline, color: Colors.red),
+                        title: Text('Delete for me'),
+                        onTap: () {
+                          _deleteMessage(message.id, false);
+                          Navigator.pop(context);
+                        },
+                      ),
+                    ],
+                  ],
+                ),
+              ),
             ),
-            Divider(),
-            // Delete options
-            if (isMe) ...[
-              ListTile(
-                leading: Icon(Icons.delete_outline, color: Colors.red),
-                title: Text('Delete for me'),
-                onTap: () {
-                  _deleteMessage(message.id, false);
-                  Navigator.pop(context);
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.delete_forever, color: Colors.red),
-                title: Text('Delete for everyone'),
-                onTap: () {
-                  _deleteMessage(message.id, true);
-                  Navigator.pop(context);
-                },
-              ),
-            ] else ...[
-              ListTile(
-                leading: Icon(Icons.delete_outline, color: Colors.red),
-                title: Text('Delete for me'),
-                onTap: () {
-                  _deleteMessage(message.id, false);
-                  Navigator.pop(context);
-                },
-              ),
-            ],
-          ],
+          ),
         ),
       ),
     );
@@ -799,205 +980,133 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
     }
     
     return SafeArea(
-      child: Container(
-        padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.of(context).viewInsets.bottom > 0 ? 16 : 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 4,
-              offset: Offset(0, -2),
-            ),
-          ],
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          bottom: MediaQuery.of(context).viewInsets.bottom > 0 ? 16 : 24,
+          top: 8,
         ),
-        child: Row(
-        children: [
-          GestureDetector(
-            onTap: _shareLocation,
-            child: Icon(Icons.location_on, color: Colors.grey),
-          ),
-          SizedBox(width: 12),
-          PopupMenuButton(
-            icon: Icon(Icons.attach_file, color: Colors.grey),
-            onSelected: (value) {
-              if (value == 'camera') _pickPhoto(ImageSource.camera);
-              if (value == 'gallery') _pickPhoto(ImageSource.gallery);
-            },
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+          decoration: BoxDecoration(
             color: Colors.white,
-            elevation: 8,
-            offset: Offset(0, -120),
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'camera',
-                child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  child: Row(
-                    children: [
+            borderRadius: BorderRadius.circular(32),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 10,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              IconButton(
+                icon: Icon(Icons.attach_file, color: Colors.grey[500]),
+                padding: EdgeInsets.zero,
+                constraints: BoxConstraints(minWidth: 40),
+                onPressed: () {
+                  _pickPhoto(ImageSource.gallery);
+                },
+              ),
+              IconButton(
+                icon: Icon(Icons.location_on_outlined, color: Colors.grey[500]),
+                padding: EdgeInsets.zero,
+                constraints: BoxConstraints(minWidth: 40),
+                onPressed: _shareLocation,
+              ),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_selectedPhoto != null)
                       Container(
-                        padding: EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [AppTheme.primaryColor, AppTheme.primaryColor.withOpacity(0.8)],
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppTheme.primaryColor.withOpacity(0.3),
-                              blurRadius: 8,
-                              offset: Offset(0, 4),
+                        margin: EdgeInsets.only(bottom: 8),
+                        height: 54,
+                        child: Row(
+                          children: [
+                            Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.file(_selectedPhoto!, width: 50, height: 50, fit: BoxFit.cover),
+                                ),
+                                Positioned(
+                                  top: -4,
+                                  right: -4,
+                                  child: GestureDetector(
+                                    onTap: () => setState(() { _selectedPhoto = null; _uploadedPhotoUrl = null; }),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(color: Colors.black12, blurRadius: 4),
+                                        ],
+                                      ),
+                                      child: Icon(Icons.cancel, size: 20, color: Colors.grey[700]),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Photo selected',
+                                style: TextStyle(
+                                  color: Colors.grey[600], 
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                maxLines: 2,
+                              ),
                             ),
                           ],
                         ),
-                        child: Icon(Icons.camera_alt, color: Colors.white, size: 22),
                       ),
-                      SizedBox(width: 16),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Camera',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          Text(
-                            'Take a photo',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
+                    TextField(
+                      controller: _messageController,
+                      style: TextStyle(color: Colors.black87, fontSize: 16),
+                      decoration: InputDecoration(
+                        hintText: _selectedPhoto != null ? 'Add a caption...' : 'Message...',
+                        hintStyle: TextStyle(color: Colors.grey[500], fontSize: 16),
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.symmetric(vertical: 10),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-              PopupMenuItem(
-                value: 'gallery',
+              IconButton(
+                icon: Icon(Icons.sentiment_satisfied_alt, color: Colors.grey[500]),
+                onPressed: _showEmojiGifPicker,
+              ),
+              GestureDetector(
+                onTap: _isUploading ? null : _sendMessage,
                 child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [AppTheme.primaryColor, AppTheme.primaryColor.withOpacity(0.8)],
-                          ),
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppTheme.primaryColor.withOpacity(0.3),
-                              blurRadius: 8,
-                              offset: Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: Icon(Icons.photo_library, color: Colors.white, size: 22),
-                      ),
-                      SizedBox(width: 16),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Gallery',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.black87,
-                            ),
-                          ),
-                          Text(
-                            'Choose from gallery',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: _isUploading ? Colors.grey : AppTheme.primaryColor,
+                    shape: BoxShape.circle,
                   ),
+                  child: _isUploading
+                      ? Padding(
+                          padding: EdgeInsets.all(12),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : Icon(Icons.send_rounded, color: Colors.white, size: 22),
                 ),
               ),
             ],
           ),
-          SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              children: [
-                if (_selectedPhoto != null)
-                  Container(
-                    margin: EdgeInsets.only(bottom: 8),
-                    height: 60,
-                    child: Row(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Stack(
-                            children: [
-                              Image.file(_selectedPhoto!, width: 60, height: 60, fit: BoxFit.cover),
-                            ],
-                          ),
-                        ),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Photo selected',
-                            style: TextStyle(color: Colors.grey),
-                          ),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.close, size: 20),
-                          onPressed: () => setState(() { _selectedPhoto = null; _uploadedPhotoUrl = null; }),
-                        ),
-                      ],
-                    ),
-                  ),
-                TextField(
-                  controller: _messageController,
-                  decoration: InputDecoration(
-                    hintText: _selectedPhoto != null ? 'Add a caption...' : 'Type something to send...',
-                    hintStyle: TextStyle(color: Colors.grey),
-                    border: InputBorder.none,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(width: 12),
-          GestureDetector(
-            onTap: _showEmojiGifPicker,
-            child: Icon(Icons.emoji_emotions, color: Colors.grey),
-          ),
-          SizedBox(width: 12),
-          GestureDetector(
-            onTap: _isUploading ? null : _sendMessage,
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: _isUploading ? Colors.grey : AppTheme.primaryColor,
-                shape: BoxShape.circle,
-              ),
-              child: _isUploading
-                  ? SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                  : Icon(Icons.send, color: Colors.white, size: 20),
-            ),
-          ),
-        ],
         ),
       ),
     );
@@ -1074,8 +1183,10 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
           .get();
       
       if (userDoc.exists && mounted) {
+        final data = userDoc.data()!;
         setState(() {
-          _otherUser = UserModel.fromMap(userDoc.data()!);
+          _otherUser = UserModel.fromMap(data);
+          _otherUserAccountDeleted = data['isDeleted'] == true;
         });
       }
     } catch (e) {
@@ -1943,7 +2054,7 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
   }
   
   void _navigateToUserProfile() {
-    if (_otherUserId == null || _otherUserId == 'haule_official') return;
+    if (_otherUserId == null || _otherUserId == 'haule_official' || _otherUserAccountDeleted) return;
     
     // Navigate to ProfileDetailScreen
     Navigator.push(
@@ -2475,74 +2586,75 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
   }
 
   Widget _buildPhotoMessage(ChatMessage message, bool isMe) {
-    // Always show local photo if available
-    if (message.localPhotoPath != null) {
-      return GestureDetector(
-        onTap: () => _showImageViewer(message.localPhotoPath!, isLocal: true),
-        child: Container(
-          constraints: BoxConstraints(maxWidth: 250, maxHeight: 250),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isMe ? AppTheme.primaryColor : Colors.grey[300]!,
-              width: 2,
+    final bool hasCaption = message.message.isNotEmpty && message.message != 'Photo';
+
+    // Helper function to build the time overlay
+    Widget buildTimeOverlay(bool isOverlayOnImage) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          Text(
+            _formatTime(message.timestamp),
+            style: TextStyle(
+              color: isOverlayOnImage ? Colors.white : (isMe ? Colors.white70 : Colors.grey[600]), 
+              fontSize: 11
             ),
           ),
-          child: Stack(
+          if (isMe) ...[
+            SizedBox(width: 4),
+            Icon(
+              message.photoUrl == 'uploading' ? Icons.access_time :
+              message.status == 'read' ? Icons.done_all : 
+              message.status == 'delivered' ? Icons.done_all : Icons.done,
+              size: 12,
+              color: isOverlayOnImage 
+                  ? (message.photoUrl == 'uploading' ? Colors.white70 : message.status == 'read' ? Colors.blue : Colors.white70)
+                  : (message.photoUrl == 'uploading' ? Colors.white54 : message.status == 'read' ? Colors.blue[200] : Colors.white70),
+            ),
+          ],
+        ],
+      );
+    }
+
+    Widget buildImageContent(Widget imageWidget) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Stack(
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: Image.file(
-                  File(message.localPhotoPath!),
-                  width: 250,
-                  height: 250,
-                  fit: BoxFit.cover,
+                borderRadius: BorderRadius.vertical(
+                  top: const Radius.circular(10),
+                  bottom: Radius.circular(hasCaption ? 0 : 10),
                 ),
+                child: imageWidget,
               ),
-              // Time overlay
-              Positioned(
-                bottom: 8,
-                right: 8,
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.6),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        _formatTime(message.timestamp),
-                        style: TextStyle(color: Colors.white, fontSize: 11),
-                      ),
-                      if (isMe) ...[
-                        SizedBox(width: 4),
-                        Icon(
-                          message.photoUrl == 'uploading' ? Icons.access_time :
-                          message.status == 'read' ? Icons.done_all : 
-                          message.status == 'delivered' ? Icons.done_all : Icons.done,
-                          size: 12,
-                          color: message.photoUrl == 'uploading' ? Colors.white70 :
-                                 message.status == 'read' ? Colors.blue : Colors.white70,
-                        ),
-                      ],
-                    ],
+              if (!hasCaption)
+                Positioned(
+                  bottom: 8,
+                  right: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.6),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: buildTimeOverlay(true),
                   ),
                 ),
-              ),
-              // Show spinner only during upload
               if (message.photoUrl == 'uploading')
                 Positioned(
                   top: 8,
                   right: 8,
                   child: Container(
-                    padding: EdgeInsets.all(4),
+                    padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
                       color: Colors.black.withOpacity(0.5),
                       shape: BoxShape.circle,
                     ),
-                    child: SizedBox(
+                    child: const SizedBox(
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
@@ -2554,78 +2666,151 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
                 ),
             ],
           ),
+          if (hasCaption)
+            Container(
+              width: 250,
+              padding: const EdgeInsets.only(left: 12, right: 12, top: 8, bottom: 6),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    message.message,
+                    style: TextStyle(
+                      color: isMe ? Colors.white : Colors.black87,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: buildTimeOverlay(false),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      );
+    }
+
+    // Only show local photo for the sender to prevent PathNotFoundException on receiver
+    if (isMe && message.localPhotoPath != null && message.photoUrl == 'uploading') {
+      return GestureDetector(
+        onTap: () => _showImageViewer(message.localPhotoPath!, isLocal: true),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 254),
+          decoration: BoxDecoration(
+            color: isMe ? AppTheme.primaryColor : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppTheme.primaryColor,
+              width: 2,
+            ),
+          ),
+          child: buildImageContent(
+            Image.file(
+              File(message.localPhotoPath!),
+              width: 250,
+              height: 250,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Container(
+                width: 250,
+                height: 250,
+                color: Colors.grey[100],
+                child: Center(
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primaryColor),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
       );
     }
     
-    // Fallback to network image
-    return GestureDetector(
-      onTap: () => _showImageViewer(message.photoUrl!),
-      child: Container(
-        constraints: BoxConstraints(maxWidth: 250, maxHeight: 250),
+    // If it's still uploading but we are the receiver (or sender lost the local file)
+    if (message.photoUrl == 'uploading' || message.photoUrl == null) {
+      return Container(
+        width: 250,
+        height: 250,
         decoration: BoxDecoration(
+          color: Colors.grey[100],
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isMe ? AppTheme.primaryColor : Colors.grey[300]!,
             width: 2,
           ),
         ),
-        child: Stack(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: Image.network(
-                message.photoUrl!,
-                width: 250,
-                height: 250,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  width: 250,
-                  height: 250,
-                  color: Colors.grey[200],
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.error, color: Colors.grey),
-                      Text('Photo not available', style: TextStyle(color: Colors.grey)),
-                    ],
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.primaryColor),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Receiving photo...',
+                style: TextStyle(color: Colors.grey[600], fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Fallback to network image
+    return GestureDetector(
+      onTap: () => _showImageViewer(message.photoUrl!),
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 254),
+        decoration: BoxDecoration(
+          color: isMe ? AppTheme.primaryColor : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isMe ? AppTheme.primaryColor : Colors.grey[300]!,
+            width: 2,
+          ),
+        ),
+        child: buildImageContent(
+          CachedNetworkImage(
+            imageUrl: message.photoUrl!,
+            width: 250,
+            height: 250,
+            fit: BoxFit.cover,
+            placeholder: (context, url) => Container(
+              width: 250,
+              height: 250,
+              color: Colors.grey[100],
+              child: Center(
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppTheme.primaryColor,
                   ),
                 ),
               ),
             ),
-            // Time overlay
-            Positioned(
-              bottom: 8,
-              right: 8,
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.6),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      _formatTime(message.timestamp),
-                      style: TextStyle(color: Colors.white, fontSize: 11),
-                    ),
-                    if (isMe) ...[
-                      SizedBox(width: 4),
-                      Icon(
-                        message.photoUrl == 'uploading' ? Icons.access_time :
-                        message.status == 'read' ? Icons.done_all : 
-                        message.status == 'delivered' ? Icons.done_all : Icons.done,
-                        size: 12,
-                        color: message.photoUrl == 'uploading' ? Colors.white70 :
-                               message.status == 'read' ? Colors.blue : Colors.white70,
-                      ),
-                    ],
-                  ],
-                ),
+            errorWidget: (context, url, error) => Container(
+              width: 250,
+              height: 250,
+              color: Colors.grey[200],
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.image_not_supported, color: Colors.grey),
+                  const SizedBox(height: 8),
+                  const Text('Photo unavailable', style: TextStyle(color: Colors.grey)),
+                ],
               ),
             ),
-          ],
+          ),
         ),
       ),
     );

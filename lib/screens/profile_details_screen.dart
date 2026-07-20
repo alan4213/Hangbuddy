@@ -1,5 +1,8 @@
 import 'dart:io';
+import 'dart:ui';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:crop_your_image/crop_your_image.dart';
@@ -438,9 +441,9 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF4F6FB),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFF4F6FB),
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: AppTheme.primaryColor),
@@ -488,142 +491,101 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            const SizedBox(height: 16),
             // Profile Completion Status
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(24),
-              margin: const EdgeInsets.only(bottom: 24),
+              padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+              margin: const EdgeInsets.only(bottom: 32),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: AppTheme.primaryColor.withOpacity(0.2),
-                  width: 1.5,
-                ),
+                borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.08),
-                    blurRadius: 15,
-                    offset: const Offset(0, 5),
+                    color: AppTheme.primaryColor.withOpacity(0.08),
+                    blurRadius: 24,
+                    offset: const Offset(0, 8),
                   ),
                 ],
               ),
               child: Column(
                 children: [
-                  Row(
+                  // Avatar with Edit Button
+                  Stack(
                     children: [
                       Container(
-                        width: 50,
-                        height: 50,
+                        width: 100,
+                        height: 100,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: AppTheme.primaryColor,
-                            width: 2,
+                            width: 2.5,
                           ),
                         ),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(25),
+                          borderRadius: BorderRadius.circular(50),
                           child: _userProfile?.profileImageUrl != null
-                              ? Image.network(
-                                  _userProfile!.profileImageUrl!,
+                              ? CachedNetworkImage(
+                                  imageUrl: _userProfile!.profileImageUrl!,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
+                                  errorWidget: (context, url, error) {
                                     return Container(
                                       color: Colors.grey[200],
-                                      child: Icon(
-                                        Icons.person,
-                                        color: Colors.grey[600],
-                                        size: 24,
-                                      ),
+                                      child: Icon(Icons.person, color: Colors.grey[600], size: 40),
                                     );
                                   },
                                 )
                               : Container(
                                   color: Colors.grey[200],
-                                  child: Icon(
-                                    Icons.person,
-                                    color: Colors.grey[600],
-                                    size: 24,
-                                  ),
+                                  child: Icon(Icons.person, color: Colors.grey[600], size: 40),
                                 ),
                         ),
                       ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _completionMessage,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                                color: AppTheme.textPrimary,
-                                letterSpacing: 0.2,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            if (_profileCompletionPercentage < 100)
-                              Text(
-                                'Complete missing fields below',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: AppTheme.textSecondary,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: AppTheme.primaryColor.withOpacity(0.3),
-                          ),
-                        ),
-                        child: Text(
-                          '${_profileCompletionPercentage}%',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
+                      Positioned(
+                        bottom: 0,
+                        right: 0,
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
                             color: AppTheme.primaryColor,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
                           ),
+                          child: const Icon(Icons.edit, color: Colors.white, size: 16),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
+                  // Text
+                  Text(
+                    'Your profile is ${_profileCompletionPercentage}%\ncomplete!',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF1E293B),
+                      height: 1.2,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  // Progress Bar
                   Stack(
                     children: [
                       Container(
-                        height: 12,
+                        height: 8,
                         decoration: BoxDecoration(
-                          color: Colors.grey[200],
-                          borderRadius: BorderRadius.circular(6),
+                          color: AppTheme.primaryColor.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(4),
                         ),
                       ),
                       Container(
-                        height: 12,
+                        height: 8,
                         width: MediaQuery.of(context).size.width * 0.8 * (_profileCompletionPercentage / 100),
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              AppTheme.primaryColor,
-                              AppTheme.primaryColor.withOpacity(0.8),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(6),
-                          boxShadow: [
-                            BoxShadow(
-                              color: AppTheme.primaryColor.withOpacity(0.3),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                          color: AppTheme.primaryColor,
+                          borderRadius: BorderRadius.circular(4),
                         ),
                       ),
                     ],
@@ -631,29 +593,30 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                 ],
               ),
             ),
-
-            // Photos Section
+                      // Photos Section
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Photos',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: AppTheme.textPrimary,
+                  'PHOTOS',
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    color: const Color(0xFF1E293B),
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+                Text(
+                  '$_photoCount/4 photos',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: Colors.grey[600],
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                if (_photoCount < 2)
-                  const SizedBox(width: 8),
-                if (_photoCount < 2)
-                  Icon(
-                    Icons.error,
-                    color: Colors.red,
-                    size: 18,
-                  ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -661,56 +624,56 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                 crossAxisCount: 2,
                 crossAxisSpacing: 16,
                 mainAxisSpacing: 16,
-                childAspectRatio: 0.8,
+                childAspectRatio: 0.75,
               ),
               itemCount: 4,
               itemBuilder: (context, index) {
-                  final photo = _photos[index];
-                  
-                  return GestureDetector(
-                    onTap: () => _pickImage(index),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade100,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: photo != null ? AppTheme.primaryColor : Colors.grey.shade300,
-                          width: photo != null ? 2 : 1,
-                        ),
-                      ),
-                      child: photo != null
-                        ? Stack(
+                final photo = _photos[index];
+                
+                return GestureDetector(
+                  onTap: () => _pickImage(index),
+                  child: photo != null
+                      ? Container(
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryColor.withOpacity(0.06),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: AppTheme.primaryColor,
+                              width: 2,
+                            ),
+                          ),
+                          child: Stack(
                             children: [
                               ClipRRect(
-                                borderRadius: BorderRadius.circular(16),
+                                borderRadius: BorderRadius.circular(14),
                                 child: photo is File
-                                  ? Image.file(
-                                      photo,
-                                      fit: BoxFit.cover,
-                                      width: double.infinity,
-                                      height: double.infinity,
-                                    )
-                                  : Image.network(
-                                      photo,
-                                      fit: BoxFit.cover,
-                                      width: double.infinity,
-                                      height: double.infinity,
-                                    ),
+                                    ? Image.file(
+                                        photo,
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                      )
+                                    : CachedNetworkImage(
+                                        imageUrl: photo,
+                                        fit: BoxFit.cover,
+                                        width: double.infinity,
+                                        height: double.infinity,
+                                      ),
                               ),
                               Positioned(
-                                top: 8,
-                                right: 8,
+                                top: 12,
+                                right: 12,
                                 child: GestureDetector(
                                   onTap: () => _removePhoto(index),
                                   child: Container(
                                     padding: const EdgeInsets.all(4),
                                     decoration: const BoxDecoration(
-                                      color: Colors.red,
+                                      color: Colors.white,
                                       shape: BoxShape.circle,
                                     ),
                                     child: const Icon(
                                       Icons.close,
-                                      color: Colors.white,
+                                      color: Colors.black87,
                                       size: 16,
                                     ),
                                   ),
@@ -718,50 +681,72 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                               ),
                               if (index == 0)
                                 Positioned(
-                                  bottom: 8,
-                                  left: 8,
+                                  top: 12,
+                                  left: 12,
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                     decoration: BoxDecoration(
                                       color: AppTheme.primaryColor,
-                                      borderRadius: BorderRadius.circular(12),
+                                      borderRadius: BorderRadius.circular(8),
                                     ),
-                                    child: const Text(
-                                      'Main',
-                                      style: TextStyle(
+                                    child: Text(
+                                      'MAIN',
+                                      style: GoogleFonts.poppins(
                                         color: Colors.white,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w500,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w800,
+                                        letterSpacing: 0.5,
                                       ),
                                     ),
                                   ),
                                 ),
                             ],
-                          )
-                        : Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.add_photo_alternate,
-                                size: 32,
-                                color: AppTheme.primaryColor,
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                index == 0 ? 'Main Photo' : 'Add Photo',
-                                style: TextStyle(
-                                  color: AppTheme.textPrimary,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ],
                           ),
-                    ),
-                  );
-                },
-              ),
-            
+                        )
+                      : CustomPaint(
+                            painter: DashedRectPainter(
+                              color: AppTheme.primaryColor.withOpacity(0.4),
+                              strokeWidth: 1.5,
+                              gap: 5.0,
+                              dash: 6.0,
+                              borderRadius: 16.0,
+                            ),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryColor.withOpacity(0.04),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.white,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      Icons.add,
+                                      size: 24,
+                                      color: AppTheme.primaryColor,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'Add Photo',
+                                    style: GoogleFonts.poppins(
+                                      color: AppTheme.primaryColor,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                );
+              },
+            ),
             if (_photoCount > 0) ...[
               const SizedBox(height: 8),
               Text(
@@ -1538,4 +1523,52 @@ class _CropScreenState extends State<_CropScreen> {
       ),
     );
   }
+}
+
+class DashedRectPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  final double dash;
+  final double gap;
+  final double borderRadius;
+
+  DashedRectPainter({
+    required this.color,
+    this.strokeWidth = 1.0,
+    this.dash = 5.0,
+    this.gap = 5.0,
+    this.borderRadius = 0.0,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    final RRect rrect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Radius.circular(borderRadius),
+    );
+
+    final Path path = Path()..addRRect(rrect);
+    final Path dashPath = Path();
+
+    for (final PathMetric measurePath in path.computeMetrics()) {
+      double distance = 0;
+      while (distance < measurePath.length) {
+        dashPath.addPath(
+          measurePath.extractPath(distance, distance + dash),
+          Offset.zero,
+        );
+        distance += dash + gap;
+      }
+    }
+
+    canvas.drawPath(dashPath, paint);
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }

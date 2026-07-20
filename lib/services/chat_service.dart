@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/chat_model.dart';
@@ -182,52 +183,52 @@ class ChatService {
     
     final chatId = _getChatId(currentUser.uid, otherUserId);
     print('🔄 getMessages: Fetching messages for chat $chatId');
-    print('   Current user: ${currentUser.uid}');
-    print('   Other user: $otherUserId');
     
-    return FirebaseFirestore.instance
-        .collection('chats')
-        .doc(chatId)
-        .collection('messages')
-        .orderBy('timestamp', descending: true)
-        .snapshots()
-        .asyncMap((snapshot) async {
-      print('📨 Messages snapshot received: ${snapshot.docs.length} messages');
+    // Use a StreamController to manually combine two Firestore streams
+    final controller = StreamController<List<ChatMessage>>();
+    
+    // Cache the latest snapshot from each stream
+    QuerySnapshot<Map<String, dynamic>>? latestMessagesSnapshot;
+    DocumentSnapshot<Map<String, dynamic>>? latestChatDoc;
+    
+    // The shared processing function — called whenever either stream fires
+    Future<void> processAndEmit() async {
+      if (latestMessagesSnapshot == null || latestChatDoc == null) return;
+      if (controller.isClosed) return;
       
-      // Get chat metadata to check deletedBy timestamp
-      final chatDoc = await FirebaseFirestore.instance
-          .collection('chats')
-          .doc(chatId)
-          .get();
+      final chatData = latestChatDoc!.data();
       
-      final deletedByTimestamp = chatDoc.exists 
-          ? (chatDoc.data()?['deletedBy']?[currentUser.uid] as Timestamp?)?.toDate()
+      final deletedByTimestamp = chatData != null
+          ? (chatData['deletedBy']?[currentUser.uid] as Timestamp?)?.toDate()
           : null;
       
-      print('🗑️ DeletedBy timestamp: $deletedByTimestamp');
+      final deletedMessagesForMe = chatData != null
+          ? List<String>.from(chatData['deletedMessages_${currentUser.uid}'] ?? [])
+          : <String>[];
       
-      final messages = snapshot.docs
+      final messages = latestMessagesSnapshot!.docs
           .where((doc) {
             final data = doc.data();
-            print('📝 Processing message: ${doc.id}');
-            print('   Data: $data');
             
-            final deletedFor = data['deletedFor'] as Map<String, dynamic>?;
-            if (deletedFor?[currentUser.uid] == true) {
-              print('   ❌ Message deleted for current user');
+            // Check if message was deleted for me (from chat metadata)
+            if (deletedMessagesForMe.contains(doc.id)) {
               return false;
             }
             
-            // Filter messages after deletedBy timestamp
+            // Legacy: Check old per-message deletedFor field
+            final deletedFor = data['deletedFor'] as Map<String, dynamic>?;
+            if (deletedFor?[currentUser.uid] == true) {
+              return false;
+            }
+            
+            // Filter messages before deletedBy timestamp
             if (deletedByTimestamp != null) {
               final messageTime = (data['timestamp'] as Timestamp).toDate();
               if (messageTime.isAfter(deletedByTimestamp)) {
-                print('   ❌ Message after deletedBy timestamp');
                 return false;
               }
             }
             
-            print('   ✅ Message included');
             return true;
           })
           .map((doc) {
@@ -248,7 +249,7 @@ class ChatService {
       final batch = FirebaseFirestore.instance.batch();
       bool hasUpdates = false;
       
-      for (final doc in snapshot.docs) {
+      for (final doc in latestMessagesSnapshot!.docs) {
         final data = doc.data();
         if (data['receiverId'] == currentUser.uid && data['status'] == 'sent') {
           batch.update(doc.reference, {
@@ -262,14 +263,46 @@ class ChatService {
       if (hasUpdates) {
         try {
           await batch.commit();
-          print('✅ Updated ${snapshot.docs.where((doc) => doc.data()['receiverId'] == currentUser.uid && doc.data()['status'] == 'sent').length} messages to delivered');
         } catch (e) {
           print('❌ Error updating message statuses: $e');
         }
       }
       
-      return messages;
+      if (!controller.isClosed) {
+        controller.add(messages);
+      }
+    }
+    
+    // Listen to messages subcollection
+    final msgSub = FirebaseFirestore.instance
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages')
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .listen((snapshot) {
+      latestMessagesSnapshot = snapshot;
+      processAndEmit();
     });
+    
+    // Listen to chat metadata doc (contains deletedMessages list)
+    final chatSub = FirebaseFirestore.instance
+        .collection('chats')
+        .doc(chatId)
+        .snapshots()
+        .listen((snapshot) {
+      latestChatDoc = snapshot;
+      processAndEmit();
+    });
+    
+    // Clean up both subscriptions when the stream is cancelled
+    controller.onCancel = () {
+      msgSub.cancel();
+      chatSub.cancel();
+      controller.close();
+    };
+    
+    return controller.stream;
   }
   
   static Future<void> sendMessage({
@@ -299,7 +332,7 @@ class ChatService {
       'senderId': currentUser.uid,
       'receiverId': receiverId,
       'message': message,
-      'timestamp': Timestamp.fromDate(timestamp),
+      'timestamp': FieldValue.serverTimestamp(),
       'status': 'sent',
       'reactions': {},
       'replyToId': replyToId,
@@ -451,15 +484,13 @@ class ChatService {
         .snapshots()
         .asyncMap((snapshot) async {
           print('Debug - Total chat documents found: ${snapshot.docs.length}');
-          final chats = <Map<String, dynamic>>[];
           
-          for (final doc in snapshot.docs) {
+          final futures = snapshot.docs.map((doc) async {
             final data = doc.data();
             final deletedForCurrentUser = data['deletedFor_${currentUser.uid}'];
             final deletedByCurrentUser = data['deletedBy']?[currentUser.uid];
-            print('Debug - Chat ${doc.id}: deletedFor_${currentUser.uid} = $deletedForCurrentUser, deletedBy = $deletedByCurrentUser');
             
-            if (deletedForCurrentUser == true || deletedByCurrentUser != null) continue;
+            if (deletedForCurrentUser == true || deletedByCurrentUser != null) return null;
             
             final participants = List<String>.from(data['participants'] ?? []);
             final otherUserId = participants.firstWhere((id) => id != currentUser.uid, orElse: () => '');
@@ -482,8 +513,14 @@ class ChatService {
                   
                   if (userDoc.exists) {
                     final userData = userDoc.data()!;
-                    userName = userData['firstName'] ?? '';
-                    userPhoto = userData['profileImageUrl'] ?? (userData['photoUrls'] as List?)?.first;
+                    
+                    if (userData['isDeleted'] == true) {
+                      userName = 'Deleted User';
+                      userPhoto = null; // Use default grey avatar
+                    } else {
+                      userName = userData['firstName'] ?? '';
+                      userPhoto = userData['profileImageUrl'] ?? (userData['photoUrls'] as List?)?.first;
+                    }
                   }
                 } catch (e) {
                   print('Error fetching user data: $e');
@@ -491,7 +528,7 @@ class ChatService {
               }
             }
             
-            chats.add({
+            return {
               'chatId': doc.id,
               'participants': participants,
               'lastMessage': data['lastMessage'] ?? '',
@@ -502,8 +539,11 @@ class ChatService {
               'otherUserName': userName ?? 'User',
               'otherUserPhoto': data['isSystemChat'] == true ? 'assets/images/haule_logo.png' : userPhoto,
               'isSystemChat': data['isSystemChat'] ?? false,
-            });
-          }
+            };
+          });
+          
+          final results = await Future.wait(futures);
+          final chats = results.whereType<Map<String, dynamic>>().toList();
           
           chats.sort((a, b) => (b['lastMessageTime'] as int).compareTo(a['lastMessageTime'] as int));
           print('Debug - Final filtered chats count: ${chats.length}');
@@ -522,14 +562,14 @@ class ChatService {
     
     final chatId = _getChatId(currentUser.uid, otherUserId);
     
+    // Write to the chat metadata doc (both participants have access)
+    // instead of the message doc (only sender has access)
     await FirebaseFirestore.instance
         .collection('chats')
         .doc(chatId)
-        .collection('messages')
-        .doc(messageId)
-        .update({
-      'deletedFor.${currentUser.uid}': true,
-    });
+        .set({
+      'deletedMessages_${currentUser.uid}': FieldValue.arrayUnion([messageId]),
+    }, SetOptions(merge: true));
   }
   
   static Future<void> deleteMessageForEveryone(String otherUserId, String messageId) async {
@@ -545,7 +585,13 @@ class ChatService {
         .doc(messageId)
         .update({
       'message': 'This message was deleted',
+      'messageType': 'deleted',
       'deletedForEveryone': true,
+      'photoUrl': FieldValue.delete(),
+      'gifUrl': FieldValue.delete(),
+      'localPhotoPath': FieldValue.delete(),
+      'latitude': FieldValue.delete(),
+      'longitude': FieldValue.delete(),
     });
   }
   

@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:lottie/lottie.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'profile_detail_screen.dart';
 import '../models/matches_model.dart';
 import '../services/hangout_service.dart';
@@ -240,7 +241,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
             // Filter chips at top
             Container(
               key: _filterKey,
-              height: 60,
+              height: 54, // Slightly increased to prevent clipping
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
@@ -327,41 +328,39 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(right: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        margin: const EdgeInsets.only(right: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         decoration: BoxDecoration(
           color: isActive ? AppTheme.primaryColor : Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(30),
           border: Border.all(
-            color: isActive ? AppTheme.primaryColor : Colors.grey[300]!,
-            width: 1,
+            color: isActive ? Colors.transparent : Colors.grey[200]!,
+            width: 1.0,
           ),
-          boxShadow: [
+          boxShadow: isActive ? [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
+              color: AppTheme.primaryColor.withOpacity(0.3),
+              blurRadius: 8,
               offset: const Offset(0, 2),
+            ),
+          ] : [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.02),
+              blurRadius: 3,
+              offset: const Offset(0, 1),
             ),
           ],
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon, 
-              color: isActive ? Colors.white : AppTheme.primaryColor, 
-              size: 16
+        child: Center(
+          child: Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              letterSpacing: 0.2,
+              color: isActive ? Colors.white : const Color(0xFF475569),
             ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: isActive ? Colors.white : const Color(0xFF334155),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -576,12 +575,31 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                     GestureDetector(
                       onTap: () => _showProfile(user, hangout),
                       child: Container(
-                        padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: Colors.grey[50],
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.04),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
-                        child: Row(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.7),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.9),
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Row(
                           children: [
                             Container(
                               width: 48,
@@ -594,7 +612,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                                 ),
                                 image: user.profileImageUrl != null
                                     ? DecorationImage(
-                                        image: NetworkImage(user.profileImageUrl!),
+                                        image: CachedNetworkImageProvider(user.profileImageUrl!),
                                         fit: BoxFit.cover,
                                       )
                                     : null,
@@ -634,64 +652,111 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                         ),
                       ),
                     ),
+                  ),
+                ),
+              ),
                     const SizedBox(height: 12),
-                    // Date and time
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primaryColor.withOpacity(0.05),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.calendar_today, size: 18, color: AppTheme.primaryColor),
-                          const SizedBox(width: 8),
-                          Text(
-                            _formatDate(hangout.dateTime),
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              color: Colors.black87,
-                              fontWeight: FontWeight.w500,
-                            ),
+                    // Date and Location Section (Modernized)
+                    // Date and Location Section (Pills Style)
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        // Time Pill
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(30),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.04),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 16),
-                          Icon(Icons.access_time, size: 18, color: AppTheme.primaryColor),
-                          const SizedBox(width: 8),
-                          Text(
-                            _formatTime(hangout.dateTime),
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              color: Colors.black87,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    // Location
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[50],
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.location_on, size: 18, color: Colors.grey[700]),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              hangout.location,
-                              style: GoogleFonts.poppins(
-                                fontSize: 14,
-                                color: Colors.black87,
-                                fontWeight: FontWeight.w400,
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(30),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.7),
+                                  borderRadius: BorderRadius.circular(30),
+                                  border: Border.all(
+                                    color: Colors.white.withOpacity(0.9),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.schedule, color: AppTheme.primaryColor, size: 22),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      '${_formatDate(hangout.dateTime)} • ${_formatTime(hangout.dateTime)}',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        letterSpacing: 0.2,
+                                        color: const Color(0xFF1E293B),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                        // Location Pill
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(30),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.04),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(30),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.7),
+                                  borderRadius: BorderRadius.circular(30),
+                                  border: Border.all(
+                                    color: Colors.white.withOpacity(0.9),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.location_on_outlined, color: AppTheme.primaryColor, size: 22),
+                                    const SizedBox(width: 8),
+                                    Flexible(
+                                      child: Text(
+                                        hangout.location,
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                          letterSpacing: 0.2,
+                                          color: const Color(0xFF1E293B),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 12),
                     // Join button
@@ -837,51 +902,76 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     
     showDialog(
       context: context,
+      barrierColor: Colors.black54,
       builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.favorite,
-                color: AppTheme.primaryColor,
-                size: 50,
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Interest Sent!',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Container(
+            padding: const EdgeInsets.all(28),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primaryColor.withOpacity(0.15),
+                  blurRadius: 30,
+                  offset: const Offset(0, 15),
+                  spreadRadius: 5,
                 ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Wait for hangout creator to respond',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  '🎉',
+                  style: TextStyle(fontSize: 32),
                 ),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25),
+                const SizedBox(height: 12),
+                Text(
+                  'Interest Sent!',
+                  style: GoogleFonts.poppins(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.textPrimary,
                   ),
                 ),
-                child: const Text(
-                  'Got it!',
-                  style: TextStyle(color: Colors.white),
+                const SizedBox(height: 8),
+                Text(
+                  'Wait for hangout creator to accept',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    color: AppTheme.textSecondary,
+                    height: 1.5,
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryColor,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: Text(
+                      'Got it!',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },

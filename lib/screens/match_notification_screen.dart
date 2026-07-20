@@ -3,6 +3,7 @@ import 'chat_window_screen.dart';
 import '../theme/app_theme.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class MatchNotificationScreen extends StatefulWidget {
   final Map<String, dynamic> user;
@@ -97,7 +98,7 @@ class _MatchNotificationScreenState extends State<MatchNotificationScreen> with 
                             child: CircleAvatar(
                               radius: 47,
                               backgroundImage: _currentUserImage != null 
-                                  ? NetworkImage(_currentUserImage!) 
+                                  ? CachedNetworkImageProvider(_currentUserImage!) 
                                   : null,
                               backgroundColor: AppTheme.primaryColor,
                               child: _currentUserImage == null
@@ -126,7 +127,7 @@ class _MatchNotificationScreenState extends State<MatchNotificationScreen> with 
                             child: CircleAvatar(
                               radius: 47,
                               backgroundImage: widget.user['image'] != null 
-                                  ? NetworkImage(widget.user['image']!) 
+                                  ? CachedNetworkImageProvider(widget.user['image']!) 
                                   : null,
                               backgroundColor: AppTheme.secondaryColor,
                               child: widget.user['image'] == null 
@@ -142,21 +143,38 @@ class _MatchNotificationScreenState extends State<MatchNotificationScreen> with 
                             ),
                           ),
                         ),
-                        // Heart icon in center
+                        // Handshake icon in center
                         Positioned(
-                          left: 75,
-                          top: 35,
+                          left: 77, // Adjusted slightly left for the larger size (100 - 46/2)
+                          top: 37, // Adjusted slightly down (120/2 - 46/2)
                           child: Container(
-                            width: 40,
-                            height: 40,
+                            width: 46,
+                            height: 46,
                             decoration: BoxDecoration(
-                              color: AppTheme.accentColor,
                               shape: BoxShape.circle,
-                            ),
-                            child: Icon(
-                              Icons.favorite,
                               color: Colors.white,
-                              size: 20,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppTheme.primaryColor.withOpacity(0.3),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(2.0),
+                              child: Container(
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Center(
+                                  child: Text(
+                                    '🤝',
+                                    style: TextStyle(fontSize: 18),
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -201,56 +219,74 @@ class _MatchNotificationScreenState extends State<MatchNotificationScreen> with 
                 
                 // Action buttons
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 40),
+                  padding: EdgeInsets.symmetric(horizontal: 24), // Reduced from 40 for more room
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.pushNamedAndRemoveUntil(
-                              context,
-                              '/home',
-                              (route) => false,
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey[200],
-                            foregroundColor: Colors.grey[600],
-                            padding: EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(25),
+                        child: SizedBox(
+                          height: 54,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.pushNamedAndRemoveUntil(
+                                context,
+                                '/home',
+                                (route) => false,
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.grey[200],
+                              foregroundColor: Colors.grey[600],
+                              padding: EdgeInsets.symmetric(horizontal: 8),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(25),
+                              ),
+                            ),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                'Discover Hangouts',
+                                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                              ),
                             ),
                           ),
-                          child: Text('Discover Hangouts'),
                         ),
                       ),
                       SizedBox(width: 16),
                       Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ChatWindowScreen(
-                                  match: {
-                                    'name': widget.user['name'] ?? 'User',
-                                    'image': widget.user['image'],
-                                  },
-                                  otherUserId: widget.otherUserId,
+                        child: SizedBox(
+                          height: 54,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ChatWindowScreen(
+                                    match: {
+                                      'name': widget.user['name'] ?? 'User',
+                                      'image': widget.user['image'],
+                                    },
+                                    otherUserId: widget.otherUserId,
+                                  ),
                                 ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.primaryColor,
+                              foregroundColor: Colors.white,
+                              padding: EdgeInsets.symmetric(horizontal: 8),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(25),
                               ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primaryColor,
-                            foregroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(25),
+                            ),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                'Say Hello',
+                                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                              ),
                             ),
                           ),
-                          child: Text('Say Hello'),
                         ),
                       ),
                     ],

@@ -107,8 +107,13 @@ service cloud.firestore {
         allow create: if request.auth != null && 
           request.auth.uid == request.resource.data.senderId;
         
-        // ✅ Only sender can modify their messages
-        allow update, delete: if request.auth != null && 
+        // ✅ Only sender can modify/delete their messages (except receivers can add reactions)
+        allow update: if request.auth != null && 
+          (
+            request.auth.uid == resource.data.senderId ||
+            (request.auth.uid == resource.data.receiverId && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions']))
+          );
+        allow delete: if request.auth != null && 
           request.auth.uid == resource.data.senderId;
       }
     }

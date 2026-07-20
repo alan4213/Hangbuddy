@@ -6,17 +6,25 @@ import 'notification_service.dart';
 class AuthService {
   static String? _verificationId;
   static String? _phoneNumber;
-  static final GoogleSignIn _googleSignIn = GoogleSignIn();
+  // Web client ID from Google Cloud Console (client_type: 3 in google-services.json)
+  // Must be explicitly set for account linking to work in production/release builds
+  static const String _webClientId = '940032181149-hj20v568vkvkt1k5ji0s58ivk3vl8lrd.apps.googleusercontent.com';
+  
+  static final GoogleSignIn _googleSignIn = GoogleSignIn(
+    serverClientId: _webClientId,
+    scopes: ['email', 'profile'],
+  );
   
   static String? getStoredPhoneNumber() => _phoneNumber;
   
   static Future<void> sendOTP(String phone) async {
     _phoneNumber = phone;
     
-    // Enable reCAPTCHA for phone verification
+    // Use silent verification (Play Integrity) in production
+    // forceRecaptchaFlow should be false so users don't see CAPTCHA
     await FirebaseAuth.instance.setSettings(
       appVerificationDisabledForTesting: false,
-      forceRecaptchaFlow: true,
+      forceRecaptchaFlow: false,
     );
     
     await FirebaseAuth.instance.verifyPhoneNumber(

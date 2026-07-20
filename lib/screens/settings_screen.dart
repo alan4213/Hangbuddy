@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../theme/app_theme.dart';
 import '../services/user_service.dart';
 import '../services/preferences_service.dart';
@@ -13,7 +14,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  UserModel? _userProfile;
+  UserModel? _userProfile = UserService.cachedProfile;
   bool _isLoading = true;
   bool _notificationsMuted = false;
 
@@ -25,15 +26,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   void _loadUserProfile() async {
     try {
-      final profile = await UserService.getUserProfile();
       final muted = await PreferencesService.areNotificationsMuted();
       setState(() {
-        _userProfile = profile;
         _notificationsMuted = muted;
         _isLoading = false;
       });
     } catch (e) {
-      print('Error loading profile: $e');
+      print('Error loading preferences: $e');
       setState(() => _isLoading = false);
     }
   }
@@ -41,78 +40,175 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'Settings',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 20,
-            fontWeight: FontWeight.w600,
+      backgroundColor: const Color(0xFFF8F9FA), // Very light grey for contrast
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: 120.0,
+            floating: false,
+            pinned: true,
+            backgroundColor: Colors.white,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black87),
+              onPressed: () => Navigator.pop(context),
+            ),
+            flexibleSpace: FlexibleSpaceBar(
+              titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
+              title: Text(
+                'Settings',
+                style: GoogleFonts.poppins(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 24,
+                ),
+              ),
+            ),
           ),
-        ),
-      ),
-      body: ListView(
-        padding: EdgeInsets.all(20),
-        children: [
-          _buildSettingsCard([
-            _buildNotificationToggle(),
-          ]),
-          
-          SizedBox(height: 20),
-          
-          _buildSettingsCard([
-            _buildSettingsItem(Icons.privacy_tip_outlined, 'Privacy', () {}),
-          ]),
-          
-          SizedBox(height: 20),
-          
-          _buildSettingsCard([
-            _buildSettingsItem(Icons.help_outline, 'Help & Support', () {}),
-            _buildSettingsItem(Icons.info_outline, 'About', () {}),
-          ]),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildSectionHeader('Preferences'),
+                  const SizedBox(height: 12),
+                  _buildNotificationToggle(),
+                  const SizedBox(height: 32),
+                  _buildSectionHeader('Legal & Support'),
+                  const SizedBox(height: 12),
+                  _buildSettingsGroup([
+                    _buildSettingsItem(
+                      icon: Icons.privacy_tip_rounded,
+                      title: 'Privacy Policy',
+                      onTap: () async {
+                        final url = Uri.parse('https://hauleapp.com/privacy.html');
+                        if (await canLaunchUrl(url)) {
+                          await launchUrl(url, mode: LaunchMode.externalApplication);
+                        }
+                      },
+                    ),
+                    _buildSettingsItem(
+                      icon: Icons.help_rounded,
+                      title: 'Help & Support',
+                      onTap: () async {
+                        final url = Uri.parse('mailto:team@hauleapp.com');
+                        try {
+                          final launched = await launchUrl(url);
+                          if (!launched && context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Could not open email app. Reach us at team@hauleapp.com')),
+                            );
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Could not open email app. Reach us at team@hauleapp.com')),
+                            );
+                          }
+                        }
+                      },
+                    ),
+                    _buildSettingsItem(
+                      icon: Icons.info_rounded,
+                      title: 'About Haule',
+                      onTap: () async {
+                        final url = Uri.parse('https://hauleapp.com');
+                        if (await canLaunchUrl(url)) {
+                          await launchUrl(url, mode: LaunchMode.externalApplication);
+                        }
+                      },
+                      isLast: true,
+                    ),
+                  ]),
+                ],
+              ),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Text(
+      title.toUpperCase(),
+      style: GoogleFonts.poppins(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        color: Colors.grey[500],
+        letterSpacing: 1.2,
+      ),
+    );
+  }
+
+  Widget _buildSettingsGroup(List<Widget> children) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: children,
       ),
     );
   }
 
   Widget _buildNotificationToggle() {
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: ListTile(
-        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         leading: Container(
-          padding: EdgeInsets.all(8),
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: AppTheme.primaryColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
+            color: _notificationsMuted
+                ? Colors.grey[100]
+                : AppTheme.primaryColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(
-            _notificationsMuted ? Icons.notifications_off : Icons.notifications,
-            color: AppTheme.primaryColor,
-            size: 20,
+            _notificationsMuted ? Icons.notifications_off_rounded : Icons.notifications_active_rounded,
+            color: _notificationsMuted ? Colors.grey[500] : AppTheme.primaryColor,
+            size: 22,
           ),
         ),
         title: Text(
-          'Mute All Notifications',
-          style: TextStyle(
+          'Mute Notifications',
+          style: GoogleFonts.poppins(
             fontSize: 16,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
           ),
         ),
-        trailing: Switch(
+        subtitle: Text(
+          'Pause all alerts',
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            color: Colors.grey[500],
+          ),
+        ),
+        trailing: Switch.adaptive(
           value: _notificationsMuted,
           activeColor: AppTheme.primaryColor,
+          activeTrackColor: AppTheme.primaryColor.withOpacity(0.3),
           onChanged: (value) async {
             await PreferencesService.setNotificationsMuted(value);
             setState(() {
@@ -124,43 +220,51 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildSettingsCard(List<Widget> items) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(children: items),
-    );
-  }
-
-  Widget _buildSettingsItem(IconData icon, String title, VoidCallback onTap) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: ListTile(
-        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        leading: Container(
-          padding: EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: AppTheme.primaryColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(8),
+  Widget _buildSettingsItem({
+    required IconData icon,
+    required String title,
+    required VoidCallback onTap,
+    bool isLast = false,
+  }) {
+    return Column(
+      children: [
+        ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+          leading: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              icon,
+              color: AppTheme.primaryColor,
+              size: 22,
+            ),
           ),
-          child: Icon(icon, color: AppTheme.primaryColor, size: 20),
-        ),
-        title: Text(
-          title,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
+          title: Text(
+            title,
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: Colors.black87,
+            ),
           ),
+          trailing: Icon(
+            Icons.arrow_forward_ios_rounded,
+            size: 16,
+            color: Colors.grey[400],
+          ),
+          onTap: onTap,
         ),
-        trailing: Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-        onTap: onTap,
-      ),
+        if (!isLast)
+          Divider(
+            height: 1,
+            indent: 70,
+            endIndent: 20,
+            color: Colors.grey[100],
+          ),
+      ],
     );
   }
 }

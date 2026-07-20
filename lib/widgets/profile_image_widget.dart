@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../theme/app_theme.dart';
 
 class ProfileImageWidget extends StatelessWidget {
@@ -35,7 +36,7 @@ class ProfileImageWidget extends StatelessWidget {
         radius: size / 2 - (showBorder ? borderWidth : 0),
         backgroundColor: Colors.grey[300],
         backgroundImage: imageUrl != null && imageUrl!.isNotEmpty
-            ? NetworkImage(imageUrl!)
+            ? CachedNetworkImageProvider(imageUrl!)
             : null,
         child: imageUrl == null || imageUrl!.isEmpty
             ? Icon(

@@ -69,7 +69,9 @@ class ChatMessage {
       senderId: map['senderId'] ?? '',
       receiverId: map['receiverId'] ?? '',
       message: map['message'] ?? '',
-      timestamp: (map['timestamp'] as Timestamp).toDate(),
+      timestamp: map['timestamp'] != null 
+          ? (map['timestamp'] as Timestamp).toDate() 
+          : DateTime.now(), // Fallback for local cache before server ack
       status: map['status'] ?? 'sent',
       deliveredAt: map['deliveredAt'] != null ? (map['deliveredAt'] as Timestamp).toDate() : null,
       readAt: map['readAt'] != null ? (map['readAt'] as Timestamp).toDate() : null,

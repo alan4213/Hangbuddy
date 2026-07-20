@@ -18,6 +18,7 @@ class UserModel {
   final List<String>? photoUrls;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final bool isDeleted;
 
   UserModel({
     required this.uid,
@@ -39,6 +40,7 @@ class UserModel {
     this.photoUrls,
     required this.createdAt,
     required this.updatedAt,
+    this.isDeleted = false,
   });
 
   Map<String, dynamic> toMap() {
@@ -62,6 +64,7 @@ class UserModel {
       'photoUrls': photoUrls,
       'createdAt': createdAt.millisecondsSinceEpoch,
       'updatedAt': updatedAt.millisecondsSinceEpoch,
+      'isDeleted': isDeleted,
     };
   }
 
@@ -86,6 +89,7 @@ class UserModel {
       photoUrls: map['photoUrls'] != null ? List<String>.from(map['photoUrls']) : null,
       createdAt: map['createdAt'] != null ? DateTime.fromMillisecondsSinceEpoch(map['createdAt']) : DateTime.now(),
       updatedAt: map['updatedAt'] != null ? DateTime.fromMillisecondsSinceEpoch(map['updatedAt']) : DateTime.now(),
+      isDeleted: map['isDeleted'] ?? false,
     );
   }
 }
