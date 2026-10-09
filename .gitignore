@@ -46,3 +46,9 @@ app.*.map.json
 
 # Environment variables
 .env
+
+# Large/Temporary Files
+test.apks
+bundletool.jar
+chunk1.txt
+temp.dart
