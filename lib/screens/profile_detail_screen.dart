@@ -1114,11 +1114,13 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
 
   String _formatDateTime(DateTime dateTime) {
     final now = DateTime.now();
-    final difference = dateTime.difference(now).inDays;
+    final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
+    final dateToCheck = DateTime(dateTime.year, dateTime.month, dateTime.day);
     
-    if (difference == 0) {
+    if (dateToCheck == today) {
       return 'Today ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
-    } else if (difference == 1) {
+    } else if (dateToCheck == tomorrow) {
       return 'Tomorrow ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
     } else {
       return '${dateTime.day}/${dateTime.month} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';

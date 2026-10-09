@@ -15,6 +15,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:io';
 import '../services/photo_upload_service.dart';
 import 'profile_detail_screen.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../widgets/premium_dialog.dart';
 
 class ChatWindowScreen extends StatefulWidget {
   final Map<String, dynamic> match;
@@ -188,29 +190,28 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFFFAFAFA),
+      backgroundColor: Colors.white,
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        backgroundColor: AppTheme.primaryColor,
+        backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: _isSearching ? TextField(
-          controller: _searchController,
-          style: TextStyle(color: Colors.white),
-          decoration: InputDecoration(
-            hintText: 'Search messages...',
-            hintStyle: TextStyle(color: Colors.white70),
-            border: InputBorder.none,
+        leadingWidth: 72,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 20.0, top: 8.0, bottom: 8.0),
+          child: Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.grey[300]!, width: 1.2),
+            ),
+            child: IconButton(
+              padding: EdgeInsets.zero,
+              icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black87, size: 16),
+              onPressed: () => Navigator.pop(context),
+            ),
           ),
-          onChanged: (value) {
-            setState(() {
-              _searchQuery = value;
-            });
-          },
-        ) : Row(
+        ),
+        title: Row(
           children: [
             GestureDetector(
               onTap: () => _navigateToUserProfile(),
@@ -244,20 +245,20 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
                         : null,
                   ),
                   Positioned(
-                    bottom: 0,
-                    right: 0,
+                    top: -2,
+                    right: -2,
                     child: StreamBuilder<bool>(
                       stream: _otherUserId != null ? _getOnlineStatus(_otherUserId!) : Stream.value(false),
                       builder: (context, snapshot) {
                         final isOnline = snapshot.data ?? false;
-                        if (!isOnline || _otherUserAccountDeleted) return SizedBox.shrink();
+                        if (!isOnline || _otherUserAccountDeleted) return const SizedBox.shrink();
                         return Container(
-                          width: 12,
-                          height: 12,
+                          width: 14,
+                          height: 14,
                           decoration: BoxDecoration(
-                            color: Color(0xFF10B981),
+                            color: const Color(0xFF10B981),
                             shape: BoxShape.circle,
-                            border: Border.all(color: AppTheme.primaryColor, width: 2),
+                            border: Border.all(color: Colors.white, width: 2),
                           ),
                         );
                       }
@@ -266,44 +267,33 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
                 ],
               ),
             ),
-            SizedBox(width: 12),
+            const SizedBox(width: 12),
             Expanded(
               child: GestureDetector(
                 onTap: () => _navigateToUserProfile(),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Row(
                       children: [
                         Flexible(
                           child: Text(
                             _otherUserAccountDeleted ? 'Deleted User' : (widget.match['name'] ?? widget.match['firstName'] ?? 'User'),
-                            style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                            style: GoogleFonts.poppins(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
                             overflow: TextOverflow.ellipsis,
                             maxLines: 1,
                           ),
                         ),
                         if (_otherUserId == 'haule_official') ...[
-                          SizedBox(width: 4),
-                          Icon(
+                          const SizedBox(width: 4),
+                          const Icon(
                             Icons.verified,
                             color: Color(0xFFFFD700),
                             size: 16,
                           ),
                         ],
                       ],
-                    ),
-                    StreamBuilder<bool>(
-                      stream: _otherUserId != null ? _getOnlineStatus(_otherUserId!) : Stream.value(false),
-                      builder: (context, snapshot) {
-                        final isOnline = snapshot.data ?? false;
-                        return Text(
-                          isOnline ? 'ONLINE' : 'LAST SEEN RECENTLY',
-                          style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w600, letterSpacing: 0.5),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        );
-                      },
                     ),
                   ],
                 ),
@@ -313,7 +303,7 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
         ),
         actions: [
           IconButton(
-            icon: Icon(_isSearching ? Icons.close : Icons.search, color: Colors.white),
+            icon: Icon(_isSearching ? Icons.close : Icons.search, color: Colors.black87),
             onPressed: () {
               setState(() {
                 _isSearching = !_isSearching;
@@ -613,13 +603,13 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
   String _formatDateSeparator(DateTime date) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final yesterday = today.subtract(Duration(days: 1));
+    final yesterday = today.subtract(const Duration(days: 1));
     final messageDate = DateTime(date.year, date.month, date.day);
 
     if (messageDate == today) {
-      return 'TODAY';
+      return 'Today';
     } else if (messageDate == yesterday) {
-      return 'YESTERDAY';
+      return 'Yesterday';
     } else {
       return '${date.day}/${date.month}/${date.year}';
     }
@@ -627,26 +617,18 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
 
   Widget _buildDateDivider(DateTime date) {
     return Container(
-      margin: EdgeInsets.symmetric(vertical: 24),
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      margin: const EdgeInsets.symmetric(vertical: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFFF1F5F9), // Light grey matching design
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 4,
-            offset: Offset(0, 2),
-          ),
-        ],
       ),
       child: Text(
         _formatDateSeparator(date),
-        style: TextStyle(
+        style: GoogleFonts.poppins(
           color: Colors.grey[500],
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-          letterSpacing: 0.5,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
         ),
       ),
     );
@@ -698,22 +680,13 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
                               maxWidth: MediaQuery.of(context).size.width * 0.75,
                             ),
                             decoration: BoxDecoration(
-                              color: isMe ? AppTheme.primaryColor : Colors.white,
+                              color: isMe ? const Color(0xFFF3E8FF) : const Color(0xFFF1F5F9),
                               borderRadius: BorderRadius.only(
-                                topLeft: Radius.circular(20),
-                                topRight: Radius.circular(20),
-                                bottomLeft: Radius.circular(isMe ? 20 : 4),
-                                bottomRight: Radius.circular(isMe ? 4 : 20),
+                                topLeft: Radius.circular(isMe ? 20 : 4),
+                                topRight: Radius.circular(isMe ? 4 : 20),
+                                bottomLeft: Radius.circular(20),
+                                bottomRight: Radius.circular(20),
                               ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: isMe 
-                                      ? AppTheme.primaryColor.withOpacity(0.2)
-                                      : Colors.black.withOpacity(0.04),
-                                  blurRadius: 15,
-                                  offset: Offset(0, 5),
-                                ),
-                              ],
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -738,7 +711,7 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
                                         Flexible(
                                           child: Text(
                                             message.replyToMessage!,
-                                            style: TextStyle(
+                                            style: GoogleFonts.poppins(
                                               color: isMe ? Colors.white.withOpacity(0.8) : Colors.grey[600],
                                               fontSize: 14,
                                               fontStyle: FontStyle.italic,
@@ -759,14 +732,14 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
                                               Icon(
                                                 Icons.block,
                                                 size: 16,
-                                                color: isMe ? Colors.white70 : Colors.black54,
+                                                color: Colors.black54,
                                               ),
                                               SizedBox(width: 6),
                                               Flexible(
                                                 child: Text(
                                                   message.message,
-                                                  style: TextStyle(
-                                                    color: isMe ? Colors.white70 : Colors.black54,
+                                                  style: GoogleFonts.poppins(
+                                                    color: Colors.black54,
                                                     fontSize: 15,
                                                     fontStyle: FontStyle.italic,
                                                   ),
@@ -776,9 +749,9 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
                                           )
                                         : Text(
                                             message.message,
-                                            style: TextStyle(
-                                              color: isMe ? Colors.white : Colors.black87,
-                                              fontSize: 16,
+                                            style: GoogleFonts.poppins(
+                                              color: Colors.black87,
+                                              fontSize: 15,
                                               fontWeight: FontWeight.w400,
                                               height: 1.4,
                                             ),
@@ -793,10 +766,10 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
                           children: [
                             Text(
                               _formatTime(message.timestamp),
-                              style: TextStyle(
-                                color: Colors.grey[500],
+                              style: GoogleFonts.poppins(
+                                color: Colors.grey[400],
                                 fontSize: 11,
-                                fontWeight: FontWeight.w500,
+                                fontWeight: FontWeight.w400,
                               ),
                             ),
                             if (isMe) ...[
@@ -806,7 +779,7 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
                                 message.status == 'read' ? Icons.done_all : 
                                 message.status == 'delivered' ? Icons.done_all : Icons.done,
                                 size: 14,
-                                color: message.photoUrl == 'uploading' ? Colors.grey[400] : AppTheme.primaryColor,
+                                color: message.photoUrl == 'uploading' ? Colors.grey[400] : const Color(0xFF8B5CF6),
                               ),
                             ],
                           ],
@@ -949,14 +922,14 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
     if (_otherUserLeftChat) {
       return SafeArea(
         child: Container(
-          padding: EdgeInsets.all(16),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.grey[100],
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.1),
                 blurRadius: 4,
-                offset: Offset(0, -2),
+                offset: const Offset(0, -2),
               ),
             ],
           ),
@@ -964,10 +937,10 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(Icons.info_outline, color: Colors.grey[600], size: 20),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Text(
                 'User left the chat',
-                style: TextStyle(
+                style: GoogleFonts.poppins(
                   color: Colors.grey[600],
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -980,133 +953,114 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
     }
     
     return SafeArea(
-      child: Padding(
+      child: Container(
+        color: Colors.white,
         padding: EdgeInsets.only(
-          left: 16,
-          right: 16,
+          left: 20,
+          right: 20,
           bottom: MediaQuery.of(context).viewInsets.bottom > 0 ? 16 : 24,
-          top: 8,
+          top: 16,
         ),
-        child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 6, vertical: 6),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(32),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.04),
-                blurRadius: 10,
-                offset: Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              IconButton(
-                icon: Icon(Icons.attach_file, color: Colors.grey[500]),
-                padding: EdgeInsets.zero,
-                constraints: BoxConstraints(minWidth: 40),
-                onPressed: () {
-                  _pickPhoto(ImageSource.gallery);
-                },
-              ),
-              IconButton(
-                icon: Icon(Icons.location_on_outlined, color: Colors.grey[500]),
-                padding: EdgeInsets.zero,
-                constraints: BoxConstraints(minWidth: 40),
-                onPressed: _shareLocation,
-              ),
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (_selectedPhoto != null)
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                height: 100,
+                child: Stack(
                   children: [
-                    if (_selectedPhoto != null)
-                      Container(
-                        margin: EdgeInsets.only(bottom: 8),
-                        height: 54,
-                        child: Row(
-                          children: [
-                            Stack(
-                              clipBehavior: Clip.none,
-                              children: [
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: Image.file(_selectedPhoto!, width: 50, height: 50, fit: BoxFit.cover),
-                                ),
-                                Positioned(
-                                  top: -4,
-                                  right: -4,
-                                  child: GestureDetector(
-                                    onTap: () => setState(() { _selectedPhoto = null; _uploadedPhotoUrl = null; }),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        shape: BoxShape.circle,
-                                        boxShadow: [
-                                          BoxShadow(color: Colors.black12, blurRadius: 4),
-                                        ],
-                                      ),
-                                      child: Icon(Icons.cancel, size: 20, color: Colors.grey[700]),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                'Photo selected',
-                                style: TextStyle(
-                                  color: Colors.grey[600], 
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                maxLines: 2,
-                              ),
-                            ),
-                          ],
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.file(_selectedPhoto!, height: 100, width: 100, fit: BoxFit.cover),
+                    ),
+                    Positioned(
+                      top: 4,
+                      right: 4,
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedPhoto = null;
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.black54,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.close, color: Colors.white, size: 16),
                         ),
-                      ),
-                    TextField(
-                      controller: _messageController,
-                      style: TextStyle(color: Colors.black87, fontSize: 16),
-                      decoration: InputDecoration(
-                        hintText: _selectedPhoto != null ? 'Add a caption...' : 'Message...',
-                        hintStyle: TextStyle(color: Colors.grey[500], fontSize: 16),
-                        border: InputBorder.none,
-                        isDense: true,
-                        contentPadding: EdgeInsets.symmetric(vertical: 10),
                       ),
                     ),
                   ],
                 ),
               ),
-              IconButton(
-                icon: Icon(Icons.sentiment_satisfied_alt, color: Colors.grey[500]),
-                onPressed: _showEmojiGifPicker,
-              ),
-              GestureDetector(
-                onTap: _isUploading ? null : _sendMessage,
-                child: Container(
-                  width: 44,
-                  height: 44,
+            Row(
+              children: [
+                Container(
                   decoration: BoxDecoration(
-                    color: _isUploading ? Colors.grey : AppTheme.primaryColor,
                     shape: BoxShape.circle,
+                    border: Border.all(color: Colors.grey[300]!, width: 1.5),
                   ),
-                  child: _isUploading
-                      ? Padding(
-                          padding: EdgeInsets.all(12),
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                          ),
-                        )
-                      : Icon(Icons.send_rounded, color: Colors.white, size: 22),
+                  child: IconButton(
+                    icon: const Icon(Icons.add, color: Colors.black54),
+                    onPressed: _showAttachmentOptions,
+                  ),
                 ),
-              ),
-            ],
-          ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC), // very light grey for input
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: Colors.grey[200]!),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _messageController,
+                            style: GoogleFonts.poppins(color: Colors.black87, fontSize: 15),
+                            decoration: InputDecoration(
+                              hintText: _selectedPhoto != null ? 'Add a caption...' : 'Type message...',
+                              hintStyle: GoogleFonts.poppins(color: Colors.grey[400], fontSize: 15),
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                GestureDetector(
+                  onTap: _isUploading ? null : _sendMessage,
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: _isUploading ? Colors.grey : const Color(0xFF8B5CF6),
+                      shape: BoxShape.circle,
+                    ),
+                    child: _isUploading
+                        ? const Padding(
+                            padding: EdgeInsets.all(14),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -1420,22 +1374,15 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
   void _showClearChatDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Clear chat'),
-        content: Text('Are you sure you want to clear all messages? This cannot be undone.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              _clearChat();
-              Navigator.pop(context);
-            },
-            child: Text('Clear', style: TextStyle(color: Colors.red)),
-          ),
-        ],
+      builder: (context) => PremiumDialog(
+        title: 'Clear chat',
+        subtitle: 'Are you sure you want to clear all messages? This cannot be undone.',
+        primaryActionText: 'Clear',
+        secondaryActionText: 'Cancel',
+        onPrimaryAction: () {
+          _clearChat();
+          Navigator.pop(context);
+        },
       ),
     );
   }
@@ -1443,121 +1390,15 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
   void _showDeleteChatDialog() {
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.white,
-                Colors.red.withOpacity(0.05),
-              ],
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.red,
-                      Colors.red.withOpacity(0.8),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(30),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.red.withOpacity(0.3),
-                      blurRadius: 15,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.delete_outline,
-                  color: Colors.white,
-                  size: 30,
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'Delete Chat',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Are you sure you want to delete this chat? This will only delete the chat for you.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[600],
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(
-                children: [
-                  Expanded(
-                    child: TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(color: Colors.grey[300]!),
-                        ),
-                      ),
-                      child: Text(
-                        'Cancel',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        _deleteChat();
-                        Navigator.pop(context);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'Delete',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
+      builder: (context) => PremiumDialog(
+        title: 'Delete Chat',
+        subtitle: 'Are you sure you want to delete this chat? This will only delete the chat for you.',
+        primaryActionText: 'Delete',
+        secondaryActionText: 'Cancel',
+        onPrimaryAction: () {
+          _deleteChat();
+          Navigator.pop(context);
+        },
       ),
     );
   }
@@ -1565,22 +1406,15 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
   void _showBlockDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Block ${widget.match['name']}'),
-        content: Text('Blocked users cannot send you messages or see your profile.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              _blockUser();
-              Navigator.pop(context);
-            },
-            child: Text('Block', style: TextStyle(color: Colors.red)),
-          ),
-        ],
+      builder: (context) => PremiumDialog(
+        title: 'Block ${widget.match['name']}',
+        subtitle: 'Blocked users cannot send you messages or see your profile.',
+        primaryActionText: 'Block',
+        secondaryActionText: 'Cancel',
+        onPrimaryAction: () {
+          _blockUser();
+          Navigator.pop(context);
+        },
       ),
     );
   }
@@ -2573,6 +2407,86 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
     );
   }
 
+  void _showAttachmentOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        margin: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _buildAttachmentOption(
+              icon: Icons.image,
+              color: Colors.blue,
+              label: 'Gallery',
+              onTap: () {
+                Navigator.pop(context);
+                _pickPhoto(ImageSource.gallery);
+              },
+            ),
+            _buildAttachmentOption(
+              icon: Icons.camera_alt,
+              color: Colors.purple,
+              label: 'Camera',
+              onTap: () {
+                Navigator.pop(context);
+                _pickPhoto(ImageSource.camera);
+              },
+            ),
+            _buildAttachmentOption(
+              icon: Icons.location_on,
+              color: Colors.green,
+              label: 'Location',
+              onTap: () {
+                Navigator.pop(context);
+                _shareLocation();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAttachmentOption({
+    required IconData icon,
+    required Color color,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 28),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: Colors.black87,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _pickPhoto(ImageSource source) async {
     final picker = ImagePicker();
     final pickedFile = await picker.pickImage(source: source);
@@ -2597,20 +2511,20 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
           Text(
             _formatTime(message.timestamp),
             style: TextStyle(
-              color: isOverlayOnImage ? Colors.white : (isMe ? Colors.white70 : Colors.grey[600]), 
+              color: isOverlayOnImage ? Colors.white : Colors.grey[600], 
               fontSize: 11
             ),
           ),
           if (isMe) ...[
-            SizedBox(width: 4),
+            const SizedBox(width: 4),
             Icon(
               message.photoUrl == 'uploading' ? Icons.access_time :
               message.status == 'read' ? Icons.done_all : 
               message.status == 'delivered' ? Icons.done_all : Icons.done,
-              size: 12,
+              size: 14,
               color: isOverlayOnImage 
                   ? (message.photoUrl == 'uploading' ? Colors.white70 : message.status == 'read' ? Colors.blue : Colors.white70)
-                  : (message.photoUrl == 'uploading' ? Colors.white54 : message.status == 'read' ? Colors.blue[200] : Colors.white70),
+                  : (message.photoUrl == 'uploading' ? Colors.grey[400] : message.status == 'read' ? Colors.blue : Colors.grey[500]),
             ),
           ],
         ],
@@ -2619,16 +2533,13 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
 
     Widget buildImageContent(Widget imageWidget) {
       return Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
+        crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           Stack(
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.vertical(
-                  top: const Radius.circular(10),
-                  bottom: Radius.circular(hasCaption ? 0 : 10),
-                ),
+                borderRadius: BorderRadius.circular(16),
                 child: imageWidget,
               ),
               if (!hasCaption)
@@ -2636,10 +2547,10 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
                   bottom: 8,
                   right: 8,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.6),
-                      borderRadius: BorderRadius.circular(10),
+                      color: Colors.black.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(12),
                     ),
                     child: buildTimeOverlay(true),
                   ),
@@ -2649,7 +2560,7 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
                   top: 8,
                   right: 8,
                   child: Container(
-                    padding: const EdgeInsets.all(4),
+                    padding: const EdgeInsets.all(6),
                     decoration: BoxDecoration(
                       color: Colors.black.withOpacity(0.5),
                       shape: BoxShape.circle,
@@ -2669,18 +2580,18 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
           if (hasCaption)
             Container(
               width: 250,
-              padding: const EdgeInsets.only(left: 12, right: 12, top: 8, bottom: 6),
+              padding: const EdgeInsets.only(left: 6, right: 6, top: 10, bottom: 2),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     message.message,
-                    style: TextStyle(
-                      color: isMe ? Colors.white : Colors.black87,
-                      fontSize: 16,
+                    style: const TextStyle(
+                      color: Colors.black87,
+                      fontSize: 15,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   Align(
                     alignment: Alignment.centerRight,
                     child: buildTimeOverlay(false),
@@ -2697,14 +2608,18 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
       return GestureDetector(
         onTap: () => _showImageViewer(message.localPhotoPath!, isLocal: true),
         child: Container(
-          constraints: const BoxConstraints(maxWidth: 254),
+          constraints: const BoxConstraints(maxWidth: 266),
           decoration: BoxDecoration(
-            color: isMe ? AppTheme.primaryColor : Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AppTheme.primaryColor,
-              width: 2,
-            ),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white, width: 8),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.12),
+                blurRadius: 15,
+                offset: const Offset(0, 6),
+              ),
+            ],
           ),
           child: buildImageContent(
             Image.file(
@@ -2733,15 +2648,19 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
     // If it's still uploading but we are the receiver (or sender lost the local file)
     if (message.photoUrl == 'uploading' || message.photoUrl == null) {
       return Container(
-        width: 250,
-        height: 250,
+        width: 266,
+        height: 266,
         decoration: BoxDecoration(
           color: Colors.grey[100],
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isMe ? AppTheme.primaryColor : Colors.grey[300]!,
-            width: 2,
-          ),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.white, width: 8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Center(
           child: Column(
@@ -2767,14 +2686,18 @@ class _ChatWindowScreenState extends State<ChatWindowScreen> with WidgetsBinding
     return GestureDetector(
       onTap: () => _showImageViewer(message.photoUrl!),
       child: Container(
-        constraints: const BoxConstraints(maxWidth: 254),
+        constraints: const BoxConstraints(maxWidth: 266),
         decoration: BoxDecoration(
-          color: isMe ? AppTheme.primaryColor : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isMe ? AppTheme.primaryColor : Colors.grey[300]!,
-            width: 2,
-          ),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: Colors.white, width: 8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.12),
+              blurRadius: 15,
+              offset: const Offset(0, 6),
+            ),
+          ],
         ),
         child: buildImageContent(
           CachedNetworkImage(

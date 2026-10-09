@@ -11,6 +11,7 @@ import '../screens/hangout_interested_users_screen.dart';
 import '../screens/profile_detail_screen.dart';
 import '../utils/error_handler.dart';
 import '../screens/match_notification_screen.dart';
+import '../widgets/premium_dialog.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class MyHangoutsTab extends StatefulWidget {
@@ -94,22 +95,32 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
           }
           
           return ListView.builder(
+            padding: const EdgeInsets.only(bottom: 120),
             itemCount: hangouts.length,
             itemBuilder: (context, index) {
               final hangout = hangouts[index];
               return Column(
                 children: [
                   _buildHangoutCard(context, hangout),
-                  if (hangout.interestedUsers.isNotEmpty)
+                  if (hangout.interestedUsers.isNotEmpty) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Requests',
+                          style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+                        ),
+                      ),
+                    ),
                     GridView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
-                        crossAxisSpacing: 8,
-                        mainAxisSpacing: 8,
-                        childAspectRatio: 0.75,
+                        crossAxisSpacing: 12,
+                        mainAxisSpacing: 12,
+                        childAspectRatio: 0.8,
                       ),
                       itemCount: hangout.interestedUsers.length,
                       itemBuilder: (context, userIndex) {
@@ -117,6 +128,7 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
                         return _buildMatchCard(context, userId, hangout);
                       },
                     ),
+                  ],
                 ],
               );
             },
@@ -130,23 +142,17 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 15,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        border: Border.all(color: Colors.grey[200]!),
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Category image section
-            Container(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Category image section
+          ClipRRect(
+            borderRadius: const BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
+            child: Container(
               height: 200,
               width: double.infinity,
               decoration: BoxDecoration(
@@ -157,39 +163,6 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
               ),
               child: Stack(
                 children: [
-                  // Dark overlay for better text visibility
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withOpacity(0.3),
-                        ],
-                      ),
-                    ),
-                  ),
-                  // Category badge
-                  Positioned(
-                    top: 16,
-                    left: 16,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primaryColor,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Text(
-                        hangout.category,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
                   // Delete button
                   Positioned(
                     top: 16,
@@ -211,78 +184,25 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
                 ],
               ),
             ),
-            // Content section
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Title
-                  Text(
-                    hangout.title,
-                    style: const TextStyle(
-                      color: Colors.black87,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  // Location
-                  Row(
-                    children: [
-                      Icon(Icons.location_on, color: AppTheme.primaryColor, size: 18),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          hangout.location,
-                          style: const TextStyle(
-                            color: Colors.black54,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  // Time
-                  Row(
-                    children: [
-                      Icon(Icons.access_time, color: AppTheme.primaryColor, size: 18),
-                      const SizedBox(width: 8),
-                      Text(
-                        _formatDateTime(hangout.dateTime),
-                        style: const TextStyle(
-                          color: Colors.black54,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  // Interested users count with avatars
-                  Row(
-                    children: [
-                      Icon(Icons.people, color: AppTheme.primaryColor, size: 18),
-                      const SizedBox(width: 8),
-                      Text(
-                        '${hangout.interestedUsers.length} interested',
-                        style: const TextStyle(
-                          color: Colors.black54,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      if (hangout.interestedUsers.isNotEmpty) const SizedBox(width: 12),
-                      if (hangout.interestedUsers.isNotEmpty)
-                        SizedBox(
-                          height: 40,
-                          width: hangout.interestedUsers.length > 3 ? 100 : (hangout.interestedUsers.length * 20 + 20),
-                          child: Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              ...hangout.interestedUsers.take(3).toList().asMap().entries.map((entry) {
+          ),
+          // Content section
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Avatars and Time
+                Row(
+                  children: [
+                    if (hangout.interestedUsers.isNotEmpty)
+                      Row(
+                        children: [
+                          SizedBox(
+                            height: 28,
+                            width: hangout.interestedUsers.length >= 3 ? 56.0 : (hangout.interestedUsers.length * 16.0 + 12.0),
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: hangout.interestedUsers.take(3).toList().asMap().entries.map((entry) {
                                 final index = entry.key;
                                 final userId = entry.value;
                                 return Positioned(
@@ -297,22 +217,15 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
                                       return Container(
                                         decoration: BoxDecoration(
                                           shape: BoxShape.circle,
-                                          border: Border.all(color: AppTheme.primaryColor, width: 2),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: AppTheme.primaryColor.withOpacity(0.3),
-                                              blurRadius: 4,
-                                              offset: const Offset(0, 2),
-                                            ),
-                                          ],
+                                          border: Border.all(color: Colors.white, width: 2),
                                         ),
                                         child: CircleAvatar(
-                                          radius: 16,
+                                          radius: 12,
                                           backgroundImage: imageUrl != null ? CachedNetworkImageProvider(imageUrl) : null,
-                                          backgroundColor: AppTheme.primaryColor.withOpacity(0.2),
+                                          backgroundColor: const Color(0xFF8B5CF6).withOpacity(0.2),
                                           child: imageUrl == null ? Text(
                                             (user['firstName'] ?? 'U')[0],
-                                            style: TextStyle(color: AppTheme.primaryColor, fontSize: 12, fontWeight: FontWeight.bold),
+                                            style: const TextStyle(color: Color(0xFF8B5CF6), fontSize: 10, fontWeight: FontWeight.bold),
                                           ) : null,
                                         ),
                                       );
@@ -320,41 +233,74 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
                                   ),
                                 );
                               }).toList(),
-                              if (hangout.interestedUsers.length > 3)
-                                Positioned(
-                                  left: 48.0,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      border: Border.all(color: AppTheme.primaryColor, width: 2),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: AppTheme.primaryColor.withOpacity(0.3),
-                                          blurRadius: 4,
-                                          offset: const Offset(0, 2),
-                                        ),
-                                      ],
-                                    ),
-                                    child: CircleAvatar(
-                                      radius: 16,
-                                      backgroundColor: AppTheme.primaryColor.withOpacity(0.2),
-                                      child: Text(
-                                        '+${hangout.interestedUsers.length - 3}',
-                                        style: TextStyle(color: AppTheme.primaryColor, fontSize: 10, fontWeight: FontWeight.bold),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                            ],
+                            ),
                           ),
-                        ),
-                    ],
+                          if (hangout.interestedUsers.length > 3)
+                            Container(
+                              margin: const EdgeInsets.only(left: 4),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF8B5CF6),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                '${hangout.interestedUsers.length - 3}+',
+                                style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                        ],
+                      ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF9CA3AF),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.access_time, color: Colors.white, size: 14),
+                          const SizedBox(width: 4),
+                          Text(
+                            _formatDateTime(hangout.dateTime),
+                            style: GoogleFonts.poppins(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  hangout.title,
+                  style: GoogleFonts.poppins(
+                    color: Colors.black87,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const Icon(Icons.location_on_outlined, color: Colors.black54, size: 16),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        hangout.location,
+                        style: GoogleFonts.poppins(
+                          color: Colors.black54,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -410,19 +356,11 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
             );
           },
           child: Container(
-            margin: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.15),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
+              borderRadius: BorderRadius.circular(16),
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(16),
               child: Stack(
                 children: [
                   // Background Image
@@ -439,13 +377,6 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
                               image: CachedNetworkImageProvider('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=600&fit=crop&crop=face'),
                               fit: BoxFit.cover,
                             ),
-                      gradient: imageUrl == null
-                          ? const LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
-                            )
-                          : null,
                     ),
                   ),
                   // Gradient Overlay
@@ -457,42 +388,55 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
                         colors: [
                           Colors.transparent,
                           Colors.transparent,
-                          Colors.black.withOpacity(0.8),
+                          Colors.black.withOpacity(0.7),
                         ],
                       ),
                     ),
                   ),
-                  // Interest Badge - Top Right
+                  // User Info at Bottom
                   Positioned(
-                    top: 12,
-                    right: 12,
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primaryColor,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Text(
-                        'Interested',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '${user['firstName'] ?? 'User'} ${user['lastName'] ?? ''}',
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
                   // Accept Button - Bottom Right
                   Positioned(
-                    bottom: 16,
-                    right: 16,
+                    bottom: 12,
+                    right: 12,
                     child: GestureDetector(
                       onTap: () => _acceptUser(context, userId, hangout),
                       child: Container(
-                        width: 40,
-                        height: 40,
+                        width: 36,
+                        height: 36,
                         decoration: BoxDecoration(
-                          color: AppTheme.primaryColor,
+                          color: const Color(0xFF8B5CF6),
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
@@ -505,39 +449,8 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
                         child: const Icon(
                           Icons.check,
                           color: Colors.white,
-                          size: 20,
+                          size: 18,
                         ),
-                      ),
-                    ),
-                  ),
-                  // User Info at Bottom
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            '${user['firstName'] ?? 'User'} ${user['lastName'] ?? ''}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Age: ${user['age'] ?? '0'}',
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
                       ),
                     ),
                   ),
@@ -552,11 +465,13 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
 
   String _formatDateTime(DateTime dateTime) {
     final now = DateTime.now();
-    final difference = dateTime.difference(now).inDays;
+    final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
+    final dateToCheck = DateTime(dateTime.year, dateTime.month, dateTime.day);
     
-    if (difference == 0) {
+    if (dateToCheck == today) {
       return 'Today ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
-    } else if (difference == 1) {
+    } else if (dateToCheck == tomorrow) {
       return 'Tomorrow ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
     } else {
       return '${dateTime.day}/${dateTime.month} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
@@ -707,97 +622,34 @@ class _MyHangoutsTabState extends State<MyHangoutsTab> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          child: Container(
-            margin: const EdgeInsets.all(20),
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Delete Hangout',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
+        return PremiumDialog(
+          title: 'Delete Hangout',
+          subtitle: 'Are you sure you want to delete this hangout?',
+          primaryActionText: 'Delete',
+          secondaryActionText: 'Cancel',
+          onPrimaryAction: () async {
+            Navigator.of(context).pop();
+            try {
+              await HangoutService.deleteHangout(hangoutId);
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Hangout deleted successfully'),
+                    backgroundColor: Colors.green,
                   ),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Are you sure you want to delete this hangout?',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: const Text(
-                          'Cancel',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Container(
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: Color(0xFF6366F1),
-                          borderRadius: BorderRadius.circular(22),
-                        ),
-                        child: TextButton(
-                          onPressed: () async {
-                            Navigator.of(context).pop();
-                            try {
-                              await HangoutService.deleteHangout(hangoutId);
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Hangout deleted successfully'),
-                                    backgroundColor: Colors.green,
-                                  ),
-                                );
-                              }
-                            } catch (e) {
-                              if (mounted) {
-                                ErrorHandler.showErrorSnackBar(
-                                  context,
-                                  e,
-                                  onRetry: () => _deleteHangout(context, hangoutId),
-                                  retryLabel: 'Try Again',
-                                );
-                              }
-                            }
-                          },
-                          child: const Text(
-                            'Delete',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+                );
+              }
+            } catch (e) {
+              if (mounted) {
+                ErrorHandler.showErrorSnackBar(
+                  context,
+                  e,
+                  onRetry: () => _deleteHangout(context, hangoutId),
+                  retryLabel: 'Try Again',
+                );
+              }
+            }
+          },
         );
       },
     );

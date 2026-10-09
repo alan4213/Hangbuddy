@@ -4,6 +4,7 @@ import '../widgets/upcoming_hangouts_tab.dart';
 import '../theme/app_theme.dart';
 import '../services/hangout_service.dart';
 import '../services/match_service.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class MatchesScreen extends StatefulWidget {
   final int initialTabIndex;
@@ -37,24 +38,38 @@ class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProvider
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        title: Text(
+          'Haule',
+          style: GoogleFonts.poppins(
+            fontSize: 28,
+            fontWeight: FontWeight.w500,
+            color: Colors.black87,
+          ),
+        ),
+        centerTitle: false,
+      ),
       body: Column(
         children: [
-          SizedBox(height: (MediaQuery.of(context).size.height * 0.07).clamp(20.0, 50.0)),
           Container(
             color: Colors.white,
             child: TabBar(
               controller: _tabController,
-              labelColor: AppTheme.primaryColor,
-              unselectedLabelColor: Colors.grey,
-              indicatorColor: AppTheme.primaryColor,
-              indicatorWeight: 3,
-              labelStyle: TextStyle(
+              labelColor: const Color(0xFF8B5CF6),
+              unselectedLabelColor: Colors.grey[500],
+              indicatorColor: const Color(0xFF8B5CF6),
+              indicatorWeight: 2,
+              dividerColor: Colors.grey[200],
+              labelStyle: GoogleFonts.poppins(
                 fontWeight: FontWeight.w600,
-                fontSize: (MediaQuery.of(context).size.width * 0.04).clamp(14.0, 18.0),
+                fontSize: 14,
               ),
-              unselectedLabelStyle: TextStyle(
-                fontWeight: FontWeight.w400,
-                fontSize: (MediaQuery.of(context).size.width * 0.04).clamp(14.0, 18.0),
+              unselectedLabelStyle: GoogleFonts.poppins(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
               ),
               tabs: [
                 StreamBuilder<List<dynamic>>(
@@ -71,17 +86,17 @@ class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProvider
                           [
                             SizedBox(width: 8),
                             Container(
-                              padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: AppTheme.primaryColor,
-                                borderRadius: BorderRadius.circular(10),
+                              padding: const EdgeInsets.all(6),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF8B5CF6),
+                                shape: BoxShape.circle,
                               ),
                               child: Text(
                                 interestedCount.toString(),
-                                style: TextStyle(
+                                style: GoogleFonts.poppins(
                                   color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ),
@@ -104,17 +119,17 @@ class _MatchesScreenState extends State<MatchesScreen> with SingleTickerProvider
                           [
                             SizedBox(width: 8),
                             Container(
-                              padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: AppTheme.primaryColor,
-                                borderRadius: BorderRadius.circular(10),
+                              padding: const EdgeInsets.all(6),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF8B5CF6),
+                                shape: BoxShape.circle,
                               ),
                               child: Text(
                                 count.toString(),
-                                style: TextStyle(
+                                style: GoogleFonts.poppins(
                                   color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                             ),

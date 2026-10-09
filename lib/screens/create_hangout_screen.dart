@@ -13,6 +13,7 @@ import '../widgets/loading_widget.dart';
 import '../utils/responsive.dart';
 import '../widgets/tutorial_overlay.dart';
 import '../utils/error_handler.dart';
+import '../widgets/premium_dialog.dart';
 
 class CreateHangoutScreen extends StatefulWidget {
   const CreateHangoutScreen({super.key});
@@ -86,10 +87,10 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
   @override
   Widget build(BuildContext context) {
     final createContent = Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: Colors.white,
       extendBodyBehindAppBar: false,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF8FAFC),
+        backgroundColor: Colors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
@@ -108,16 +109,10 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+              border: Border.all(color: Colors.grey[300]!, width: 1.2),
             ),
             child: IconButton(
-              icon: Icon(Icons.arrow_back, color: AppTheme.primaryColor, size: 20),
+              icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black87, size: 16),
               padding: EdgeInsets.zero,
               onPressed: () => Navigator.pop(context),
             ),
@@ -128,49 +123,21 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
         children: [
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.only(top: 24, left: 24, right: 24, bottom: 24),
+              padding: const EdgeInsets.only(top: 16, left: 24, right: 24, bottom: 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header
-                  SizedBox(
-                    width: double.infinity,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          "What's the plan?",
-                          style: GoogleFonts.poppins(
-                            fontSize: 32,
-                            fontWeight: FontWeight.w900,
-                            color: AppTheme.primaryColor,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "DEFINE YOUR NEXT ADVENTURE",
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: AppTheme.primaryColor.withOpacity(0.6),
-                            letterSpacing: 1.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-                  _buildSectionLabel('HANGOUT TITLE'),
+                  _buildSectionLabel('Hangout Title'),
                   _buildTitleField(),
 
                   const SizedBox(height: 24),
 
-                  _buildSectionLabel('CATEGORY'),
+                  _buildSectionLabel('Category'),
                   _buildCategoryField(),
 
                   const SizedBox(height: 24),
 
-                  _buildSectionLabel('LOCATION'),
+                  _buildSectionLabel('Location'),
                   _buildLocationField(),
 
                   const SizedBox(height: 24),
@@ -179,7 +146,13 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
 
                   const SizedBox(height: 24),
 
-                  _buildSectionLabel('WHEN?'),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildSectionLabel('When Date & Time'),
+                      Text('Select Date', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFF8B5CF6))),
+                    ],
+                  ),
                   Row(
                     key: _dateTimeKey,
                     children: [
@@ -187,6 +160,8 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
                         child: _buildDateTimeBox(
                           '${_selectedDate.month}/${_selectedDate.day}/${_selectedDate.year}',
                           _selectDate,
+                          'DATE',
+                          Icons.calendar_today_rounded,
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -194,6 +169,8 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
                         child: _buildDateTimeBox(
                           _selectedTime.format(context),
                           _selectTime,
+                          'TIME',
+                          Icons.access_time_rounded,
                         ),
                       ),
                     ],
@@ -209,7 +186,7 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: const BoxDecoration(
-              color: Color(0xFFF8FAFC),
+              color: Colors.white,
             ),
             child: SizedBox(
               width: double.infinity,
@@ -217,10 +194,10 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
                 key: _createButtonKey,
                 onPressed: _isCreating ? null : _createHangout,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
+                  backgroundColor: const Color(0xFF8B5CF6),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(32),
                   ),
                   elevation: 0,
                 ),
@@ -233,13 +210,27 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
                           strokeWidth: 2,
                         ),
                       )
-                    : Text(
-                        'Create Hangout',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Create Hangout',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.arrow_outward, color: Color(0xFF8B5CF6), size: 16),
+                          ),
+                        ],
                       ),
               ),
             ),
@@ -301,14 +292,13 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
 
   Widget _buildSectionLabel(String label) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         label,
         style: GoogleFonts.poppins(
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          color: const Color(0xFF475569),
-          letterSpacing: 1.0,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: Colors.grey[600],
         ),
       ),
     );
@@ -320,13 +310,7 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: Colors.grey[200]!),
       ),
       child: TextField(
         controller: _titleController,
@@ -336,7 +320,7 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
           hintStyle: GoogleFonts.poppins(color: const Color(0xFF94A3B8), fontSize: 16),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-          suffixIcon: Icon(Icons.edit_note, color: AppTheme.primaryColor.withOpacity(0.5)),
+          prefixIcon: const Icon(Icons.format_list_bulleted, color: Color(0xFF8B5CF6)),
         ),
       ),
     );
@@ -353,13 +337,7 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.02),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+              border: Border.all(color: Colors.grey[200]!),
             ),
             child: Row(
               children: [
@@ -395,13 +373,13 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
                 Container(
                   width: 32,
                   height: 32,
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.1),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF3E8FF),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
                     _showCategoryDropdown ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
-                    color: AppTheme.primaryColor,
+                    color: const Color(0xFF8B5CF6),
                     size: 20,
                   ),
                 ),
@@ -415,13 +393,7 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+              border: Border.all(color: Colors.grey[200]!),
             ),
             constraints: const BoxConstraints(maxHeight: 250),
             child: ListView.builder(
@@ -470,30 +442,46 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
     );
   }
 
-  Widget _buildDateTimeBox(String text, VoidCallback onTap) {
+  Widget _buildDateTimeBox(String text, VoidCallback onTap, String label, IconData icon) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.02),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+          border: Border.all(color: Colors.grey[200]!),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: const BoxDecoration(
+                color: Color(0xFFF3E8FF),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: const Color(0xFF8B5CF6), size: 16),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    label,
+                    style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w600, color: Colors.grey[400]),
+                  ),
+                  Text(
+                    text,
+                    style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.black87),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
             ),
           ],
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          text,
-          style: GoogleFonts.poppins(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: const Color(0xFF0F172A),
-          ),
         ),
       ),
     );
@@ -511,13 +499,7 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.02),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                  border: Border.all(color: Colors.grey[200]!),
                 ),
                 child: TextField(
                   controller: _locationController,
@@ -551,15 +533,8 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
                 width: 62,
                 height: 62,
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryColor,
+                  color: const Color(0xFF8B5CF6),
                   borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.primaryColor.withOpacity(0.3),
-                      blurRadius: 8,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
                 ),
                 child: _isGettingLocation
                     ? const Center(
@@ -619,13 +594,7 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: Colors.grey[200]!),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -638,12 +607,11 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'VISIBILITY RANGE',
+                      'Visibility Range',
                       style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF475569),
-                        letterSpacing: 1.0,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey[600],
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -659,19 +627,12 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
                 ),
               ),
               const SizedBox(width: 8), // Add a little spacing
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  _maxDistance >= 100.0 ? 'Anywhere' : '${_maxDistance.toInt()} km',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.primaryColor,
-                  ),
+              Text(
+                _maxDistance >= 100.0 ? 'Anywhere' : '${_maxDistance.toInt()} km',
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF8B5CF6),
                 ),
               ),
             ],
@@ -679,11 +640,11 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
           const SizedBox(height: 32),
           SliderTheme(
             data: SliderThemeData(
-              activeTrackColor: AppTheme.primaryColor.withOpacity(0.2),
-              inactiveTrackColor: const Color(0xFFF1F5F9),
-              thumbColor: AppTheme.primaryColor,
-              overlayColor: AppTheme.primaryColor.withOpacity(0.1),
-              trackHeight: 4,
+              activeTrackColor: const Color(0xFF8B5CF6),
+              inactiveTrackColor: const Color(0xFFE2E8F0),
+              thumbColor: const Color(0xFF8B5CF6),
+              overlayColor: const Color(0xFF8B5CF6).withOpacity(0.1),
+              trackHeight: 6,
             ),
             child: Slider(
               value: _maxDistance,
@@ -698,8 +659,8 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('LOCAL', style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: const Color(0xFF94A3B8))),
-                Text('WORLDWIDE', style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: const Color(0xFF94A3B8))),
+                Text('Local', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: const Color(0xFF94A3B8))),
+                Text('Worldwide', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600, color: const Color(0xFF94A3B8))),
               ],
             ),
           ),
@@ -707,13 +668,13 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
+              color: const Color(0xFFF3E8FF),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.info_outline, color: AppTheme.primaryColor, size: 18),
+                const Icon(Icons.info_outline, color: Color(0xFF8B5CF6), size: 18),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -723,8 +684,7 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
                     style: GoogleFonts.poppins(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: const Color(0xFF475569),
-                      fontStyle: FontStyle.italic,
+                      color: const Color(0xFF8B5CF6),
                     ),
                   ),
                 ),
@@ -907,14 +867,18 @@ class _CreateHangoutScreenState extends State<CreateHangoutScreen> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const SuccessDialog(),
+        builder: (context) => PremiumDialog(
+          title: 'Success!',
+          subtitle: 'Hangout created successfully.',
+          primaryActionText: 'Got it',
+          onPrimaryAction: () {
+            Navigator.of(context).pop(); // Close dialog
+            Navigator.pop(context); // Go back to previous screen
+          },
+        ),
       );
 
-      // Auto close after 2 seconds and navigate back
-      Timer(const Duration(seconds: 2), () {
-        Navigator.of(context).pop(); // Close dialog
-        Navigator.pop(context); // Go back to previous screen
-      });
+
     } catch (e) {
       print('ERROR creating hangout: $e');
       print('Error type: ${e.runtimeType}');

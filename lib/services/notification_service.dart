@@ -20,11 +20,14 @@ class NotificationService {
       sound: true,
     );
 
-    // Get FCM token and save to user profile
-    String? token = await _messaging.getToken();
-    if (token != null) {
-      await _saveTokenToDatabase(token);
-    }
+    // Get FCM token and save to user profile asynchronously to prevent cold start freezing
+    _messaging.getToken().then((token) {
+      if (token != null) {
+        _saveTokenToDatabase(token);
+      }
+    }).catchError((e) {
+      print('Error getting FCM token during launch: $e');
+    });
 
     // Handle foreground messages with in-app notifications
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {

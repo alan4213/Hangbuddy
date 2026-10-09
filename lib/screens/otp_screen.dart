@@ -6,7 +6,9 @@ import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import '../services/account_manager.dart';
 import '../theme/app_theme.dart';
+import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
+import '../widgets/premium_dialog.dart';
 
 class OTPScreen extends StatefulWidget {
   const OTPScreen({super.key});
@@ -99,25 +101,19 @@ class _OTPScreenState extends State<OTPScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('Complete Account Setup'),
-        content: const Text('Would you like to link a Google account for easier sign-in, or continue with just your phone number?'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.pushNamed(context, '/email');
-            },
-            child: const Text('Continue with Phone'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await _linkGoogleAccount();
-            },
-            child: const Text('Link Google Account'),
-          ),
-        ],
+      builder: (context) => PremiumDialog(
+        title: 'Complete Account Setup',
+        subtitle: 'Would you like to link a Google account for easier sign-in, or continue with just your phone number?',
+        primaryActionText: 'Link Google Account',
+        secondaryActionText: 'Continue with Phone',
+        onPrimaryAction: () async {
+          Navigator.pop(context);
+          await _linkGoogleAccount();
+        },
+        onSecondaryAction: () {
+          Navigator.pop(context);
+          Navigator.pushNamed(context, '/email');
+        },
       ),
     );
   }

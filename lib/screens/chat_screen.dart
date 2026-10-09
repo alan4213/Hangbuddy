@@ -8,6 +8,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../theme/app_theme.dart';
 import '../widgets/loading_widget.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/cupertino.dart';
 
 class ChatScreen extends StatefulWidget {
   @override
@@ -39,46 +41,42 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
-          padding: EdgeInsets.all((MediaQuery.of(context).size.width * 0.05).clamp(12.0, 20.0)),
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
           child: Column(
             children: [
               // Header
               Padding(
-                padding: EdgeInsets.only(bottom: (MediaQuery.of(context).size.height * 0.02).clamp(12.0, 20.0)),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Chats',
-                    style: TextStyle(
-                      fontSize: (MediaQuery.of(context).size.width * 0.07).clamp(20.0, 28.0),
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryColor,
+                padding: const EdgeInsets.only(top: 20, bottom: 24),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Haule',
+                      style: GoogleFonts.poppins(
+                        fontSize: 28.0,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black,
+                      ),
                     ),
-                  ),
+                    Row(
+                      children: [
+                        Container(
+                          width: 46,
+                          height: 46,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.grey[300]!, width: 1.2),
+                          ),
+                          child: const Icon(CupertinoIcons.search, color: Colors.black87, size: 24),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-              
-              // Search Bar
-              Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8F9FA),
-                  borderRadius: BorderRadius.circular((MediaQuery.of(context).size.width * 0.05).clamp(16.0, 24.0)),
-                ),
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Search conversations...',
-                    hintStyle: TextStyle(color: Colors.grey[500]),
-                    prefixIcon: Icon(Icons.search, color: AppTheme.primaryColor),
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(vertical: (MediaQuery.of(context).size.height * 0.02).clamp(12.0, 20.0)),
-                  ),
-                ),
-              ),
-              
-              SizedBox(height: (MediaQuery.of(context).size.height * 0.03).clamp(16.0, 24.0)),
             
               // Chats and Matches List
               Expanded(
@@ -105,6 +103,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         setState(() {});
                       },
                       child: ListView.builder(
+                        padding: const EdgeInsets.only(bottom: 120), // Padding for floating navbar
                         itemCount: chats.length,
                         itemBuilder: (context, index) {
                           final chat = chats[index];
@@ -215,51 +214,28 @@ class _ChatScreenState extends State<ChatScreen> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: const Color(0xFFF8F9FA),
-          borderRadius: BorderRadius.circular(20),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey[200]!),
         ),
         child: Row(
           children: [
-            Stack(
-              children: [
-                CircleAvatar(
-                  radius: 28,
-                  backgroundColor: isSystemChat ? Colors.white : avatarColors[otherUserId.hashCode % avatarColors.length],
-                  backgroundImage: isSystemChat 
-                      ? AssetImage('assets/images/haule_logo.png') as ImageProvider
-                      : (userPhoto != null ? CachedNetworkImageProvider(userPhoto) : null),
-                  child: !isSystemChat && userPhoto == null ? Text(
-                    userName[0].toUpperCase(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ) : null,
+            CircleAvatar(
+              radius: 28,
+              backgroundColor: isSystemChat ? Colors.white : avatarColors[otherUserId.hashCode % avatarColors.length],
+              backgroundImage: isSystemChat 
+                  ? const AssetImage('assets/images/haule_logo.png') as ImageProvider
+                  : (userPhoto != null ? CachedNetworkImageProvider(userPhoto) : null),
+              child: !isSystemChat && userPhoto == null ? Text(
+                userName[0].toUpperCase(),
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
                 ),
-                if (unreadCount > 0)
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Container(
-                      padding: EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        unreadCount > 9 ? '9+' : unreadCount.toString(),
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
+              ) : null,
             ),
-            SizedBox(width: 12),
+            const SizedBox(width: 16),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -268,29 +244,29 @@ class _ChatScreenState extends State<ChatScreen> {
                     children: [
                       Text(
                         userName,
-                        style: const TextStyle(
-                          fontSize: 18,
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
                           fontWeight: FontWeight.w600,
-                          color: Colors.black,
+                          color: Colors.black87,
                         ),
                       ),
                       if (isSystemChat) ...[
-                        SizedBox(width: 4),
-                        Icon(
+                        const SizedBox(width: 4),
+                        const Icon(
                           Icons.verified,
                           color: Color(0xFFFFD700),
-                          size: 18,
+                          size: 16,
                         ),
                       ],
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
                   Text(
                     lastMessage.isEmpty ? 'Start a conversation' : lastMessage,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                      fontWeight: unreadCount > 0 ? FontWeight.w600 : FontWeight.normal,
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      color: Colors.grey[500],
+                      fontWeight: unreadCount > 0 ? FontWeight.w500 : FontWeight.w400,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -298,12 +274,39 @@ class _ChatScreenState extends State<ChatScreen> {
                 ],
               ),
             ),
-            Text(
-              _formatTime(chat['lastMessageTime']),
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[500],
-              ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  _formatTime(chat['lastMessageTime']),
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: Colors.grey[400],
+                  ),
+                ),
+                if (unreadCount > 0) ...[
+                  const SizedBox(height: 6),
+                  Container(
+                    width: 24,
+                    height: 24,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF8B5CF6),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        unreadCount > 9 ? '9+' : unreadCount.toString(),
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ],
         ),

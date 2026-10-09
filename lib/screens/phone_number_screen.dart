@@ -7,6 +7,7 @@ import '../services/auth_service.dart';
 import '../services/user_service.dart';
 import '../services/video_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/premium_dialog.dart';
 
 class PhoneNumberScreen extends StatefulWidget {
   final bool showGoogleSignIn;
@@ -188,65 +189,19 @@ class _PhoneNumberScreenState extends State<PhoneNumberScreen> {
                                   await showDialog(
                                     context: context,
                                     barrierDismissible: false,
-                                    builder: (context) => AlertDialog(
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                                      title: Row(
-                                        children: [
-                                          Container(
-                                            width: 40,
-                                            height: 40,
-                                            decoration: BoxDecoration(
-                                              gradient: AppTheme.primaryGradient,
-                                              borderRadius: BorderRadius.circular(20),
-                                            ),
-                                            child: Icon(Icons.account_circle, color: Colors.white, size: 24),
+                                    builder: (context) => PremiumDialog(
+                                      title: 'Account Not Found',
+                                      subtitle: 'No account found with this Google email. Please create a new account with your phone number.',
+                                      primaryActionText: 'Create Account',
+                                      onPrimaryAction: () {
+                                        Navigator.pop(context);
+                                        Navigator.pushReplacement(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => PhoneNumberScreen(showGoogleSignIn: false),
                                           ),
-                                          SizedBox(width: 12),
-                                          Expanded(
-                                            child: Text(
-                                              'Account Not Found',
-                                              style: TextStyle(
-                                                fontSize: 18,
-                                                fontWeight: FontWeight.bold,
-                                                color: AppTheme.textPrimary,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      content: Text(
-                                        'No account found with this Google email. Please create a new account with your phone number.',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          color: AppTheme.textSecondary,
-                                          height: 1.4,
-                                        ),
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () {
-                                            Navigator.pop(context);
-                                            Navigator.pushReplacement(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => PhoneNumberScreen(showGoogleSignIn: false),
-                                              ),
-                                            );
-                                          },
-                                          style: TextButton.styleFrom(
-                                            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                          ),
-                                          child: Text(
-                                            'Create Account',
-                                            style: TextStyle(
-                                              color: AppTheme.primaryColor,
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: 16,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
+                                        );
+                                      },
                                     ),
                                   );
                                 } else {

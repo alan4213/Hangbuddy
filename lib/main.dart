@@ -195,158 +195,131 @@ class _MainNavigationState extends State<MainNavigation> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_selectedIndex],
-      bottomNavigationBar: Container(
-        height: 73,
-        child: OverflowBox(
-          maxHeight: double.infinity,
-          child: StreamBuilder<int>(
-            stream: ChatService.getUnreadMessageCount(),
-            builder: (context, snapshot) {
-              final unreadCount = snapshot.data ?? 0;
-              
-              return BottomNavigationBar(
-                currentIndex: _selectedIndex,
-                onTap: (index) {
-                  HapticFeedback.selectionClick();
-                  setState(() {
-                    _selectedIndex = index;
-                    // Reset matches tab index when manually navigating
-                    if (index == 1) {
-                      _matchesTabIndex = 0;
-                    }
-                  });
-                },
-                type: BottomNavigationBarType.fixed,
-                selectedItemColor: AppTheme.primaryColor,
-                unselectedItemColor: Colors.grey,
-                backgroundColor: AppTheme.bottomNavColor,
-                elevation: 20,
-                selectedLabelStyle: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-                unselectedLabelStyle: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                ),
-                items: [
-                BottomNavigationBarItem(
-                  icon: Container(
-                    alignment: Alignment.center,
-                    child: Image.asset(
-                      'assets/images/haule_logo_button.png',
-                      width: 24,
-                      height: 24,
+      extendBody: true,
+      body: Stack(
+        children: [
+          _screens[_selectedIndex],
+          Positioned(
+            bottom: 30,
+            left: 0,
+            right: 0,
+            child: StreamBuilder<int>(
+              stream: ChatService.getUnreadMessageCount(),
+              builder: (context, snapshot) {
+                final unreadCount = snapshot.data ?? 0;
+                
+                return Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12), // Increased padding
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.circular(50), // Fully rounded
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildNavItem(0, Icons.home_outlined, Icons.home),
+                        const SizedBox(width: 28), // Increased spacing
+                        _buildNavItemWithBadge(1, Icons.favorite_border, Icons.favorite, _interestCount),
+                        const SizedBox(width: 28), // Increased spacing
+                        _buildNavItemWithBadge(2, Icons.chat_bubble_outline, Icons.chat_bubble, unreadCount),
+                        const SizedBox(width: 28), // Increased spacing
+                        _buildNavItem(3, Icons.person_outline, Icons.person),
+                      ],
                     ),
                   ),
-                  label: '',
-                ),
-                BottomNavigationBarItem(
-                  icon: Stack(
-                    children: [
-                      const Icon(Icons.favorite),
-                      if (_interestCount > 0)
-                        Positioned(
-                          right: 0,
-                          top: 0,
-                          child: Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: const BoxDecoration(
-                              color: Colors.red,
-                              shape: BoxShape.circle,
-                            ),
-                            constraints: const BoxConstraints(
-                              minWidth: 16,
-                              minHeight: 16,
-                            ),
-                            child: Text(
-                              _interestCount > 99 ? '99+' : _interestCount.toString(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  label: '',
-                ),
-                BottomNavigationBarItem(
-                  icon: Stack(
-                    children: [
-                      const Icon(Icons.chat),
-                      if (unreadCount > 0)
-                        Positioned(
-                          right: 0,
-                          top: 0,
-                          child: Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: const BoxDecoration(
-                              color: Colors.red,
-                              shape: BoxShape.circle,
-                            ),
-                            constraints: const BoxConstraints(
-                              minWidth: 16,
-                              minHeight: 16,
-                            ),
-                            child: Text(
-                              unreadCount > 99 ? '99+' : unreadCount.toString(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  label: '',
-                ),
-                BottomNavigationBarItem(
-                  icon: FutureBuilder(
-                    future: UserService.getUserProfile(),
-                    builder: (context, snapshot) {
-                      final user = snapshot.data;
-                      return Container(
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: _selectedIndex == 3 ? AppTheme.primaryColor : Colors.grey,
-                            width: 2,
-                          ),
-                          image: user?.profileImageUrl != null
-                              ? DecorationImage(
-                                  image: NetworkImage(user!.profileImageUrl!),
-                                  fit: BoxFit.cover,
-                                )
-                              : null,
-                          color: user?.profileImageUrl == null ? Colors.grey[300] : null,
-                        ),
-                        child: user?.profileImageUrl == null
-                            ? Icon(
-                                Icons.person,
-                                size: 16,
-                                color: _selectedIndex == 3 ? AppTheme.primaryColor : Colors.grey,
-                              )
-                            : null,
-                      );
-                    },
-                  ),
-                  label: '',
-                ),
-              ],
-              );
-            },
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavItem(int index, IconData outlineIcon, IconData solidIcon) {
+    final isSelected = _selectedIndex == index;
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() {
+          _selectedIndex = index;
+          if (index == 1) _matchesTabIndex = 0;
+        });
+      },
+      child: Container(
+        width: 56, // Increased width
+        height: 56, // Increased height
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: isSelected ? const Color(0xFF8B5CF6) : Colors.transparent,
+        ),
+        child: Center(
+          child: Icon(
+            isSelected ? solidIcon : outlineIcon,
+            color: isSelected ? Colors.white : Colors.grey[400],
+            size: 28, // Increased icon size
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildNavItemWithBadge(int index, IconData outlineIcon, IconData solidIcon, int badgeCount) {
+    final isSelected = _selectedIndex == index;
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() {
+          _selectedIndex = index;
+          if (index == 1) _matchesTabIndex = 0;
+        });
+      },
+      child: Stack(
+        children: [
+          Container(
+            width: 56, // Increased width
+            height: 56, // Increased height
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isSelected ? const Color(0xFF8B5CF6) : Colors.transparent,
+            ),
+            child: Center(
+              child: Icon(
+                isSelected ? solidIcon : outlineIcon,
+                color: isSelected ? Colors.white : Colors.grey[400],
+                size: 28, // Increased icon size
+              ),
+            ),
+          ),
+          if (badgeCount > 0)
+            Positioned(
+              right: 0,
+              top: 0,
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: Colors.red,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  badgeCount > 99 ? '99+' : badgeCount.toString(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

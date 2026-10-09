@@ -445,29 +445,47 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
       appBar: AppBar(
         backgroundColor: const Color(0xFFF4F6FB),
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppTheme.primaryColor),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Profile Details',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.black,
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Icon(Icons.arrow_back_ios_new, color: AppTheme.primaryColor, size: 16),
+            ),
           ),
         ),
+        title: Text(
+          'Edit Profile',
+          style: GoogleFonts.poppins(
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF1E293B),
+          ),
+        ),
+        centerTitle: true,
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: ElevatedButton(
               onPressed: _isLoading ? null : _saveProfile,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                elevation: 0,
               ),
               child: _isLoading
                 ? const SizedBox(
@@ -478,9 +496,13 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                       strokeWidth: 2,
                     ),
                   )
-                : const Text(
+                : Text(
                     'Save',
-                    style: TextStyle(color: Colors.white),
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 14,
+                    ),
                   ),
             ),
           ),
@@ -495,27 +517,84 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
             // Profile Completion Status
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+              padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
               margin: const EdgeInsets.only(bottom: 32),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                    color: AppTheme.primaryColor.withOpacity(0.08),
-                    blurRadius: 24,
-                    offset: const Offset(0, 8),
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
                 ],
+                border: Border.all(color: Colors.grey.shade100),
               ),
-              child: Column(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        RichText(
+                          text: TextSpan(
+                            style: GoogleFonts.poppins(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: const Color(0xFF1E293B),
+                              height: 1.2,
+                            ),
+                            children: [
+                              const TextSpan(text: 'Your profile is '),
+                              TextSpan(
+                                text: '$_profileCompletionPercentage%\n',
+                                style: const TextStyle(color: AppTheme.primaryColor),
+                              ),
+                              const TextSpan(text: 'complete!'),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Add a few more details to get\nbetter matches.',
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            color: Colors.grey[600],
+                            height: 1.4,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        // Progress Bar
+                        Stack(
+                          children: [
+                            Container(
+                              height: 6,
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryColor.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                            ),
+                            Container(
+                              height: 6,
+                              width: MediaQuery.of(context).size.width * 0.45 * (_profileCompletionPercentage / 100),
+                              decoration: BoxDecoration(
+                                color: AppTheme.primaryColor,
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
                   // Avatar with Edit Button
                   Stack(
                     children: [
                       Container(
-                        width: 100,
-                        height: 100,
+                        padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(
@@ -523,23 +602,30 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                             width: 2.5,
                           ),
                         ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(50),
-                          child: _userProfile?.profileImageUrl != null
-                              ? CachedNetworkImage(
-                                  imageUrl: _userProfile!.profileImageUrl!,
-                                  fit: BoxFit.cover,
-                                  errorWidget: (context, url, error) {
-                                    return Container(
-                                      color: Colors.grey[200],
-                                      child: Icon(Icons.person, color: Colors.grey[600], size: 40),
-                                    );
-                                  },
-                                )
-                              : Container(
-                                  color: Colors.grey[200],
-                                  child: Icon(Icons.person, color: Colors.grey[600], size: 40),
-                                ),
+                        child: Container(
+                          width: 80,
+                          height: 80,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(40),
+                            child: _userProfile?.profileImageUrl != null
+                                ? CachedNetworkImage(
+                                    imageUrl: _userProfile!.profileImageUrl!,
+                                    fit: BoxFit.cover,
+                                    errorWidget: (context, url, error) {
+                                      return Container(
+                                        color: Colors.grey[200],
+                                        child: Icon(Icons.person, color: Colors.grey[600], size: 40),
+                                      );
+                                    },
+                                  )
+                                : Container(
+                                    color: Colors.grey[200],
+                                    child: Icon(Icons.person, color: Colors.grey[600], size: 40),
+                                  ),
+                          ),
                         ),
                       ),
                       Positioned(
@@ -548,44 +634,17 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                         child: Container(
                           padding: const EdgeInsets.all(6),
                           decoration: BoxDecoration(
-                            color: AppTheme.primaryColor,
+                            color: Colors.white,
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.1),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              )
+                            ],
                           ),
-                          child: const Icon(Icons.edit, color: Colors.white, size: 16),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  // Text
-                  Text(
-                    'Your profile is ${_profileCompletionPercentage}%\ncomplete!',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF1E293B),
-                      height: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  // Progress Bar
-                  Stack(
-                    children: [
-                      Container(
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                      ),
-                      Container(
-                        height: 8,
-                        width: MediaQuery.of(context).size.width * 0.8 * (_profileCompletionPercentage / 100),
-                        decoration: BoxDecoration(
-                          color: AppTheme.primaryColor,
-                          borderRadius: BorderRadius.circular(4),
+                          child: const Icon(Icons.edit, color: Colors.black87, size: 14),
                         ),
                       ),
                     ],
@@ -720,23 +779,23 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: const BoxDecoration(
-                                      color: Colors.white,
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.primaryColor.withOpacity(0.1),
                                       shape: BoxShape.circle,
                                     ),
                                     child: Icon(
                                       Icons.add,
-                                      size: 24,
+                                      size: 20,
                                       color: AppTheme.primaryColor,
                                     ),
                                   ),
-                                  const SizedBox(height: 12),
+                                  const SizedBox(height: 8),
                                   Text(
                                     'Add Photo',
                                     style: GoogleFonts.poppins(
                                       color: AppTheme.primaryColor,
-                                      fontSize: 14,
+                                      fontSize: 10,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -759,16 +818,13 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
             ],
 
             const SizedBox(height: 32),
-
             // First Name Field
             _buildInputField(
               label: 'First Name',
               controller: _firstNameController,
               icon: Icons.person_outline,
             ),
-
-            const SizedBox(height: 24),
-
+            const SizedBox(height: 16),
             // Last Name Field
             _buildInputField(
               label: 'Last Name',
@@ -776,110 +832,66 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
               icon: Icons.person_outline,
               isIncomplete: _lastNameController.text.isEmpty,
             ),
-
-            const SizedBox(height: 24),
-
+            const SizedBox(height: 16),
             // Gender Field
-            _buildSectionTitle('I am a', isIncomplete: _selectedGender == null),
-            GestureDetector(
+            _buildSelectionField(
+              label: 'I am a',
+              value: _selectedGender,
+              hint: 'Select gender',
+              icon: Icons.people_outline,
               onTap: () async {
                 final result = await Navigator.push<String>(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => GenderScreen(
-                      initialGender: _selectedGender,
-                      isEditMode: true,
-                    ),
-                  ),
+                  MaterialPageRoute(builder: (context) => GenderScreen(initialGender: _selectedGender, isEditMode: true)),
                 );
-                if (result != null) {
-                  setState(() => _selectedGender = result);
-                }
+                if (result != null) setState(() => _selectedGender = result);
               },
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.people_outline, color: AppTheme.primaryColor),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        _selectedGender ?? 'Select gender',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: _selectedGender != null ? AppTheme.textPrimary : Colors.grey[600],
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    Icon(Icons.arrow_forward_ios, color: Colors.grey[400], size: 16),
-                  ],
-                ),
-              ),
             ),
-
-            const SizedBox(height: 24),
-
-            // Interests Field
-            _buildSectionTitle('Interests', isIncomplete: _selectedInterests.length < 3),
+            const SizedBox(height: 16),
+            // Interests Field (custom for pills)
             GestureDetector(
               onTap: () async {
                 final result = await Navigator.push<List<String>>(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => InterestsScreen(
-                      initialInterests: _selectedInterests,
-                      isEditMode: true,
-                    ),
-                  ),
+                  MaterialPageRoute(builder: (context) => InterestsScreen(initialInterests: _selectedInterests, isEditMode: true)),
                 );
-                if (result != null) {
-                  setState(() => _selectedInterests = result);
-                }
+                if (result != null) setState(() => _selectedInterests = result);
               },
               child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.only(top: 16, left: 16, right: 16, bottom: 16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+                  color: const Color(0xFFF8F9FA), // Soft grey background
+                  borderRadius: BorderRadius.circular(24), // Pill-like rounding
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    _buildSectionTitle('Interests', isIncomplete: _selectedInterests.length < 3),
+                    const SizedBox(height: 8),
                     Row(
                       children: [
                         Icon(Icons.favorite, color: AppTheme.primaryColor),
                         const SizedBox(width: 12),
                         Text(
                           'Tap to edit interests',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: AppTheme.textPrimary,
-                            fontWeight: FontWeight.w500,
-                          ),
+                          style: GoogleFonts.poppins(fontSize: 16, color: AppTheme.textPrimary, fontWeight: FontWeight.w500),
                         ),
-                        const Spacer(),
-                        Icon(Icons.arrow_forward_ios, color: Colors.grey[400], size: 16),
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Icon(Icons.edit, color: Colors.grey[800], size: 14),
+                        ),
                       ],
                     ),
                     if (_selectedInterests.isNotEmpty) ...[
@@ -891,25 +903,17 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                           return Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             decoration: BoxDecoration(
-                              color: AppTheme.primaryColor,
+                              color: AppTheme.primaryColor.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(
-                                  _getInterestIcon(interest),
-                                  color: Colors.white,
-                                  size: 16,
-                                ),
+                                Icon(_getInterestIcon(interest), color: AppTheme.primaryColor, size: 16),
                                 const SizedBox(width: 6),
                                 Text(
                                   interest,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                                  style: GoogleFonts.poppins(color: AppTheme.primaryColor, fontSize: 13, fontWeight: FontWeight.w600),
                                 ),
                               ],
                             ),
@@ -921,277 +925,131 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
                 ),
               ),
             ),
-
-            const SizedBox(height: 24),
-
+            const SizedBox(height: 16),
             // Religion Field
-            _buildSectionTitle('Religion', isIncomplete: _selectedReligion == null),
-            GestureDetector(
+            _buildSelectionField(
+              label: 'Religion',
+              value: _selectedReligion,
+              hint: 'Select religion',
+              icon: Icons.church_outlined,
               onTap: () async {
                 final result = await Navigator.push<String>(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => ReligionScreen(
-                      initialReligion: _selectedReligion,
-                      isEditMode: true,
-                    ),
-                  ),
+                  MaterialPageRoute(builder: (context) => ReligionScreen(initialReligion: _selectedReligion, isEditMode: true)),
                 );
-                if (result != null) {
-                  setState(() => _selectedReligion = result);
-                }
+                if (result != null) setState(() => _selectedReligion = result);
               },
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.church_outlined, color: AppTheme.primaryColor),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        _selectedReligion ?? 'Select religion',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: _selectedReligion != null ? AppTheme.textPrimary : Colors.grey[600],
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    Icon(Icons.arrow_forward_ios, color: Colors.grey[400], size: 16),
-                  ],
-                ),
-              ),
             ),
-
-            const SizedBox(height: 24),
-
+            const SizedBox(height: 16),
             // Occupation Field
-            _buildSectionTitle('Occupation', isIncomplete: _selectedOccupation == null),
-            GestureDetector(
+            _buildSelectionField(
+              label: 'Occupation',
+              value: _selectedOccupation,
+              hint: 'Select occupation',
+              icon: Icons.work_outline,
               onTap: () async {
                 final result = await Navigator.push<String>(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => OccupationScreen(
-                      initialOccupation: _selectedOccupation,
-                      isEditMode: true,
-                    ),
-                  ),
+                  MaterialPageRoute(builder: (context) => OccupationScreen(initialOccupation: _selectedOccupation, isEditMode: true)),
                 );
-                if (result != null) {
-                  setState(() => _selectedOccupation = result);
-                }
+                if (result != null) setState(() => _selectedOccupation = result);
               },
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.work_outline, color: AppTheme.primaryColor),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        _selectedOccupation ?? 'Select occupation',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: _selectedOccupation != null ? AppTheme.textPrimary : Colors.grey[600],
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    Icon(Icons.arrow_forward_ios, color: Colors.grey[400], size: 16),
-                  ],
-                ),
-              ),
             ),
-
-            const SizedBox(height: 24),
-
+            const SizedBox(height: 16),
             // Education Field
-            _buildSectionTitle('Education', isIncomplete: _selectedEducation == null),
-            GestureDetector(
+            _buildSelectionField(
+              label: 'Education',
+              value: _selectedEducation,
+              hint: 'Select education',
+              icon: Icons.school_outlined,
               onTap: () async {
                 final result = await Navigator.push<String>(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => EducationScreen(
-                      initialEducation: _selectedEducation,
-                      isEditMode: true,
-                    ),
-                  ),
+                  MaterialPageRoute(builder: (context) => EducationScreen(initialEducation: _selectedEducation, isEditMode: true)),
                 );
-                if (result != null) {
-                  setState(() => _selectedEducation = result);
-                }
+                if (result != null) setState(() => _selectedEducation = result);
               },
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.school_outlined, color: AppTheme.primaryColor),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        _selectedEducation ?? 'Select education',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: _selectedEducation != null ? AppTheme.textPrimary : Colors.grey[600],
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    Icon(Icons.arrow_forward_ios, color: Colors.grey[400], size: 16),
-                  ],
-                ),
-              ),
             ),
-
-            const SizedBox(height: 24),
-
+            const SizedBox(height: 16),
             // Height Field
-            _buildSectionTitle('Height', isIncomplete: _selectedHeight == null),
-            GestureDetector(
+            _buildSelectionField(
+              label: 'Height',
+              value: _selectedHeight,
+              hint: 'Select height',
+              icon: Icons.height,
               onTap: () async {
                 final result = await Navigator.push<String>(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => HeightScreen(
-                      initialHeight: _selectedHeight,
-                      isEditMode: true,
-                    ),
-                  ),
+                  MaterialPageRoute(builder: (context) => HeightScreen(initialHeight: _selectedHeight, isEditMode: true)),
                 );
-                if (result != null) {
-                  setState(() => _selectedHeight = result);
-                }
+                if (result != null) setState(() => _selectedHeight = result);
               },
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.height, color: AppTheme.primaryColor),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        _selectedHeight ?? 'Select height',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: _selectedHeight != null ? AppTheme.textPrimary : Colors.grey[600],
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                    Icon(Icons.arrow_forward_ios, color: Colors.grey[400], size: 16),
-                  ],
-                ),
-              ),
             ),
-
-            const SizedBox(height: 24),
-
+            const SizedBox(height: 16),
             // Birthday Field
-            _buildSectionTitle('Birthday', isIncomplete: _selectedDate == null),
-            GestureDetector(
+            _buildSelectionField(
+              label: 'Birthday',
+              value: _selectedDate != null ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}' : null,
+              hint: 'Choose birthday date',
+              icon: Icons.cake,
               onTap: () async {
                 final result = await Navigator.push<DateTime>(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => DobScreen(
-                      initialDate: _selectedDate,
-                      isEditMode: true,
-                    ),
-                  ),
+                  MaterialPageRoute(builder: (context) => DobScreen(initialDate: _selectedDate, isEditMode: true)),
                 );
-                if (result != null) {
-                  setState(() => _selectedDate = result);
-                }
+                if (result != null) setState(() => _selectedDate = result);
               },
+            ),
+            const SizedBox(height: 32),
+            
+            // Ultra-Premium Save Button
+            GestureDetector(
+              onTap: _saveProfile,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                width: double.infinity,
+                height: 64,
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
+                  color: AppTheme.primaryColor,
+                  borderRadius: BorderRadius.circular(32), // Pill shape
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
+                      color: AppTheme.primaryColor.withOpacity(0.3),
+                      blurRadius: 16,
+                      offset: const Offset(0, 8),
                     ),
                   ],
                 ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.cake,
-                      color: AppTheme.accentColor,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        _selectedDate != null 
-                            ? '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}'
-                            : 'Choose birthday date',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: _selectedDate != null ? Colors.black : Colors.grey,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const SizedBox(width: 48), // Balance the circle on right
+                      Text(
+                        'Save Profile',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                    ),
-                    Icon(Icons.arrow_forward_ios, color: Colors.grey[400], size: 16),
-                  ],
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.arrow_forward_rounded, // Matches the reference arrow
+                          color: AppTheme.primaryColor,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-            
-            const SizedBox(height: 24),
             
             const SizedBox(height: 100),
           ],
@@ -1335,24 +1193,24 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
 
   Widget _buildSectionTitle(String title, {bool isIncomplete = false}) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 0),
       child: Row(
         children: [
           Text(
             title,
-            style: TextStyle(
-              fontSize: 16,
-              color: AppTheme.textPrimary,
-              fontWeight: FontWeight.w600,
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              color: const Color(0xFF1E293B),
+              fontWeight: FontWeight.bold,
             ),
           ),
           if (isIncomplete)
             const SizedBox(width: 8),
           if (isIncomplete)
-            Icon(
+            const Icon(
               Icons.error,
               color: Colors.red,
-              size: 18,
+              size: 16,
             ),
         ],
       ),
@@ -1365,47 +1223,92 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
     required IconData icon,
     bool isIncomplete = false,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionTitle(label, isIncomplete: isIncomplete),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: TextField(
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8F9FA),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      padding: const EdgeInsets.only(top: 16, left: 24, right: 24, bottom: 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionTitle(label, isIncomplete: isIncomplete),
+          TextField(
             controller: controller,
+            style: GoogleFonts.poppins(fontSize: 16, color: const Color(0xFF1E293B)),
             decoration: InputDecoration(
               prefixIcon: Icon(icon, color: AppTheme.primaryColor),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide.none,
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide.none,
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
-              ),
-              filled: true,
-              fillColor: Colors.white,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              filled: false,
+              contentPadding: const EdgeInsets.symmetric(vertical: 12),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
+
+  Widget _buildSelectionField({
+    required String label,
+    required String? value,
+    required String hint,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8F9FA),
+          borderRadius: BorderRadius.circular(24),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionTitle(label, isIncomplete: value == null),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(icon, color: AppTheme.primaryColor),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    value ?? hint,
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      color: value != null ? AppTheme.textPrimary : Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Icon(Icons.arrow_forward_ios, color: Colors.grey[800], size: 12),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
 
   Widget _buildDropdownField({
     required String? value,
@@ -1422,9 +1325,9 @@ class _ProfileDetailsScreenState extends State<ProfileDetailsScreen> {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: AppTheme.primaryColor.withOpacity(0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
           ),
         ],
       ),

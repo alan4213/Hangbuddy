@@ -139,6 +139,9 @@ class MatchService {
   }
 
   static Future<void> markHangoutAsDeleted(String hangoutTitle) async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+
     final matchesSnapshot = await _firestore
         .collection('matches')
         .where('hangoutTitle', isEqualTo: hangoutTitle)
@@ -146,7 +149,10 @@ class MatchService {
         .get();
     
     for (final doc in matchesSnapshot.docs) {
-      await doc.reference.update({'hangoutStatus': 'deleted'});
+      final data = doc.data();
+      if (data['user1Id'] == currentUser.uid || data['user2Id'] == currentUser.uid) {
+        await doc.reference.update({'hangoutStatus': 'deleted'});
+      }
     }
   }
 

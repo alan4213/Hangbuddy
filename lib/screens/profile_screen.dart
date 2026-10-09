@@ -12,6 +12,7 @@ import '../models/user_model.dart';
 import '../theme/app_theme.dart';
 import '../widgets/profile_image_widget.dart';
 import '../widgets/photo_verified_sheet.dart';
+import '../widgets/premium_dialog.dart';
 import 'settings_screen.dart';
 import 'notifications_screen.dart';
 import 'edit_photos_screen.dart';
@@ -64,108 +65,145 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF4F6F8), // Light off-white background
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             children: [
               // Header
-            Padding(
-              padding: EdgeInsets.all((MediaQuery.of(context).size.width * 0.05).clamp(12.0, 20.0)),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Haule',
-                    style: TextStyle(
-                      fontSize: (MediaQuery.of(context).size.width * 0.07).clamp(20.0, 28.0),
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryColor,
+              Padding(
+                padding: EdgeInsets.all((MediaQuery.of(context).size.width * 0.05).clamp(12.0, 20.0)),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Haule',
+                      style: GoogleFonts.poppins(
+                        fontSize: 28.0,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.black,
+                      ),
                     ),
-                    overflow: TextOverflow.ellipsis,
+                  ],
+                ),
+              ),
+              
+              // Profile Image
+              Stack(
+                alignment: Alignment.center,
+                clipBehavior: Clip.none,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppTheme.primaryColor, width: 3),
+                    ),
+                    child: ProfileImageWidget(
+                      imageUrl: _userProfile?.profileImageUrl,
+                      size: (MediaQuery.of(context).size.width * 0.28).clamp(90.0, 110.0),
+                    ),
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => SettingsScreen()),
-                      );
-                    },
-                    child: Icon(Icons.settings, size: (MediaQuery.of(context).size.width * 0.06).clamp(20.0, 28.0), color: AppTheme.primaryColor),
+                  Positioned(
+                    top: 0,
+                    right: 0,
+                    child: GestureDetector(
+                      onTap: () async {
+                        await Navigator.pushNamed(context, '/profile-details');
+                        _loadUserProfile();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 4,
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.edit,
+                          size: 14,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    bottom: -8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppTheme.primaryColor,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '67%',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                   ),
                 ],
               ),
-            ),
-            
-            // Profile Image
-            Stack(
-              children: [
-                ProfileImageWidget(
-                  imageUrl: _userProfile?.profileImageUrl,
-                  size: (MediaQuery.of(context).size.width * 0.3).clamp(80.0, 120.0),
-                ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: GestureDetector(
-                    onTap: () async {
-                      await Navigator.pushNamed(context, '/profile-details');
-                      _loadUserProfile();
-                    },
-                    child: Container(
-                      width: (MediaQuery.of(context).size.width * 0.09).clamp(28.0, 36.0),
-                      height: (MediaQuery.of(context).size.width * 0.09).clamp(28.0, 36.0),
-                      decoration: BoxDecoration(
-                        color: AppTheme.primaryColor,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white,
-                          width: 2,
-                        ),
+              
+              const SizedBox(height: 24),
+              
+              // Name
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Flexible(
+                    child: Text(
+                      _isLoading 
+                          ? 'Loading...' 
+                          : '${_userProfile?.firstName ?? 'User'} ${_userProfile?.lastName ?? ''}',
+                      style: GoogleFonts.poppins(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
                       ),
-                      child: Icon(
-                        Icons.edit,
-                        size: (MediaQuery.of(context).size.width * 0.045).clamp(16.0, 20.0),
-                        color: Colors.white,
-                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
                   ),
-                ),
-              ],
-            ),
-            
-            SizedBox(height: (MediaQuery.of(context).size.height * 0.02).clamp(12.0, 20.0)),
-            
-            // Name
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Flexible(
-                  child: Text(
-                    _isLoading 
-                        ? 'Loading...' 
-                        : '${_userProfile?.firstName ?? 'User'} ${_userProfile?.lastName ?? ''}',
-                    style: GoogleFonts.poppins(
-                      fontSize: (MediaQuery.of(context).size.width * 0.08).clamp(20.0, 32.0),
-                      fontWeight: FontWeight.w600,
-                      color: Colors.black,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.check_circle,
+                    color: _verificationStatus == 'verified' ? AppTheme.primaryColor : Colors.grey[400],
+                    size: 20,
                   ),
+                ],
+              ),
+              
+              const SizedBox(height: 8),
+              
+              // Subtitle texts
+              Text(
+                'Incomplete profile',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.primaryColor,
                 ),
-                SizedBox(width: (MediaQuery.of(context).size.width * 0.02).clamp(4.0, 8.0)),
-                Icon(
-                  Icons.verified,
-                  color: _verificationStatus == 'verified' ? AppTheme.primaryColor : Colors.grey[400],
-                  size: (MediaQuery.of(context).size.width * 0.06).clamp(20.0, 24.0),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Complete your profile to get better matches.',
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
+                  color: Colors.grey[600],
                 ),
-              ],
-            ),
-            
-            SizedBox(height: (MediaQuery.of(context).size.height * 0.04).clamp(20.0, 32.0)),
-            
-            SizedBox(height: (MediaQuery.of(context).size.height * 0.03).clamp(16.0, 24.0)),
+              ),
+              
+              const SizedBox(height: 24),
             
             // Content
             Padding(
@@ -278,145 +316,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        elevation: 0,
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.8,
-            maxWidth: 400,
+      builder: (context) => PremiumDialog(
+        title: 'Delete Account?',
+        subtitle: 'This action cannot be undone. All your data, matches, and hangouts will be permanently removed from Haule.',
+        primaryActionText: 'Delete',
+        secondaryActionText: 'Cancel',
+        onPrimaryAction: () async {
+          Navigator.pop(context);
+          await _deleteAccount();
+        },
+        customContent: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF9FAFB),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
           ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Warning Icon
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFEE2E2), // Light red bg
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.warning_amber_rounded,
-                    size: 40,
-                    color: Color(0xFFDC2626), // Strong red icon
-                  ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'What happens next:',
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF4B5563),
+                  letterSpacing: 0.5,
                 ),
-                const SizedBox(height: 24),
-                
-                // Title
-                Text(
-                  'Delete Account?',
-                  style: GoogleFonts.poppins(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF1F2937),
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                
-                // Description
-                Text(
-                  'This action cannot be undone. All your data, matches, and hangouts will be permanently removed from Haule.',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: const Color(0xFF6B7280),
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                
-                // What will be deleted
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF9FAFB),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFE5E7EB)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'What happens next:',
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF4B5563),
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      _buildDeleteItem('Authentication access revoked immediately'),
-                      _buildDeleteItem('Profile & photos permanently deleted'),
-                      _buildDeleteItem('No account recovery possible'),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 32),
-                
-                // Buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: SizedBox(
-                        height: 54,
-                        child: TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          style: TextButton.styleFrom(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            backgroundColor: const Color(0xFFF3F4F6),
-                          ),
-                          child: Text(
-                            'Cancel',
-                            style: GoogleFonts.poppins(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF4B5563),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: SizedBox(
-                        height: 54,
-                        child: ElevatedButton(
-                          onPressed: () async {
-                            Navigator.pop(context);
-                            await _deleteAccount();
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFDC2626), // Destructive Red
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: Text(
-                            'Delete',
-                            style: GoogleFonts.poppins(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 12),
+              _buildDeleteItem('Authentication access revoked immediately'),
+              _buildDeleteItem('Profile & photos permanently deleted'),
+              _buildDeleteItem('No account recovery possible'),
+            ],
           ),
         ),
       ),
@@ -462,79 +394,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => Dialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Success Icon
-                Container(
-                  width: 70,
-                  height: 70,
-                  decoration: BoxDecoration(
-                    gradient: AppTheme.primaryGradient,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.check,
-                    size: 35,
-                    color: Colors.white,
-                  ),
-                ),
-                SizedBox(height: 20),
-                
-                // Title
-                Text(
-                  'Account Deleted',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                SizedBox(height: 12),
-                
-                // Description
-                Text(
-                  'Your account has been successfully deleted. You can create a new account anytime.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey,
-                    height: 1.4,
-                  ),
-                ),
-                SizedBox(height: 24),
-                
-                // OK Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryColor,
-                      foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: Text(
-                      'OK',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+        builder: (context) => PremiumDialog(
+          title: 'Account Deleted',
+          subtitle: 'Your account has been successfully deleted. You can create a new account anytime.',
+          primaryActionText: 'Got it',
+          onPrimaryAction: () => Navigator.pop(context),
         ),
       );
     } catch (e) {
@@ -565,19 +429,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildMenuCard(IconData icon, String title, String subtitle, VoidCallback onTap, {bool isDestructive = false, Color? iconBgColor, Color? iconColor}) {
-    final finalIconColor = isDestructive ? const Color(0xFFDC2626) : (iconColor ?? AppTheme.primaryColor);
-    final finalIconBgColor = isDestructive ? const Color(0xFFFEE2E2) : (iconBgColor ?? AppTheme.primaryColor.withOpacity(0.1));
-    final textColor = isDestructive ? const Color(0xFFDC2626) : const Color(0xFF1F2937);
-    final subtextColor = isDestructive ? const Color(0xFFEF4444) : const Color(0xFF6B7280);
+    final finalIconColor = isDestructive ? const Color(0xFFDC2626) : const Color(0xFF8B5CF6);
+    final finalIconBgColor = isDestructive ? const Color(0xFFFEE2E2) : const Color(0xFFF3E8FF);
+    final textColor = isDestructive ? const Color(0xFFDC2626) : Colors.black87;
+    final subtextColor = Colors.grey[500];
 
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(24.0),
+          borderRadius: BorderRadius.circular(16.0),
+          border: Border.all(color: Colors.grey[200]!),
         ),
         child: Row(
           children: [
@@ -586,7 +451,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               height: 48.0,
               decoration: BoxDecoration(
                 color: finalIconBgColor,
-                borderRadius: BorderRadius.circular(16.0),
+                shape: BoxShape.circle,
               ),
               child: Icon(
                 icon,
@@ -602,24 +467,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Text(
                     title,
                     style: GoogleFonts.poppins(
-                      fontSize: 16.0,
-                      fontWeight: FontWeight.w500,
+                      fontSize: 15.0,
+                      fontWeight: FontWeight.w600,
                       color: textColor,
-                      letterSpacing: -0.2,
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4.0),
+                  const SizedBox(height: 2.0),
                   Text(
                     subtitle,
                     style: GoogleFonts.poppins(
-                      fontSize: 14.0,
+                      fontSize: 13.0,
                       color: subtextColor,
                       fontWeight: FontWeight.w400,
-                      height: 1.2,
                     ),
                     overflow: TextOverflow.ellipsis,
-                    maxLines: 2,
+                    maxLines: 1,
                   ),
                 ],
               ),
@@ -627,7 +490,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Icon(
               Icons.chevron_right,
               size: 20.0,
-              color: isDestructive ? const Color(0xFFEF4444).withOpacity(0.5) : const Color(0xFF9CA3AF),
+              color: Colors.grey[400],
             ),
           ],
         ),

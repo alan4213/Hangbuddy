@@ -7,6 +7,7 @@ import '../services/match_service.dart';
 import '../screens/profile_detail_screen.dart';
 import '../screens/chat_window_screen.dart';
 import '../theme/app_theme.dart';
+import '../widgets/premium_dialog.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class UpcomingHangoutsTab extends StatefulWidget {
@@ -102,6 +103,7 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
           }
           
           return GridView.builder(
+            padding: const EdgeInsets.only(bottom: 120),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               crossAxisSpacing: 12,
@@ -420,11 +422,13 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
 
   String _formatDateTime(DateTime dateTime) {
     final now = DateTime.now();
-    final difference = dateTime.difference(now).inDays;
+    final today = DateTime(now.year, now.month, now.day);
+    final tomorrow = today.add(const Duration(days: 1));
+    final dateToCheck = DateTime(dateTime.year, dateTime.month, dateTime.day);
     
-    if (difference == 0) {
+    if (dateToCheck == today) {
       return 'Today ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
-    } else if (difference == 1) {
+    } else if (dateToCheck == tomorrow) {
       return 'Tomorrow ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
     } else {
       return '${dateTime.day}/${dateTime.month} ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
@@ -435,148 +439,68 @@ class _UpcomingHangoutsTabState extends State<UpcomingHangoutsTab> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              color: Colors.white,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.delete_outline,
-                    color: AppTheme.primaryColor,
-                    size: 30,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Delete Match',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Are you sure you want to delete this match? This will remove it from your matches.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppTheme.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          'Cancel',
-                          style: TextStyle(
-                            color: AppTheme.textSecondary,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
+        return PremiumDialog(
+          title: 'Delete Match',
+          subtitle: 'Are you sure you want to delete this match? This will remove it from your matches.',
+          primaryActionText: 'Delete',
+          secondaryActionText: 'Cancel',
+          onPrimaryAction: () async {
+            Navigator.of(context).pop();
+            try {
+              final currentUser = FirebaseAuth.instance.currentUser;
+              if (currentUser == null) return;
+              
+              // Get match data to find other user
+              final matchDoc = await FirebaseFirestore.instance
+                  .collection('matches')
+                  .doc(matchId)
+                  .get();
+              
+              if (matchDoc.exists) {
+                final matchData = matchDoc.data()!;
+                final otherUserId = matchData['user1Id'] == currentUser.uid 
+                    ? matchData['user2Id'] 
+                    : matchData['user1Id'];
+                
+                // Mark chat as deleted for current user
+                final sortedIds = [currentUser.uid, otherUserId]..sort();
+                final chatId = '${sortedIds[0]}_${sortedIds[1]}';
+                await FirebaseFirestore.instance
+                    .collection('chats')
+                    .doc(chatId)
+                    .set({
+                  'deletedBy': {
+                    currentUser.uid: FieldValue.serverTimestamp(),
+                  },
+                }, SetOptions(merge: true));
+              }
+              
+              // Delete match
+              await MatchService.deleteMatch(matchId);
+              
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('Match deleted successfully'),
+                    backgroundColor: AppTheme.primaryColor,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          Navigator.of(context).pop();
-                          try {
-                            final currentUser = FirebaseAuth.instance.currentUser;
-                            if (currentUser == null) return;
-                            
-                            // Get match data to find other user
-                            final matchDoc = await FirebaseFirestore.instance
-                                .collection('matches')
-                                .doc(matchId)
-                                .get();
-                            
-                            if (matchDoc.exists) {
-                              final matchData = matchDoc.data()!;
-                              final otherUserId = matchData['user1Id'] == currentUser.uid 
-                                  ? matchData['user2Id'] 
-                                  : matchData['user1Id'];
-                              
-                              // Mark chat as deleted for current user
-                              final sortedIds = [currentUser.uid, otherUserId]..sort();
-                              final chatId = '${sortedIds[0]}_${sortedIds[1]}';
-                              await FirebaseFirestore.instance
-                                  .collection('chats')
-                                  .doc(chatId)
-                                  .set({
-                                'deletedBy': {
-                                  currentUser.uid: FieldValue.serverTimestamp(),
-                                },
-                              }, SetOptions(merge: true));
-                            }
-                            
-                            // Delete match
-                            await MatchService.deleteMatch(matchId);
-                            
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: const Text('Match deleted successfully'),
-                                backgroundColor: AppTheme.primaryColor,
-                                behavior: SnackBarBehavior.floating,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                            );
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Error deleting match'),
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryColor,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: const Text(
-                          'Delete',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+                  ),
+                );
+              }
+            } catch (e) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Error deleting match'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            }
+          },
         );
       },
     );

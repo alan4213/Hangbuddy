@@ -15,6 +15,7 @@ import '../services/user_service.dart';
 import '../models/user_model.dart';
 import '../services/match_service.dart';
 import '../services/location_service.dart';
+import '../widgets/premium_dialog.dart';
 import 'package:firebase_auth/firebase_auth.dart' as auth;
 import 'hangout_interested_users_screen.dart';
 import 'package:geolocator/geolocator.dart';
@@ -237,42 +238,120 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header Section
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
+              child: FutureBuilder<UserModel?>(
+                future: UserService.getUserProfile(),
+                builder: (context, snapshot) {
+                  final user = snapshot.data;
+                  final firstName = user?.firstName ?? 'there';
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Hi, $firstName',
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            "Let's plan something fun",
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              color: Colors.black87,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            "Events",
+                            style: GoogleFonts.poppins(
+                              fontSize: 28,
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.grey[200],
+                          image: user?.profileImageUrl != null
+                              ? DecorationImage(
+                                  image: CachedNetworkImageProvider(user!.profileImageUrl!),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
+                        ),
+                        child: user?.profileImageUrl == null
+                            ? const Icon(Icons.person, color: Colors.grey)
+                            : null,
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
             // Filter chips at top
             Container(
               key: _filterKey,
-              height: 54, // Slightly increased to prevent clipping
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    _buildFilterChip(
-                      _getDistanceLabel(),
-                      Icons.location_on,
-                      onTap: _showDistanceFilter,
-                      isActive: _isDistanceFilterActive(),
+              height: 54,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: Row(
+                children: [
+                  const Icon(Icons.tune, color: Colors.black87, size: 24),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          _buildFilterChip(
+                            _getDistanceLabel() == 'Distance' ? 'Anywhere' : _getDistanceLabel(),
+                            Icons.location_on,
+                            onTap: _showDistanceFilter,
+                            isActive: _isDistanceFilterActive(),
+                            hideIcon: true,
+                          ),
+                          _buildFilterChip(
+                            _getAgeLabel() == 'Age' ? 'Age' : _getAgeLabel(),
+                            Icons.keyboard_arrow_down,
+                            onTap: _showAgeFilter,
+                            isActive: _isAgeFilterActive(),
+                            iconRight: true,
+                          ),
+                          _buildFilterChip(
+                            _getGenderLabel() == 'Gender' ? 'Gender' : _getGenderLabel(),
+                            Icons.keyboard_arrow_down,
+                            onTap: _showGenderFilter,
+                            isActive: _isGenderFilterActive(),
+                            iconRight: true,
+                          ),
+                          _buildFilterChip(
+                            _getTimeLabel() == 'Time' ? 'Time' : _getTimeLabel(),
+                            Icons.keyboard_arrow_down,
+                            onTap: _showTimeFilter,
+                            isActive: _isTimeFilterActive(),
+                            iconRight: true,
+                          ),
+                        ],
+                      ),
                     ),
-                    _buildFilterChip(
-                      _getAgeLabel(),
-                      Icons.person,
-                      onTap: _showAgeFilter,
-                      isActive: _isAgeFilterActive(),
-                    ),
-                    _buildFilterChip(
-                      _getGenderLabel(),
-                      Icons.people,
-                      onTap: _showGenderFilter,
-                      isActive: _isGenderFilterActive(),
-                    ),
-                    _buildFilterChip(
-                      _getTimeLabel(),
-                      Icons.access_time,
-                      onTap: _showTimeFilter,
-                      isActive: _isTimeFilterActive(),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
             // Hangout cards list
@@ -282,11 +361,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        key: _createButtonKey,
-        onPressed: () => Navigator.pushNamed(context, '/create'),
-        backgroundColor: AppTheme.primaryColor,
-        child: const Icon(Icons.add, color: Colors.white),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 80.0), // Shift FAB up to sit above the navigation pill
+        child: FloatingActionButton(
+          key: _createButtonKey,
+          onPressed: () => Navigator.pushNamed(context, '/create'),
+          backgroundColor: const Color(0xFF8B5CF6), // Purple color
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: const Icon(Icons.add_comment, color: Colors.white),
+        ),
       ),
     );
     
@@ -324,43 +409,40 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     return homeContent;
   }
 
-  Widget _buildFilterChip(String label, IconData icon, {VoidCallback? onTap, bool isActive = false}) {
+  Widget _buildFilterChip(String label, IconData icon, {VoidCallback? onTap, bool isActive = false, bool hideIcon = false, bool iconRight = false}) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(right: 10),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isActive ? AppTheme.primaryColor : Colors.white,
+          color: isActive ? Colors.black87 : Colors.white,
           borderRadius: BorderRadius.circular(30),
           border: Border.all(
-            color: isActive ? Colors.transparent : Colors.grey[200]!,
+            color: isActive ? Colors.transparent : Colors.black87,
             width: 1.0,
           ),
-          boxShadow: isActive ? [
-            BoxShadow(
-              color: AppTheme.primaryColor.withOpacity(0.3),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ] : [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.02),
-              blurRadius: 3,
-              offset: const Offset(0, 1),
-            ),
-          ],
         ),
-        child: Center(
-          child: Text(
-            label,
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              letterSpacing: 0.2,
-              color: isActive ? Colors.white : const Color(0xFF475569),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (!hideIcon && !iconRight) ...[
+              Icon(icon, size: 16, color: isActive ? Colors.white : Colors.black87),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              label,
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: isActive ? Colors.white : Colors.black87,
+              ),
             ),
-          ),
+            if (!hideIcon && iconRight) ...[
+              const SizedBox(width: 6),
+              Icon(icon, size: 16, color: isActive ? Colors.white : Colors.black87),
+            ],
+          ],
         ),
       ),
     );
@@ -444,7 +526,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
         onTap: _resetIdleTimer, // Reset timer on any interaction
         onPanDown: (_) => _resetIdleTimer(),
         child: ListView.builder(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.only(top: 16, left: 16, right: 16, bottom: 120), // Extra bottom padding for floating navbar
           itemCount: _hangouts.length,
           itemBuilder: (context, index) {
             return Padding(
@@ -457,13 +539,29 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     );
   }
 
+  String _formatTimer(DateTime eventTime) {
+    final now = DateTime.now();
+    final difference = eventTime.difference(now);
+    if (difference.isNegative) return "00 : 00 : 00";
+    
+    final days = difference.inDays;
+    final hours = difference.inHours.remainder(24);
+    final minutes = difference.inMinutes.remainder(60);
+    
+    if (days > 0) {
+      return "${days.toString().padLeft(2, '0')} : ${hours.toString().padLeft(2, '0')} : ${minutes.toString().padLeft(2, '0')}";
+    } else {
+      final seconds = difference.inSeconds.remainder(60);
+      return "${hours.toString().padLeft(2, '0')} : ${minutes.toString().padLeft(2, '0')} : ${seconds.toString().padLeft(2, '0')}";
+    }
+  }
+
   Widget _buildHangoutCard(HangoutRequest hangout) {
     return FutureBuilder<UserModel?>(
       future: _getUserData(hangout.creatorId),
       builder: (context, userSnapshot) {
         final user = userSnapshot.data;
         if (user == null) {
-          // Show a minimal placeholder instead of loading widget
           return Container(
             height: 200,
             decoration: BoxDecoration(
@@ -476,7 +574,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
         return Container(
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.08),
@@ -484,15 +582,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                 offset: const Offset(0, 4),
               ),
             ],
+            border: Border.all(color: Colors.grey[200]!),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Image section
               Container(
-                height: 180,
+                height: 200,
                 decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
                   image: DecorationImage(
                     image: AssetImage(_getCategoryImagePath(hangout.category)),
                     fit: BoxFit.cover,
@@ -504,7 +603,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                 ),
                 child: Stack(
                   children: [
-                    // Viewed indicator
                     if (_isViewed(hangout))
                       Positioned(
                         top: 12,
@@ -517,36 +615,24 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                           ),
                           child: const Text(
                             'Viewed',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
+                            style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w500),
                           ),
                         ),
                       ),
-                    // Favorite button
                     Positioned(
-                      top: 12,
-                      right: 12,
+                      top: 16,
+                      right: 16,
                       child: GestureDetector(
                         onTap: () => _handleLike(hangout),
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: Colors.black.withOpacity(0.4),
                             shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
-                                blurRadius: 4,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
                           ),
                           child: Icon(
                             _isLiked(hangout) ? Icons.favorite : Icons.favorite_border,
-                            color: _isLiked(hangout) ? Colors.red : Colors.grey[600],
+                            color: Colors.white,
                             size: 20,
                           ),
                         ),
@@ -556,235 +642,172 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
                 ),
               ),
               // Content section
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Title
-                    Text(
-                      hangout.title,
-                      style: GoogleFonts.poppins(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    // Host info
-                    GestureDetector(
-                      onTap: () => _showProfile(user, hangout),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.04),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.7),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: Colors.white.withOpacity(0.9),
-                                  width: 1.5,
-                                ),
-                              ),
-                              child: Row(
-                          children: [
-                            Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: AppTheme.primaryColor,
-                                  width: 2,
-                                ),
-                                image: user.profileImageUrl != null
-                                    ? DecorationImage(
-                                        image: CachedNetworkImageProvider(user.profileImageUrl!),
-                                        fit: BoxFit.cover,
-                                      )
-                                    : null,
-                                color: user.profileImageUrl == null ? Colors.grey[300] : null,
-                              ),
-                              child: user.profileImageUrl == null
-                                  ? Icon(Icons.person, size: 24, color: Colors.grey[600])
-                                  : null,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    '${user.firstName} ${user.lastName}',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 15,
-                                      color: Colors.black87,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+              GestureDetector(
+                onTap: () => _showProfile(user, hangout),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Top row: Avatars + Timer
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // Interested users avatars
+                          Row(
+                            children: [
+                              // Host Avatar First
+                              Align(
+                                widthFactor: 0.6,
+                                child: Container(
+                                  width: 28,
+                                  height: 28,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: Colors.white, width: 2),
+                                    color: Colors.grey[300],
+                                    image: user.profileImageUrl != null
+                                        ? DecorationImage(
+                                            image: CachedNetworkImageProvider(user.profileImageUrl!),
+                                            fit: BoxFit.cover,
+                                          )
+                                        : null,
                                   ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    'Host',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 12,
-                                      color: Colors.grey[600],
-                                      fontWeight: FontWeight.w400,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Icon(Icons.chevron_right, color: Colors.grey[400], size: 20),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-                    const SizedBox(height: 12),
-                    // Date and Location Section (Modernized)
-                    // Date and Location Section (Pills Style)
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: [
-                        // Time Pill
-                        Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(30),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.04),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(30),
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.7),
-                                  borderRadius: BorderRadius.circular(30),
-                                  border: Border.all(
-                                    color: Colors.white.withOpacity(0.9),
-                                    width: 1.5,
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.schedule, color: AppTheme.primaryColor, size: 22),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      '${_formatDate(hangout.dateTime)} • ${_formatTime(hangout.dateTime)}',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                        letterSpacing: 0.2,
-                                        color: const Color(0xFF1E293B),
-                                      ),
-                                    ),
-                                  ],
+                                  child: user.profileImageUrl == null
+                                      ? const Icon(Icons.person, size: 14, color: Colors.grey)
+                                      : null,
                                 ),
                               ),
-                            ),
-                          ),
-                        ),
-                        // Location Pill
-                        Container(
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(30),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.04),
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(30),
-                            child: BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.7),
-                                  borderRadius: BorderRadius.circular(30),
-                                  border: Border.all(
-                                    color: Colors.white.withOpacity(0.9),
-                                    width: 1.5,
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(Icons.location_on_outlined, color: AppTheme.primaryColor, size: 22),
-                                    const SizedBox(width: 8),
-                                    Flexible(
-                                      child: Text(
-                                        hangout.location,
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                          letterSpacing: 0.2,
-                                          color: const Color(0xFF1E293B),
+                              // Then Interested Users (take up to 1)
+                              if (hangout.interestedUsers.isNotEmpty)
+                                ...hangout.interestedUsers.take(1).map((userId) => 
+                                  FutureBuilder<UserModel?>(
+                                    future: _getUserData(userId),
+                                    builder: (context, snapshot) {
+                                      final interestedUser = snapshot.data;
+                                      return Align(
+                                        widthFactor: 0.6,
+                                        child: Container(
+                                          width: 28,
+                                          height: 28,
+                                          decoration: BoxDecoration(
+                                            shape: BoxShape.circle,
+                                            border: Border.all(color: Colors.white, width: 2),
+                                            color: Colors.grey[300],
+                                            image: interestedUser?.profileImageUrl != null
+                                                ? DecorationImage(
+                                                    image: CachedNetworkImageProvider(interestedUser!.profileImageUrl!),
+                                                    fit: BoxFit.cover,
+                                                  )
+                                                : null,
+                                          ),
+                                          child: interestedUser?.profileImageUrl == null
+                                              ? const Icon(Icons.person, size: 14, color: Colors.grey)
+                                              : null,
                                         ),
+                                      );
+                                    },
+                                  )
+                                ).toList(),
+                              if (hangout.interestedUsers.length > 1)
+                                Align(
+                                  widthFactor: 0.6,
+                                  child: Container(
+                                    width: 28,
+                                    height: 28,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: Colors.white, width: 2),
+                                      color: const Color(0xFF8B5CF6),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        '${hangout.interestedUsers.length}+',
+                                        style: GoogleFonts.poppins(fontSize: 10, color: Colors.white, fontWeight: FontWeight.bold),
                                       ),
                                     ),
-                                  ],
-                                ),
-                              ),
-                            ),
+                                  ),
+                                )
+                            ],
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    // Join button
-                    Row(
-                      children: [
-                        const Spacer(),
-                        ElevatedButton(
-                          onPressed: () => _handleJoin(hangout),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _isLiked(hangout) ? Colors.grey : AppTheme.primaryColor,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                            shape: RoundedRectangleBorder(
+                          // Timer Pill
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF9CA3AF), // Lighter grey pill
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            elevation: 0,
-                          ),
-                          child: Text(
-                            _isLiked(hangout) ? 'Interested' : 'Join',
-                            style: GoogleFonts.poppins(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                            child: Text(
+                              _formatTimer(hangout.dateTime),
+                              style: GoogleFonts.poppins(
+                                fontSize: 13, 
+                                color: Colors.white, 
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 1.0, // Matches the spaced out numbers in mockup
+                              ),
                             ),
                           ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      // Creator name
+                      Text(
+                        '${user.firstName} ${user.lastName}',
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: const Color(0xFF9CA3AF),
+                          fontWeight: FontWeight.w500,
                         ),
-                      ],
-                    ),
-                  ],
+                      ),
+                      const SizedBox(height: 2),
+                      // Title
+                      Text(
+                        hangout.title,
+                        style: GoogleFonts.poppins(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF111827),
+                          height: 1.2,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      // Date and Time
+                      Row(
+                        children: [
+                          const Icon(Icons.calendar_today_outlined, size: 15, color: Color(0xFF4B5563)),
+                          const SizedBox(width: 6),
+                          Text(
+                            '${_formatDate(hangout.dateTime)} • ${_formatTime(hangout.dateTime)}',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              color: const Color(0xFF4B5563),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      // Location
+                      Row(
+                        children: [
+                          const Icon(Icons.location_on_outlined, size: 16, color: Color(0xFF4B5563)),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              hangout.location,
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                color: const Color(0xFF4B5563),
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -904,75 +927,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
       context: context,
       barrierColor: Colors.black54,
       builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          child: Container(
-            padding: const EdgeInsets.all(28),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.primaryColor.withOpacity(0.15),
-                  blurRadius: 30,
-                  offset: const Offset(0, 15),
-                  spreadRadius: 5,
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  '🎉',
-                  style: TextStyle(fontSize: 32),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Interest Sent!',
-                  style: GoogleFonts.poppins(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Wait for hangout creator to accept',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    color: AppTheme.textSecondary,
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryColor,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                    child: Text(
-                      'Got it!',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+        return PremiumDialog(
+          title: 'Interest Sent!',
+          subtitle: 'We\'ve notified the creator. Once they accept,\nyou can start chatting and make plans together',
+          primaryActionText: 'Got it',
+          onPrimaryAction: () => Navigator.of(context).pop(),
         );
       },
     );
@@ -1085,110 +1044,18 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
-        return Dialog(
-          backgroundColor: Colors.transparent,
-          child: Container(
-            margin: const EdgeInsets.all(20),
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.location_off,
-                    color: AppTheme.primaryColor,
-                    size: 40,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                const Text(
-                  'Location Required',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'Please enable location services to find hangouts near you.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey,
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 32),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                        child: const Text(
-                          'Cancel',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          Navigator.of(context).pop();
-                          await Geolocator.openLocationSettings();
-                          Future.delayed(const Duration(seconds: 2), () {
-                            _getCurrentLocation();
-                          });
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryColor,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: const Text(
-                          'Open Settings',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
+        return PremiumDialog(
+          title: 'Location Required',
+          subtitle: 'Please enable location services to find hangouts near you.',
+          primaryActionText: 'Open Settings',
+          secondaryActionText: 'Cancel',
+          onPrimaryAction: () async {
+            Navigator.of(context).pop();
+            await Geolocator.openLocationSettings();
+            Future.delayed(const Duration(seconds: 2), () {
+              _getCurrentLocation();
+            });
+          },
         );
       },
     );
@@ -1262,74 +1129,57 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     _resetIdleTimer(); // Reset timer on filter interaction
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        alignment: Alignment.topCenter,
-        insetPadding: const EdgeInsets.only(top: 120, left: 20, right: 20),
-        child: StatefulBuilder(
-          builder: (context, setModalState) => Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Distance Filter',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => PremiumDialog(
+          title: '', // Hide standard title
+          subtitle: '',
+          primaryActionText: 'Apply',
+          secondaryActionText: 'Cancel',
+          onPrimaryAction: () {
+            Navigator.pop(context);
+            _loadHangoutsQuietly();
+          },
+          customContent: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Distance',
+                    style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600, color: const Color(0xFF111827)),
                   ),
+                  Text(
+                    _distanceFilter >= 100.0 ? 'Anywhere' : '${_distanceFilter.toInt()} km',
+                    style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600, color: const Color(0xFF111827)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              SliderTheme(
+                data: SliderThemeData(
+                  trackHeight: 8,
+                  activeTrackColor: AppTheme.primaryColor,
+                  inactiveTrackColor: Colors.grey[200],
+                  thumbShape: const HollowSliderThumbShape(
+                    color: AppTheme.primaryColor,
+                    thumbRadius: 10,
+                    strokeWidth: 3.5,
+                  ),
+                  overlayColor: AppTheme.primaryColor.withOpacity(0.1),
                 ),
-                const SizedBox(height: 20),
-                Text(
-                  _distanceFilter >= 100.0 
-
-                      ? 'Show hangouts anywhere'
-                      : 'Show hangouts within ${_distanceFilter.toInt()} km',
-                  style: const TextStyle(fontSize: 16),
-                ),
-                const SizedBox(height: 20),
-                Slider(
+                child: Slider(
                   value: _distanceFilter,
                   min: 1.0,
                   max: 100.0,
                   divisions: 99,
-                  activeColor: AppTheme.primaryColor,
                   onChanged: (value) {
                     setModalState(() => _distanceFilter = value);
                     setState(() => _distanceFilter = value);
                   },
                 ),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: const Text('Cancel'),
-                      ),
-                    ),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          _loadHangoutsQuietly();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primaryColor,
-                        ),
-                        child: const Text(
-                          'Apply',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -1413,44 +1263,60 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   void _showAgeFilter() {
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        alignment: Alignment.topCenter,
-        insetPadding: const EdgeInsets.only(top: 120, left: 20, right: 20),
-        child: StatefulBuilder(
-          builder: (context, setModalState) => Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('Age Range', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 20),
-                Text('${_ageRange.start.toInt()} - ${_ageRange.end.toInt()} years'),
-                RangeSlider(
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => PremiumDialog(
+          title: '', // Hide standard title
+          subtitle: '',
+          primaryActionText: 'Apply',
+          secondaryActionText: 'Cancel',
+          onPrimaryAction: () {
+            Navigator.pop(context);
+            _loadHangoutsQuietly();
+          },
+          onSecondaryAction: () {
+            Navigator.pop(context);
+          },
+          customContent: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Age',
+                    style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600, color: const Color(0xFF111827)),
+                  ),
+                  Text(
+                    '${_ageRange.start.toInt()}-${_ageRange.end.toInt()}',
+                    style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600, color: const Color(0xFF111827)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              SliderTheme(
+                data: SliderThemeData(
+                  trackHeight: 8,
+                  activeTrackColor: AppTheme.primaryColor,
+                  inactiveTrackColor: Colors.grey[200],
+                  rangeThumbShape: const HollowRangeSliderThumbShape(
+                    color: AppTheme.primaryColor,
+                    thumbRadius: 10,
+                    strokeWidth: 3.5,
+                  ),
+                  overlayColor: AppTheme.primaryColor.withOpacity(0.1),
+                ),
+                child: RangeSlider(
                   values: _ageRange,
                   min: 18,
                   max: 65,
                   divisions: 47,
-                  activeColor: AppTheme.primaryColor,
                   onChanged: (values) {
                     setModalState(() => _ageRange = values);
                     setState(() => _ageRange = values);
                   },
                 ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _loadHangoutsQuietly();
-                  },
-                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
-                  child: const Text('Apply', style: TextStyle(color: Colors.white)),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -1458,36 +1324,33 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   }
 
   void _showGenderFilter() {
+    String? tempGender = _genderFilter;
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        alignment: Alignment.topCenter,
-        insetPadding: const EdgeInsets.only(top: 120, left: 20, right: 20),
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('Gender Filter', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 20),
-              ...['All', 'Man', 'Woman', 'Transgender', 'Non-binary', 'Other'].map((gender) => ListTile(
-                title: Text(gender),
-                leading: Radio<String?>(
-                  value: gender == 'All' ? null : gender,
-                  groupValue: _genderFilter,
-                  activeColor: AppTheme.primaryColor,
-                  onChanged: (value) {
-                    setState(() => _genderFilter = value);
-                    Navigator.pop(context);
-                    _loadHangoutsQuietly();
-                  },
-                ),
-              )),
-            ],
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => PremiumDialog(
+          title: 'Gender Filter',
+          subtitle: '',
+          primaryActionText: 'Apply',
+          secondaryActionText: 'Cancel',
+          onPrimaryAction: () {
+            setState(() => _genderFilter = tempGender);
+            Navigator.pop(context);
+            _loadHangoutsQuietly();
+          },
+          onSecondaryAction: () => Navigator.pop(context),
+          customContent: Column(
+            children: ['All', 'Man', 'Woman', 'Transgender', 'Non-binary', 'Other'].map((gender) => ListTile(
+              title: Text(gender),
+              leading: Radio<String?>(
+                value: gender == 'All' ? null : gender,
+                groupValue: tempGender,
+                activeColor: AppTheme.primaryColor,
+                onChanged: (value) {
+                  setModalState(() => tempGender = value);
+                },
+              ),
+            )).toList(),
           ),
         ),
       ),
@@ -1497,59 +1360,61 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
   void _showTimeFilter() {
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        alignment: Alignment.topCenter,
-        insetPadding: const EdgeInsets.only(top: 120, left: 20, right: 20),
-        child: StatefulBuilder(
-          builder: (context, setModalState) => Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('Time Range', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 20),
-                Text('${_formatHour(_timeRange.start)} - ${_formatHour(_timeRange.end)}'),
-                RangeSlider(
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => PremiumDialog(
+          title: '', // Hide standard title
+          subtitle: '',
+          primaryActionText: 'Apply',
+          secondaryActionText: 'Reset',
+          onPrimaryAction: () {
+            Navigator.pop(context);
+            _loadHangoutsQuietly();
+          },
+          onSecondaryAction: () {
+            setState(() => _timeRange = const RangeValues(0, 24));
+            Navigator.pop(context);
+          },
+          customContent: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Time',
+                    style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600, color: const Color(0xFF111827)),
+                  ),
+                  Text(
+                    '${_formatHour(_timeRange.start)} - ${_formatHour(_timeRange.end)}',
+                    style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.w600, color: const Color(0xFF111827)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              SliderTheme(
+                data: SliderThemeData(
+                  trackHeight: 8,
+                  activeTrackColor: AppTheme.primaryColor,
+                  inactiveTrackColor: Colors.grey[200],
+                  rangeThumbShape: const HollowRangeSliderThumbShape(
+                    color: AppTheme.primaryColor,
+                    thumbRadius: 10,
+                    strokeWidth: 3.5,
+                  ),
+                  overlayColor: AppTheme.primaryColor.withOpacity(0.1),
+                ),
+                child: RangeSlider(
                   values: _timeRange,
                   min: 0,
                   max: 24,
                   divisions: 24,
-                  activeColor: AppTheme.primaryColor,
                   onChanged: (values) {
                     setModalState(() => _timeRange = values);
                     setState(() => _timeRange = values);
                   },
                 ),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () {
-                          setState(() => _timeRange = const RangeValues(0, 24));
-                          Navigator.pop(context);
-                        },
-                        child: const Text('Reset'),
-                      ),
-                    ),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          _loadHangoutsQuietly();
-                        },
-                        style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
-                        child: const Text('Apply', style: TextStyle(color: Colors.white)),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -1675,5 +1540,96 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin, 
     scoredHangouts.sort((a, b) => b.value.compareTo(a.value));
     
     return scoredHangouts.map((entry) => entry.key).toList();
+  }
+}
+
+class HollowSliderThumbShape extends SliderComponentShape {
+  final double thumbRadius;
+  final double strokeWidth;
+  final Color color;
+
+  const HollowSliderThumbShape({
+    this.thumbRadius = 10.0,
+    this.strokeWidth = 3.5,
+    this.color = AppTheme.primaryColor,
+  });
+
+  @override
+  Size getPreferredSize(bool isEnabled, bool isDiscrete) {
+    return Size.fromRadius(thumbRadius);
+  }
+
+  @override
+  void paint(
+    PaintingContext context,
+    Offset center, {
+    required Animation<double> activationAnimation,
+    required Animation<double> enableAnimation,
+    required bool isDiscrete,
+    required TextPainter labelPainter,
+    required RenderBox parentBox,
+    required SliderThemeData sliderTheme,
+    required TextDirection textDirection,
+    required double value,
+    required double textScaleFactor,
+    required Size sizeWithOverflow,
+  }) {
+    final Canvas canvas = context.canvas;
+    
+    final paintOuter = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+      
+    final paintInner = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+
+    canvas.drawCircle(center, thumbRadius, paintOuter);
+    canvas.drawCircle(center, thumbRadius - strokeWidth, paintInner);
+  }
+}
+
+class HollowRangeSliderThumbShape extends RangeSliderThumbShape {
+  final double thumbRadius;
+  final double strokeWidth;
+  final Color color;
+
+  const HollowRangeSliderThumbShape({
+    this.thumbRadius = 10.0,
+    this.strokeWidth = 3.5,
+    this.color = AppTheme.primaryColor,
+  });
+
+  @override
+  Size getPreferredSize(bool isEnabled, bool isDiscrete) {
+    return Size.fromRadius(thumbRadius);
+  }
+
+  @override
+  void paint(
+    PaintingContext context,
+    Offset center, {
+    required Animation<double> activationAnimation,
+    required Animation<double> enableAnimation,
+    bool isDiscrete = false,
+    bool isEnabled = false,
+    bool? isOnTop,
+    TextDirection? textDirection,
+    required SliderThemeData sliderTheme,
+    Thumb? thumb,
+    bool? isPressed,
+  }) {
+    final Canvas canvas = context.canvas;
+    
+    final paintOuter = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+      
+    final paintInner = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+
+    canvas.drawCircle(center, thumbRadius, paintOuter);
+    canvas.drawCircle(center, thumbRadius - strokeWidth, paintInner);
   }
 }
