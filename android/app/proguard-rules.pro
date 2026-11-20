@@ -18,3 +18,9 @@
 # Keep AndroidX classes
 -keep class androidx.** { *; }
 -dontwarn androidx.**
+
+# Keep Razorpay classes
+-keepattributes *Annotation*
+-dontwarn com.razorpay.**
+-keep class com.razorpay.** { *; }
+-optimizations !method/inlining/*

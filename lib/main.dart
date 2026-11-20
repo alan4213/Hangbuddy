@@ -24,6 +24,7 @@ import 'screens/personal_info_screen.dart';
 import 'screens/interests_screen.dart';
 import 'screens/photos_screen.dart';
 import 'screens/banned_user_screen.dart';
+import 'screens/subscription_screen.dart';
 import 'services/chat_service.dart';
 import 'services/match_service.dart';
 import 'services/hangout_service.dart';
@@ -102,6 +103,7 @@ class MyApp extends StatelessWidget {
         '/otp': (context) => const OTPScreen(),
         '/email': (context) => const EmailScreen(),
         '/profile-details': (context) => const ProfileDetailsScreen(),
+        '/subscription': (context) => const SubscriptionScreen(),
       },
     );
   }

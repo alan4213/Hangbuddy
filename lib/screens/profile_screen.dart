@@ -18,6 +18,8 @@ import 'notifications_screen.dart';
 import 'edit_photos_screen.dart';
 import '../services/hangout_service.dart';
 import '../services/verification_service.dart';
+import '../services/subscription_service.dart';
+import 'subscription_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -30,12 +32,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
   UserModel? _userProfile = UserService.cachedProfile;
   bool _isLoading = UserService.cachedProfile == null;
   String? _verificationStatus;
+  bool _isPremium = false;
 
   @override
   void initState() {
     super.initState();
     _loadUserProfile();
     _loadVerificationStatus();
+    _loadSubscriptionStatus();
+  }
+
+  void _loadSubscriptionStatus() async {
+    final hasActive = await SubscriptionService.hasActiveSubscription();
+    if (mounted) {
+      setState(() {
+        _isPremium = hasActive;
+      });
+    }
   }
   
   void _loadVerificationStatus() async {
@@ -210,6 +223,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
               padding: EdgeInsets.symmetric(horizontal: (MediaQuery.of(context).size.width * 0.05).clamp(12.0, 20.0)),
               child: Column(
                 children: [
+                    // Haule Premium Subscription
+                    _buildPremiumCard(),
+
+                    const SizedBox(height: 16),
+
                     // Notifications
                     _buildMenuCard(
                       Icons.notifications_outlined,
@@ -424,6 +442,126 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Navigator.pop(context);
           await _deleteAccount();
         },
+      ),
+    );
+  }
+
+  Widget _buildPremiumCard() {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const SubscriptionScreen()),
+        ).then((_) => _loadSubscriptionStatus());
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          gradient: _isPremium
+              ? const LinearGradient(
+                  colors: [Color(0xFF10B981), Color(0xFF059669)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : LinearGradient(
+                  colors: [
+                    AppTheme.primaryColor,
+                    AppTheme.secondaryColor,
+                    const Color(0xFFA78BFA),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: (_isPremium ? const Color(0xFF10B981) : AppTheme.primaryColor)
+                  .withOpacity(0.25),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                _isPremium ? Icons.verified_rounded : Icons.workspace_premium_rounded,
+                color: Colors.white,
+                size: 26,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        _isPremium ? 'Haule Premium Active' : 'Haule Premium',
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      if (!_isPremium)
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.25),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            'PRO',
+                            style: GoogleFonts.poppins(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _isPremium
+                        ? 'Unlimited access unlocked'
+                        : 'From ₹66/mo • Unlimited Hangouts',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      color: Colors.white.withOpacity(0.9),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                _isPremium ? 'View' : 'Upgrade',
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: _isPremium ? const Color(0xFF059669) : AppTheme.primaryColor,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
